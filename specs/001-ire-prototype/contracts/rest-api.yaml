@@ -1,0 +1,298 @@
+openapi: 3.0.3
+info:
+  title: GAVIGO IRE Orchestrator API
+  description: REST API for initial data loading and configuration (WebSocket used for real-time)
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: Orchestrator API
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  redis:
+                    type: string
+                    example: "connected"
+                  kubernetes:
+                    type: string
+                    example: "connected"
+
+  /content:
+    get:
+      summary: Get all content items
+      description: Returns the list of all content available for the stream
+      responses:
+        '200':
+          description: List of content items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ContentItem'
+
+  /content/{contentId}:
+    get:
+      summary: Get single content item
+      parameters:
+        - name: contentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Content item details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentItem'
+        '404':
+          description: Content not found
+
+  /containers:
+    get:
+      summary: Get all container statuses
+      description: Returns current status of all workload containers
+      responses:
+        '200':
+          description: Container status map
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/ContainerStatus'
+
+  /decisions:
+    get:
+      summary: Get recent AI decisions
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        '200':
+          description: List of recent decisions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AIDecision'
+
+  /scores:
+    get:
+      summary: Get all content scores
+      responses:
+        '200':
+          description: Score map for all content
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Scores'
+
+  /mode:
+    get:
+      summary: Get current operational mode
+      responses:
+        '200':
+          description: Current mode
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Mode'
+
+  /resources:
+    get:
+      summary: Get current resource allocation
+      responses:
+        '200':
+          description: Resource allocation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceAllocation'
+
+  /demo/reset:
+    post:
+      summary: Reset demo to initial state
+      description: Resets all containers to COLD, clears scores, resets mode
+      responses:
+        '200':
+          description: Reset successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Demo reset complete"
+
+  /demo/trend-spike:
+    post:
+      summary: Trigger a trend spike
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content_id:
+                  type: string
+                viral_score:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+              required:
+                - content_id
+                - viral_score
+      responses:
+        '200':
+          description: Trend spike triggered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_id:
+                    type: string
+                  new_viral_score:
+                    type: number
+
+components:
+  schemas:
+    ContentItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [GAME, AI_SERVICE, VIDEO]
+        theme:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        thumbnail_url:
+          type: string
+        container_status:
+          type: string
+          enum: [COLD, WARM, HOT]
+        deployment_name:
+          type: string
+        personal_score:
+          type: number
+        global_score:
+          type: number
+        combined_score:
+          type: number
+
+    ContainerStatus:
+      type: object
+      properties:
+        content_id:
+          type: string
+        status:
+          type: string
+          enum: [COLD, WARM, HOT]
+        deployment_name:
+          type: string
+        replicas:
+          type: integer
+        ready_replicas:
+          type: integer
+        last_state_change:
+          type: string
+          format: date-time
+
+    AIDecision:
+      type: object
+      properties:
+        decision_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        trigger_type:
+          type: string
+          enum: [CROSS_DOMAIN, SWARM_BOOST, PROACTIVE_WARM, MODE_CHANGE, RESOURCE_THROTTLE]
+        affected_content_id:
+          type: string
+        reasoning_text:
+          type: string
+        input_scores:
+          type: object
+          properties:
+            personal_score:
+              type: number
+            global_score:
+              type: number
+            combined_score:
+              type: number
+        resulting_action:
+          type: string
+          enum: [INJECT_CONTENT, SCALE_WARM, SCALE_HOT, THROTTLE_BACKGROUND, CHANGE_MODE]
+        success:
+          type: boolean
+
+    Scores:
+      type: object
+      properties:
+        personal_score:
+          type: number
+        global_score:
+          type: number
+        combined_score:
+          type: number
+        threshold_exceeded:
+          type: boolean
+
+    Mode:
+      type: object
+      properties:
+        current_mode:
+          type: string
+          enum: [MIXED_STREAM_BROWSING, GAME_FOCUS_MODE, AI_SERVICE_MODE]
+        active_content_id:
+          type: string
+          nullable: true
+        since:
+          type: string
+          format: date-time
+
+    ResourceAllocation:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        active_allocation:
+          type: number
+        warm_allocation:
+          type: number
+        background_allocation:
+          type: number
+        mode:
+          type: string
