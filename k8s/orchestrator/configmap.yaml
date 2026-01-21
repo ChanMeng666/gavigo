@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: orchestrator-config
+  namespace: gavigo
+data:
+  REDIS_URL: "redis://redis:6379"
+  PORT: "8080"
+  LOG_LEVEL: "info"
+  # Cross-domain recommendation settings
+  ENGAGEMENT_THRESHOLD_MS: "10000"
+  RECOMMENDATION_THRESHOLD: "0.6"
+  # Scoring weights
+  PERSONAL_SCORE_WEIGHT: "0.6"
+  GLOBAL_SCORE_WEIGHT: "0.4"

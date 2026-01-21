@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: gavigo
+  labels:
+    app.kubernetes.io/name: gavigo
+    app.kubernetes.io/part-of: ire-prototype

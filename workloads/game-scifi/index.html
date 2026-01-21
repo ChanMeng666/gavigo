@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Adventure - GAVIGO IRE</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0d0d0d 0%, #1a1a2e 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow: hidden;
+        }
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background-image:
+                radial-gradient(2px 2px at 20px 30px, #eee, transparent),
+                radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+                radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+                radial-gradient(2px 2px at 160px 120px, #ddd, transparent);
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: twinkle 5s ease-in-out infinite;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+        .icon { font-size: 6rem; margin-bottom: 1rem; animation: float 3s ease-in-out infinite; }
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        p { color: #888; margin-bottom: 2rem; }
+        .status {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #0ff;
+            border-radius: 9999px;
+            color: #0ff;
+            font-size: 0.875rem;
+        }
+        .game-area {
+            margin-top: 2rem;
+            padding: 2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 1rem;
+            width: 350px;
+        }
+        .spaceship {
+            font-size: 4rem;
+            margin: 1rem 0;
+            animation: fly 2s ease-in-out infinite;
+        }
+        @keyframes fly {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(20px); }
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: #0ff; }
+        .stat-label { font-size: 0.75rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="container">
+        <div class="icon">🚀</div>
+        <h1>Space Adventure</h1>
+        <p>Explore the galaxy in this epic adventure</p>
+        <div class="status">Container HOT - Active</div>
+        <div class="game-area">
+            <div class="spaceship">🛸</div>
+            <p style="color: #aaa; font-size: 0.875rem;">Navigate through space</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">∞</div>
+                    <div class="stat-label">Stars</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">7</div>
+                    <div class="stat-label">Planets</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">42</div>
+                    <div class="stat-label">Missions</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

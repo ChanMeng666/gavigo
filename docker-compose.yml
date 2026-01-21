@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  orchestrator:
+    build:
+      context: ./orchestrator
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - REDIS_URL=redis:6379
+      - K8S_NAMESPACE=gavigo
+      - LOG_LEVEL=debug
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - orchestrator
+
+  # Workload containers (for demo/local testing)
+  game-football:
+    build:
+      context: ./workloads/game-football
+    ports:
+      - "8081:8080"
+
+  game-scifi:
+    build:
+      context: ./workloads/game-scifi
+    ports:
+      - "8082:8080"
+
+  ai-service:
+    build:
+      context: ./workloads/ai-service
+    ports:
+      - "8083:8080"
+
+volumes:
+  redis-data:
