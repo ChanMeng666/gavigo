@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	Port                    string
+	RedisEnabled            bool
 	RedisURL                string
 	RedisPassword           string
 	LogLevel                string
@@ -21,6 +22,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		Port:                    getEnv("PORT", "8080"),
+		RedisEnabled:            getEnvBool("REDIS_ENABLED", true),
 		RedisURL:                getEnv("REDIS_URL", "localhost:6379"),
 		RedisPassword:           getEnv("REDIS_PASSWORD", ""),
 		LogLevel:                getEnv("LOG_LEVEL", "info"),
