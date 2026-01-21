@@ -1,50 +1,110 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report:
+- Version change: 0.0.0 → 1.0.0
+- Initial constitution creation for GAVIGO IRE Prototype
+- All principles newly defined
+- Templates: Pending review after initial setup
+-->
+
+# GAVIGO IRE Prototype Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Investor Demonstration First
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+All development decisions MUST prioritize investor comprehension and demonstration impact. The Orchestration Dashboard is the primary artifact for conveying GAVIGO's value proposition.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- Every AI decision MUST be logged with human-readable explanations
+- Container state transitions (COLD→WARM→HOT) MUST be visually represented in real-time
+- Cross-domain recommendation triggers MUST be clearly articulated in the decision log
+- The "magic" of proactive orchestration MUST be observable, not hidden
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+### II. Real-Time Responsiveness
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+WebSocket-first architecture for all dynamic interactions. HTTP REST is secondary and used only for initial loads or configuration.
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+- User behavior events (scroll, focus, click) MUST propagate to backend within 100ms
+- AI decisions MUST reflect on Dashboard within 200ms of being made
+- Container scaling events MUST be visible on Dashboard immediately upon K8s acknowledgment
+- No polling; all updates MUST be push-based via WebSocket
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### III. Kubernetes-Native Design
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Leverage Kubernetes primitives directly. Do not abstract away K8s concepts—they are the demonstration.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+- Use native Kubernetes Deployments for workload simulation
+- Scale replicas (0↔1) via client-go, not custom abstractions
+- Resource quotas and limits MUST be used for throttling demonstrations
+- All simulated workloads MUST be real K8s pods (stress-ng for background load)
+
+### IV. Prototype Simplicity (YAGNI)
+
+This is a 2-4 week prototype. Functionality over polish. Working demo over perfect architecture.
+
+- No authentication/authorization for prototype phase
+- UI styling uses existing component libraries (Tailwind, shadcn/ui) without customization
+- Rule-based AI only—no ML model training or inference
+- Placeholder content acceptable (static images, looping videos)
+- Hardcoded demo scenarios permitted for investor presentations
+
+### V. Technology Stack Standards
+
+The following stack is NON-NEGOTIABLE for this prototype:
+
+- **Backend**: Go 1.21+ with client-go (K8s), gorilla/websocket, Redis client
+- **Frontend**: Vite + React 18 + TypeScript
+- **Infrastructure**: DigitalOcean Kubernetes (DOKS), Redis (in-cluster)
+- **Containerization**: Docker with multi-stage builds
+- **Communication**: WebSocket (primary), REST (configuration only)
+
+## Architectural Constraints
+
+### Service Boundaries
+
+| Service | Responsibility | Language |
+|---------|---------------|----------|
+| orchestrator | AI logic, K8s control, WebSocket hub | Go |
+| frontend | User Stream + Dashboard | React/TS |
+| redis | State, scores, pub/sub | Redis 7.x |
+| workload-* | Simulated content pods | Docker |
+
+### Data Flow Requirements
+
+1. User actions → WebSocket → Orchestrator → Rule Engine
+2. Rule Engine → K8s API (scaling) + Redis (state) + WebSocket (broadcast)
+3. Dashboard subscribes to all orchestrator events via WebSocket
+
+### Forbidden Patterns
+
+- No gRPC (WebSocket + REST sufficient for prototype)
+- No message queues (Redis pub/sub is enough)
+- No service mesh (direct pod communication)
+- No custom operators (simple Deployment scaling only)
+
+## Quality Gates
+
+### Before Merge
+
+- [ ] Code compiles without errors
+- [ ] Docker image builds successfully
+- [ ] Basic functionality manually verified
+- [ ] No hardcoded secrets in code
+
+### Before Demo
+
+- [ ] Full demo scenario runs end-to-end
+- [ ] Dashboard accurately reflects all AI decisions
+- [ ] Container scaling visually confirmed
+- [ ] Cross-domain recommendation triggers correctly
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution governs all development decisions for the GAVIGO IRE Prototype. When in conflict:
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+1. Constitution principles override developer preference
+2. Investor demonstration value overrides technical elegance
+3. Working functionality overrides comprehensive testing (prototype phase only)
+
+Amendments to this constitution require explicit discussion and documentation of rationale.
+
+**Version**: 1.0.0 | **Ratified**: 2025-01-21 | **Last Amended**: 2025-01-21
