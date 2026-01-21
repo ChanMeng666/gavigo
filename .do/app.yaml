@@ -7,8 +7,7 @@ services:
       repo: ChanMeng666/gavigo
       branch: 001-ire-prototype
       deploy_on_push: true
-    source_dir: /orchestrator
-    dockerfile_path: Dockerfile
+    dockerfile_path: orchestrator/Dockerfile
     http_port: 8080
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
@@ -31,7 +30,7 @@ static_sites:
       repo: ChanMeng666/gavigo
       branch: 001-ire-prototype
       deploy_on_push: true
-    source_dir: /frontend
+    source_dir: frontend
     build_command: npm install && npm run build
     output_dir: dist
     routes:
