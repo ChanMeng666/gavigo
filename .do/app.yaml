@@ -8,10 +8,12 @@ services:
       branch: 001-ire-prototype
       deploy_on_push: true
     source_dir: /orchestrator
-    dockerfile_path: Dockerfile
+    environment_slug: go
     http_port: 8080
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
+    build_command: go mod tidy && go build -o bin/orchestrator ./cmd/orchestrator
+    run_command: ./bin/orchestrator
     envs:
       - key: PORT
         value: "8080"
