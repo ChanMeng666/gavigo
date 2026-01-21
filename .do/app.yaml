@@ -1,6 +1,30 @@
 name: gavigo-ire
 region: sgp
 
+services:
+  - name: orchestrator
+    github:
+      repo: ChanMeng666/gavigo
+      branch: 001-ire-prototype
+      deploy_on_push: true
+    source_dir: /orchestrator
+    dockerfile_path: Dockerfile
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    envs:
+      - key: PORT
+        value: "8080"
+      - key: REDIS_ENABLED
+        value: "false"
+      - key: K8S_ENABLED
+        value: "false"
+      - key: LOG_LEVEL
+        value: "info"
+    routes:
+      - path: /api
+      - path: /ws
+
 static_sites:
   - name: frontend
     github:
