@@ -12,7 +12,6 @@ services:
     http_port: 8080
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
-    build_command: go mod download && go build -o bin/orchestrator ./cmd/orchestrator
     run_command: ./bin/orchestrator
     envs:
       - key: PORT
@@ -23,12 +22,6 @@ services:
         value: "false"
       - key: LOG_LEVEL
         value: "info"
-      - key: GOFLAGS
-        value: "-insecure"
-        scope: BUILD_TIME
-      - key: GOSUMDB
-        value: "off"
-        scope: BUILD_TIME
     routes:
       - path: /api
       - path: /ws
