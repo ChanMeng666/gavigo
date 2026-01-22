@@ -19,11 +19,12 @@ const (
 type ActionType string
 
 const (
-	ActionInjectContent     ActionType = "INJECT_CONTENT"
-	ActionScaleWarm         ActionType = "SCALE_WARM"
-	ActionScaleHot          ActionType = "SCALE_HOT"
+	ActionInjectContent      ActionType = "INJECT_CONTENT"
+	ActionScaleWarm          ActionType = "SCALE_WARM"
+	ActionScaleHot           ActionType = "SCALE_HOT"
 	ActionThrottleBackground ActionType = "THROTTLE_BACKGROUND"
-	ActionChangeMode        ActionType = "CHANGE_MODE"
+	ActionRestoreResources   ActionType = "RESTORE_RESOURCES"
+	ActionChangeMode         ActionType = "CHANGE_MODE"
 )
 
 type InputScores struct {

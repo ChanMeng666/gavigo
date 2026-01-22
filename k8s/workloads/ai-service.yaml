@@ -24,6 +24,14 @@ spec:
           image: registry.digitalocean.com/gavigo-registry/ai-service:latest
           ports:
             - containerPort: 8080
+          env:
+            # Background stress simulation configuration
+            - name: STRESS_ENABLED
+              value: "true"
+            - name: STRESS_CPU_WORKERS
+              value: "1"
+            - name: STRESS_CPU_LOAD
+              value: "25"
           resources:
             requests:
               cpu: "200m"

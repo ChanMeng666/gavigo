@@ -12,6 +12,7 @@ import (
 	"github.com/gavigo/orchestrator/internal/api"
 	"github.com/gavigo/orchestrator/internal/config"
 	"github.com/gavigo/orchestrator/internal/engine"
+	"github.com/gavigo/orchestrator/internal/k8s"
 	"github.com/gavigo/orchestrator/internal/models"
 	"github.com/gavigo/orchestrator/internal/websocket"
 )
@@ -22,6 +23,23 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 	log.Printf("Configuration loaded: port=%s", cfg.Port)
+
+	// Initialize K8s client and throttler (optional - for K8s environments)
+	var throttler *k8s.Throttler
+	namespace := os.Getenv("K8S_NAMESPACE")
+	if namespace == "" {
+		namespace = "gavigo"
+	}
+
+	if k8sClient, err := k8s.NewClient(namespace); err != nil {
+		log.Printf("K8s client not available (running in local mode): %v", err)
+	} else {
+		log.Println("K8s client initialized successfully")
+		throttler = k8s.NewThrottler(k8sClient, k8s.DefaultThrottleConfig())
+	}
+
+	// Define workload deployment names
+	workloadDeployments := []string{"game-football", "game-scifi", "ai-service"}
 
 	// Initialize scorer
 	scorer := engine.NewScorer(nil)
@@ -59,6 +77,43 @@ func main() {
 
 	rulesEngine.OnInject = func(content *models.ContentItem, position int, reason string) {
 		hub.BroadcastStreamInject(content, position, reason)
+	}
+
+	// Wire up resource throttling (only if K8s is available)
+	rulesEngine.OnThrottleAction = func(activeContentID string, mode models.OperationalMode) {
+		if throttler == nil {
+			log.Printf("Throttle action requested but K8s not available (simulated mode)")
+			// Broadcast resource allocation update for visualization
+			allocation := models.DefaultResourceAllocation(mode)
+			hub.BroadcastResourceUpdate(&allocation)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		if mode == models.ModeGameFocus || mode == models.ModeAIServiceFocus {
+			// Throttle background workloads when entering focused mode
+			// Find the deployment name for the active content
+			content := handlers.GetContentByID(activeContentID)
+			deploymentName := ""
+			if content != nil {
+				deploymentName = content.DeploymentName
+			}
+			if err := throttler.ThrottleForForeground(ctx, deploymentName, workloadDeployments); err != nil {
+				log.Printf("Warning: throttle action failed: %v", err)
+			}
+		} else {
+			// Restore resources when returning to mixed browsing
+			if err := throttler.RestoreResources(ctx, workloadDeployments); err != nil {
+				log.Printf("Warning: restore resources failed: %v", err)
+			}
+		}
+
+		// Broadcast resource allocation update
+		allocation := models.DefaultResourceAllocation(mode)
+		hub.BroadcastResourceUpdate(&allocation)
+		log.Printf("Resource throttling applied for mode: %s", mode)
 	}
 
 	scorer.OnScoreUpdate = func(contentID string, scores *models.InputScores) {

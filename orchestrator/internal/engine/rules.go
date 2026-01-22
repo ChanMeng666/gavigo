@@ -13,10 +13,11 @@ type RulesEngine struct {
 	config *EngineConfig
 
 	// Callbacks
-	OnDecision    func(decision *models.AIDecision)
-	OnModeChange  func(oldMode, newMode models.OperationalMode, reason string)
-	OnScaleAction func(contentID string, targetState models.ContainerStatus)
-	OnInject      func(content *models.ContentItem, position int, reason string)
+	OnDecision        func(decision *models.AIDecision)
+	OnModeChange      func(oldMode, newMode models.OperationalMode, reason string)
+	OnScaleAction     func(contentID string, targetState models.ContainerStatus)
+	OnInject          func(content *models.ContentItem, position int, reason string)
+	OnThrottleAction  func(activeContentID string, mode models.OperationalMode)
 }
 
 // EngineConfig holds configuration for the rules engine
@@ -214,6 +215,24 @@ func (e *RulesEngine) checkModeChange(session *models.UserSession, content *mode
 		if e.OnModeChange != nil {
 			e.OnModeChange(oldMode, newMode, reason)
 		}
+
+		// Trigger resource throttling when mode changes to focused mode
+		if e.OnThrottleAction != nil {
+			if newMode == models.ModeGameFocus || newMode == models.ModeAIServiceFocus {
+				e.makeDecision(models.TriggerResourceThrottle, content.ID, models.InputScores{},
+					models.ActionThrottleBackground,
+					fmt.Sprintf("Throttling background workloads for %s focus mode", content.Type))
+				e.OnThrottleAction(content.ID, newMode)
+			} else if newMode == models.ModeMixedStreamBrowsing {
+				// Restore resources when returning to mixed browsing
+				e.makeDecision(models.TriggerResourceThrottle, "", models.InputScores{},
+					models.ActionRestoreResources,
+					"Restoring resources for mixed stream browsing")
+				e.OnThrottleAction("", newMode)
+			}
+		}
+
+		session.CurrentMode = newMode
 	}
 }
 

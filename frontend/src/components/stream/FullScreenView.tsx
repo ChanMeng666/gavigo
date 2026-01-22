@@ -24,30 +24,9 @@ export function FullScreenView({
   containerStatus,
   onDeactivate,
 }: FullScreenViewProps) {
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  // Simulate loading progress
-  useEffect(() => {
-    if (containerStatus === 'HOT') {
-      setIsLoaded(true);
-      setLoadProgress(100);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setLoadProgress((prev) => {
-        if (prev >= 100) {
-          setIsLoaded(true);
-          clearInterval(interval);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 200);
-
-    return () => clearInterval(interval);
-  }, [containerStatus]);
+  // Seamless activation: content displays immediately without loading indicators
+  // The orchestrator should have already pre-warmed the container (WARM/HOT state)
+  // This implements the "Instant Reality" experience - no loading bars per spec FR-005
 
   return (
     <div
@@ -70,42 +49,21 @@ export function FullScreenView({
         </button>
       </header>
 
-      {/* Main content area */}
+      {/* Main content area - displays immediately for seamless "Instant Reality" experience */}
       <div className="flex-1 flex items-center justify-center p-8">
-        {!isLoaded ? (
-          // Loading state
-          <div className="text-center">
-            <div className="w-64 h-2 bg-white/20 rounded-full overflow-hidden mb-4">
-              <div
-                className="h-full bg-white rounded-full transition-all duration-200"
-                style={{ width: `${loadProgress}%` }}
-              />
-            </div>
-            <p className="text-white/70">
-              {containerStatus === 'WARM'
-                ? 'Activating container...'
-                : 'Container warming up...'}
-            </p>
-            <p className="text-white/50 text-sm mt-2">
-              Container Status: {containerStatus}
-            </p>
+        <div className="w-full max-w-4xl">
+          <div className="bg-black/30 rounded-2xl p-8 backdrop-blur-sm">
+            {content.type === 'GAME' && (
+              <GameSimulation title={content.title} theme={content.theme} />
+            )}
+            {content.type === 'AI_SERVICE' && (
+              <AIServiceSimulation title={content.title} />
+            )}
+            {content.type === 'VIDEO' && (
+              <VideoSimulation title={content.title} theme={content.theme} />
+            )}
           </div>
-        ) : (
-          // Loaded content simulation
-          <div className="w-full max-w-4xl">
-            <div className="bg-black/30 rounded-2xl p-8 backdrop-blur-sm">
-              {content.type === 'GAME' && (
-                <GameSimulation title={content.title} theme={content.theme} />
-              )}
-              {content.type === 'AI_SERVICE' && (
-                <AIServiceSimulation title={content.title} />
-              )}
-              {content.type === 'VIDEO' && (
-                <VideoSimulation title={content.title} theme={content.theme} />
-              )}
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Footer with container info */}
