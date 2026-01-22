@@ -21,7 +21,7 @@ spec:
     spec:
       containers:
         - name: ai
-          image: gavigo/ai-service:latest
+          image: registry.digitalocean.com/gavigo-registry/ai-service:latest
           ports:
             - containerPort: 8080
           resources:

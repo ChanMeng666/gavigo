@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: registry.digitalocean.com/gavigo/frontend:latest
+          image: registry.digitalocean.com/gavigo-registry/frontend:latest
           ports:
             - containerPort: 80
           resources:

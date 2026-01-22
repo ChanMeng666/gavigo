@@ -18,7 +18,7 @@ spec:
       serviceAccountName: orchestrator
       containers:
         - name: orchestrator
-          image: registry.digitalocean.com/gavigo/orchestrator:latest
+          image: registry.digitalocean.com/gavigo-registry/orchestrator:latest
           ports:
             - containerPort: 8080
           envFrom:
