@@ -108,10 +108,11 @@ kubectl -n gavigo rollout restart deployment/frontend
 
 | 服务 | 规格 | 预计费用 |
 |------|------|----------|
-| Kubernetes 集群 | 2 节点 x s-2vcpu-4gb | ~$48/月 |
-| Managed Redis | db-s-1vcpu-1gb | ~$15/月 |
-| Container Registry | Basic | ~$5/月 |
-| **总计** | | **~$68/月** |
+| Kubernetes 集群 | 2 节点, sgp1 | ~$24/月 |
+| Managed Redis | Valkey 8, TLS | ~$15/月 |
+| Container Registry | Basic (5 repos) | ~$5/月 |
+| Load Balancer | 自动创建 (129.212.209.146) | ~$12/月 |
+| **总计** | | **~$56/月** |
 
 ---
 

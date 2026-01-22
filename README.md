@@ -434,10 +434,11 @@ sequenceDiagram
 
 | Service | Cost |
 |---------|------|
-| Kubernetes (2 nodes) | ~$48/月 |
-| Managed Redis | ~$15/月 |
-| Container Registry (Basic) | ~$5/月 |
-| **Total** | **~$68/月** |
+| Kubernetes (2 nodes) | ~$24/month |
+| Managed Redis (Valkey) | ~$15/month |
+| Container Registry (Basic) | ~$5/month |
+| Load Balancer (auto-created) | ~$12/month |
+| **Total** | **~$56/month** |
 
 ---
 

@@ -2,71 +2,209 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    /* === BACKGROUND LAYERS === */
+    --bg-base: 222 47% 3%;
+    --bg-surface: 222 35% 5%;
+    --bg-elevated: 217 33% 9%;
+    --bg-overlay: 217 19% 18%;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #0a0a0f;
+    /* === STATUS COLORS === */
+    --status-hot: 0 84% 60%;
+    --status-hot-glow: 0 84% 60% / 0.4;
+    --status-warm: 38 92% 50%;
+    --status-warm-glow: 38 92% 50% / 0.4;
+    --status-cold: 217 91% 60%;
+    --status-cold-glow: 217 91% 60% / 0.3;
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+    /* === ACCENT COLORS === */
+    --accent-primary: 199 89% 48%;
+    --accent-secondary: 187 94% 43%;
+    --accent-success: 160 84% 39%;
+    --accent-warning: 38 92% 50%;
+    --accent-error: 0 84% 60%;
 
-body {
-  margin: 0;
-  min-height: 100vh;
-}
+    /* === TEXT COLORS === */
+    --foreground: 0 0% 98%;
+    --foreground-secondary: 0 0% 70%;
+    --foreground-muted: 0 0% 50%;
+    --foreground-disabled: 0 0% 30%;
 
-#root {
-  min-height: 100vh;
-}
+    /* === SHADCN VARIABLES === */
+    --background: 222 47% 3%;
+    --card: 222 35% 5%;
+    --card-foreground: 0 0% 98%;
+    --popover: 217 33% 9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 217 19% 18%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 217 19% 18%;
+    --muted-foreground: 0 0% 63%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 199 89% 48%;
+    --radius: 0.5rem;
 
-/* Custom scrollbar */
-.scrollbar-thin::-webkit-scrollbar {
-  width: 6px;
-}
+    /* === TYPOGRAPHY === */
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: #1f2937;
-  border-radius: 3px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background: #4b5563;
-  border-radius: 3px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}
-
-/* Animation for status indicators */
-@keyframes pulse-glow {
-  0%, 100% {
-    opacity: 1;
-    box-shadow: 0 0 5px currentColor;
+    /* === ANIMATIONS === */
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
   }
-  50% {
-    opacity: 0.7;
-    box-shadow: 0 0 15px currentColor;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  #root {
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 600;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-mono);
   }
 }
 
-.status-hot {
-  animation: pulse-glow 1s ease-in-out infinite;
-  color: #ef4444;
+/* === CUSTOM SCROLLBAR === */
+@layer utilities {
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: hsl(var(--bg-elevated));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--bg-overlay));
+    border-radius: 3px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--foreground-muted));
+  }
 }
 
-.status-warm {
-  animation: pulse-glow 2s ease-in-out infinite;
-  color: #eab308;
+/* === STATUS GLOW ANIMATIONS === */
+@layer utilities {
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 1;
+      box-shadow: 0 0 8px currentColor;
+    }
+    50% {
+      opacity: 0.8;
+      box-shadow: 0 0 20px currentColor;
+    }
+  }
+
+  @keyframes pulse-subtle {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+
+  .status-glow-hot {
+    animation: pulse-glow 1s ease-in-out infinite;
+    color: hsl(var(--status-hot));
+    box-shadow: 0 0 15px hsl(var(--status-hot-glow));
+  }
+
+  .status-glow-warm {
+    animation: pulse-glow 2s ease-in-out infinite;
+    color: hsl(var(--status-warm));
+    box-shadow: 0 0 12px hsl(var(--status-warm-glow));
+  }
+
+  .status-glow-cold {
+    color: hsl(var(--status-cold));
+    box-shadow: 0 0 10px hsl(var(--status-cold-glow));
+  }
 }
 
-.status-cold {
-  color: #3b82f6;
+/* === GRADIENT BACKGROUNDS === */
+@layer utilities {
+  .bg-grid-pattern {
+    background-image:
+      linear-gradient(hsl(var(--accent-secondary) / 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--accent-secondary) / 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  .gradient-hot {
+    background: hsl(var(--status-hot));
+  }
+
+  .gradient-warm {
+    background: hsl(var(--status-warm));
+  }
+
+  .gradient-cold {
+    background: hsl(var(--status-cold));
+  }
+
+  .gradient-primary {
+    background: hsl(var(--accent-primary));
+  }
+
+  .gradient-success {
+    background: hsl(var(--accent-success));
+  }
+}
+
+/* === CARD HOVER EFFECTS === */
+@layer utilities {
+  .card-hover {
+    transition: all var(--duration-normal) ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 0 8px 25px -5px hsl(0 0% 0% / 0.3);
+  }
+
+  .card-glow:hover {
+    box-shadow: 0 0 0 1px hsl(var(--border) / 0.5), 0 0 20px -5px hsl(var(--accent-secondary) / 0.3);
+  }
+}
+
+/* === FOCUS STATES === */
+@layer utilities {
+  .focus-ring {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
 }

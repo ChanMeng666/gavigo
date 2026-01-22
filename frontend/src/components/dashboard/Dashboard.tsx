@@ -1,9 +1,10 @@
-import { ContainerStatus } from './ContainerStatus';
-import { AIDecisionLog } from './AIDecisionLog';
-import { ScoreDisplay } from './ScoreDisplay';
-import { ModeIndicator } from './ModeIndicator';
-import { ResourceChart } from './ResourceChart';
-import { DemoControls } from './DemoControls';
+import { ContainerStatus } from "./ContainerStatus"
+import { AIDecisionLog } from "./AIDecisionLog"
+import { ScoreDisplay } from "./ScoreDisplay"
+import { ModeIndicator } from "./ModeIndicator"
+import { ResourceChart } from "./ResourceChart"
+import { DemoControls } from "./DemoControls"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type {
   ContentItem,
   ContainerStatus as ContainerStatusType,
@@ -12,25 +13,23 @@ import type {
   InputScores,
   ResourceAllocation,
   DemoControlPayload,
-} from '../../types';
+} from "@/types"
 
 interface DashboardProps {
-  connected: boolean;
-  sessionId: string | null;
-  content: ContentItem[];
-  containerStates: Record<string, ContainerStatusType>;
-  currentMode: OperationalMode;
-  activeContentId: string | null;
-  decisions: AIDecision[];
-  scores: Record<string, InputScores>;
-  resourceHistory: ResourceAllocation[];
-  onDemoControl: (payload: DemoControlPayload) => void;
-  onResetDemo: () => void;
+  connected: boolean
+  sessionId: string | null
+  content: ContentItem[]
+  containerStates: Record<string, ContainerStatusType>
+  currentMode: OperationalMode
+  activeContentId: string | null
+  decisions: AIDecision[]
+  scores: Record<string, InputScores>
+  resourceHistory: ResourceAllocation[]
+  onDemoControl: (payload: DemoControlPayload) => void
+  onResetDemo: () => void
 }
 
 export function Dashboard({
-  connected,
-  sessionId,
   content,
   containerStates,
   currentMode,
@@ -44,72 +43,45 @@ export function Dashboard({
   const contentTitles = content.reduce(
     (acc, item) => ({ ...acc, [item.id]: item.title }),
     {} as Record<string, string>
-  );
+  )
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-4">
-      {/* Header */}
-      <header className="mb-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-              GAVIGO IRE Dashboard
-            </h1>
-            <p className="text-gray-500 text-sm">
-              AI-Driven Container Orchestration Visualization
-            </p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  connected ? 'bg-green-500 animate-pulse' : 'bg-red-500'
-                }`}
+    <div className="h-full flex flex-col bg-base">
+      {/* Main Content */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 lg:p-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-6">
+            {/* Left Column - Mode and Controls */}
+            <div className="md:col-span-1 xl:col-span-3 space-y-4">
+              <ModeIndicator
+                currentMode={currentMode}
+                activeContentId={activeContentId}
               />
-              <span className="text-sm text-gray-400">
-                {connected ? 'Connected' : 'Disconnected'}
-              </span>
+              <DemoControls
+                content={content}
+                onDemoControl={onDemoControl}
+                onResetDemo={onResetDemo}
+              />
+              <ContainerStatus content={content} containerStates={containerStates} />
             </div>
-            {sessionId && (
-              <span className="text-xs text-gray-600 font-mono">
-                Session: {sessionId.slice(0, 8)}
-              </span>
-            )}
+
+            {/* Center Column - Decision Log */}
+            <div className="md:col-span-1 xl:col-span-5">
+              <div className="h-[calc(100vh-180px)] min-h-[400px]">
+                <AIDecisionLog decisions={decisions} maxItems={30} />
+              </div>
+            </div>
+
+            {/* Right Column - Scores and Resources */}
+            <div className="md:col-span-2 xl:col-span-4 space-y-4">
+              <ScoreDisplay scores={scores} contentTitles={contentTitles} />
+              <ResourceChart history={resourceHistory} />
+            </div>
           </div>
         </div>
-      </header>
-
-      {/* Main Grid */}
-      <div className="grid grid-cols-12 gap-4">
-        {/* Left Column - Mode and Controls */}
-        <div className="col-span-12 lg:col-span-3 space-y-4">
-          <ModeIndicator
-            currentMode={currentMode}
-            activeContentId={activeContentId}
-          />
-          <DemoControls
-            content={content}
-            onDemoControl={onDemoControl}
-            onResetDemo={onResetDemo}
-          />
-          <ContainerStatus content={content} containerStates={containerStates} />
-        </div>
-
-        {/* Center Column - Decision Log */}
-        <div className="col-span-12 lg:col-span-5">
-          <div className="h-[calc(100vh-160px)]">
-            <AIDecisionLog decisions={decisions} maxItems={30} />
-          </div>
-        </div>
-
-        {/* Right Column - Scores and Resources */}
-        <div className="col-span-12 lg:col-span-4 space-y-4">
-          <ScoreDisplay scores={scores} contentTitles={contentTitles} />
-          <ResourceChart history={resourceHistory} />
-        </div>
-      </div>
+      </ScrollArea>
     </div>
-  );
+  )
 }
 
-export default Dashboard;
+export default Dashboard

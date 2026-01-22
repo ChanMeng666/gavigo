@@ -1,80 +1,79 @@
-import { forwardRef } from 'react';
-import type { ContentItem, ContainerStatus } from '../../types';
+import { forwardRef } from "react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { StatusIndicator } from "@/components/ui/status-indicator"
+import { contentTypeIcons, contentTypeConfig } from "@/components/icons"
+import { PlayIcon } from "@/components/icons"
+import { cn } from "@/lib/utils"
+import type { ContentItem, ContainerStatus } from "@/types"
 
 interface ContentCardProps {
-  content: ContentItem;
-  containerStatus: ContainerStatus;
-  isActive: boolean;
-  onActivate: (contentId: string) => void;
-  onMouseEnter: () => void;
-  onMouseLeave: () => void;
+  content: ContentItem
+  containerStatus: ContainerStatus
+  isActive: boolean
+  onActivate: (contentId: string) => void
+  onMouseEnter: () => void
+  onMouseLeave: () => void
 }
-
-const typeIcons: Record<string, string> = {
-  GAME: '🎮',
-  AI_SERVICE: '🤖',
-  VIDEO: '🎬',
-};
-
-const typeColors: Record<string, string> = {
-  GAME: 'from-red-500 to-orange-500',
-  AI_SERVICE: 'from-green-500 to-teal-500',
-  VIDEO: 'from-blue-500 to-purple-500',
-};
-
-const statusIndicators: Record<ContainerStatus, { color: string; pulse: boolean }> = {
-  COLD: { color: 'bg-blue-500', pulse: false },
-  WARM: { color: 'bg-yellow-500', pulse: true },
-  HOT: { color: 'bg-red-500', pulse: true },
-};
 
 export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(
   ({ content, containerStatus, isActive, onActivate, onMouseEnter, onMouseLeave }, ref) => {
-    const status = statusIndicators[containerStatus];
+    const TypeIcon = contentTypeIcons[content.type]
+    const typeConfig = contentTypeConfig[content.type]
 
     return (
       <div
         ref={ref}
         data-content-id={content.id}
         data-theme={content.theme}
-        className={`relative bg-gray-800 rounded-xl overflow-hidden transition-all duration-300 ${
-          isActive ? 'ring-2 ring-white shadow-lg scale-[1.02]' : 'hover:scale-[1.01]'
-        }`}
+        className={cn(
+          "relative bg-card rounded-xl overflow-hidden transition-all duration-300 card-hover",
+          isActive && "ring-2 ring-accent scale-[1.02]",
+          !isActive && "hover:scale-[1.01]"
+        )}
         onMouseEnter={onMouseEnter}
         onMouseLeave={onMouseLeave}
       >
         {/* Thumbnail */}
-        <div className="relative aspect-video bg-gray-900">
+        <div className="relative aspect-video bg-elevated">
           <div
-            className={`absolute inset-0 bg-gradient-to-br ${typeColors[content.type]} opacity-30`}
+            className={cn(
+              "absolute inset-0 bg-gradient-to-br opacity-40",
+              typeConfig.gradient
+            )}
           />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-6xl">{typeIcons[content.type]}</span>
+            <div className={cn(
+              "h-16 w-16 rounded-2xl flex items-center justify-center bg-black/30 backdrop-blur-sm",
+              isActive && "scale-110 transition-transform"
+            )}>
+              <TypeIcon className="h-8 w-8 text-white" />
+            </div>
           </div>
 
           {/* Status indicator */}
           <div className="absolute top-3 right-3">
-            <div
-              className={`w-3 h-3 rounded-full ${status.color} ${
-                status.pulse ? 'animate-pulse' : ''
-              }`}
-            />
+            <StatusIndicator status={containerStatus} size="md" />
           </div>
 
           {/* Score indicator */}
-          <div className="absolute bottom-3 left-3 bg-black/60 rounded-lg px-2 py-1">
+          <div className="absolute bottom-3 left-3 bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-1">
             <span className="text-xs text-white font-mono">
-              Score: {(content.combined_score * 100).toFixed(0)}%
+              {(content.combined_score * 100).toFixed(0)}%
             </span>
           </div>
 
           {/* Content type badge */}
           <div className="absolute top-3 left-3">
-            <span
-              className={`inline-block px-2 py-1 rounded text-xs font-medium bg-gradient-to-r ${typeColors[content.type]} text-white`}
+            <Badge
+              className={cn(
+                "gap-1 bg-gradient-to-r text-white border-0",
+                typeConfig.gradient
+              )}
             >
-              {content.type.replace('_', ' ')}
-            </span>
+              <TypeIcon className="h-3 w-3" />
+              {typeConfig.label}
+            </Badge>
           </div>
         </div>
 
@@ -82,49 +81,51 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(
         <div className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="text-white font-semibold truncate">{content.title}</h3>
-              <p className="text-gray-400 text-sm truncate">{content.description}</p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-xs text-gray-500 bg-gray-700 px-2 py-1 rounded">
+              <h3 className="text-foreground font-display font-semibold truncate">
+                {content.title}
+              </h3>
+              <p className="text-muted-foreground text-sm truncate">
+                {content.description}
+              </p>
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Badge variant="secondary" className="text-[10px]">
                   #{content.theme}
-                </span>
-                <span
-                  className={`text-xs px-2 py-1 rounded ${
-                    containerStatus === 'HOT'
-                      ? 'bg-red-500/20 text-red-400'
-                      : containerStatus === 'WARM'
-                      ? 'bg-yellow-500/20 text-yellow-400'
-                      : 'bg-blue-500/20 text-blue-400'
-                  }`}
+                </Badge>
+                <Badge
+                  variant={
+                    containerStatus === "HOT" ? "hot" :
+                    containerStatus === "WARM" ? "warm" : "cold"
+                  }
+                  className="text-[10px]"
                 >
                   {containerStatus}
-                </span>
+                </Badge>
               </div>
             </div>
           </div>
 
           {/* Activate button */}
-          <button
+          <Button
             onClick={() => onActivate(content.id)}
-            disabled={containerStatus === 'COLD'}
-            className={`mt-4 w-full py-2 rounded-lg font-medium transition-all ${
-              containerStatus === 'COLD'
-                ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                : containerStatus === 'HOT'
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : 'bg-yellow-500 hover:bg-yellow-600 text-black'
-            }`}
+            disabled={containerStatus === "COLD"}
+            variant={
+              containerStatus === "HOT" ? "hot" :
+              containerStatus === "WARM" ? "warm" : "secondary"
+            }
+            className="mt-4 w-full gap-2"
+            size="sm"
           >
-            {containerStatus === 'COLD'
-              ? 'Not Ready'
-              : containerStatus === 'HOT'
-              ? 'Active'
-              : 'Activate'}
-          </button>
+            <PlayIcon className="h-4 w-4" />
+            {containerStatus === "COLD"
+              ? "Not Ready"
+              : containerStatus === "HOT"
+              ? "Launch Now"
+              : "Activate"}
+          </Button>
         </div>
       </div>
-    );
+    )
   }
-);
+)
 
-ContentCard.displayName = 'ContentCard';
+ContentCard.displayName = "ContentCard"

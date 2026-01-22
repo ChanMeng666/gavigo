@@ -1,95 +1,138 @@
-import { useEffect, useRef } from 'react';
-import type { AIDecision } from '../../types';
+import { useEffect, useRef } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
+import { ActivityIcon, ClockIcon } from "@/components/icons"
+import { actionIcons, triggerTypeConfig } from "@/components/icons"
+import type { AIDecision } from "@/types"
 
 interface AIDecisionLogProps {
-  decisions: AIDecision[];
-  maxItems?: number;
+  decisions: AIDecision[]
+  maxItems?: number
 }
 
-const triggerColors: Record<string, string> = {
-  CROSS_DOMAIN: 'text-purple-400',
-  SWARM_BOOST: 'text-green-400',
-  PROACTIVE_WARM: 'text-yellow-400',
-  MODE_CHANGE: 'text-blue-400',
-  RESOURCE_THROTTLE: 'text-red-400',
-};
-
-const actionIcons: Record<string, string> = {
-  INJECT_CONTENT: '💉',
-  SCALE_WARM: '🔥',
-  SCALE_HOT: '🌋',
-  THROTTLE_BACKGROUND: '⏸️',
-  CHANGE_MODE: '🔄',
-};
-
 export function AIDecisionLog({ decisions, maxItems = 20 }: AIDecisionLogProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
-      scrollRef.current.scrollTop = 0;
+      scrollRef.current.scrollTop = 0
     }
-  }, [decisions]);
+  }, [decisions])
 
-  const displayDecisions = decisions.slice(0, maxItems);
+  const displayDecisions = decisions.slice(0, maxItems)
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4 h-full flex flex-col">
-      <h3 className="text-lg font-semibold text-white mb-4">AI Decision Log</h3>
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto space-y-2 scrollbar-thin scrollbar-thumb-gray-700"
-      >
-        {displayDecisions.length === 0 ? (
-          <div className="text-gray-500 text-center py-8">
-            No decisions yet. Interact with the stream to generate AI decisions.
-          </div>
-        ) : (
-          displayDecisions.map((decision) => (
-            <div
-              key={decision.decision_id}
-              className={`bg-gray-800 rounded-lg p-3 border-l-4 ${
-                decision.success ? 'border-green-500' : 'border-red-500'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">
-                    {actionIcons[decision.resulting_action] || '🤖'}
-                  </span>
-                  <span
-                    className={`text-xs font-mono ${
-                      triggerColors[decision.trigger_type] || 'text-gray-400'
-                    }`}
-                  >
-                    {decision.trigger_type}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500">
-                  {new Date(decision.timestamp).toLocaleTimeString()}
-                </span>
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ActivityIcon className="h-4 w-4 text-muted-foreground" />
+          AI Decision Log
+          {displayDecisions.length > 0 && (
+            <Badge variant="secondary" className="ml-auto text-xs">
+              {displayDecisions.length}
+            </Badge>
+          )}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="flex-1 overflow-hidden pb-4">
+        <ScrollArea className="h-full pr-3" ref={scrollRef}>
+          {displayDecisions.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <ActivityIcon className="h-6 w-6 text-muted-foreground" />
               </div>
-              <p className="text-sm text-gray-300 mb-2">{decision.reasoning_text}</p>
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-gray-500">
-                  Content: {decision.affected_content_id.slice(0, 8)}...
-                </span>
-                <div className="flex gap-2">
-                  <span className="text-blue-400">
-                    P: {decision.input_scores.personal_score.toFixed(2)}
-                  </span>
-                  <span className="text-green-400">
-                    G: {decision.input_scores.global_score.toFixed(2)}
-                  </span>
-                  <span className="text-yellow-400">
-                    C: {decision.input_scores.combined_score.toFixed(2)}
-                  </span>
-                </div>
-              </div>
+              <p className="text-muted-foreground text-sm">
+                No decisions yet
+              </p>
+              <p className="text-muted-foreground/60 text-xs mt-1">
+                Interact with the stream to generate AI decisions
+              </p>
             </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+          ) : (
+            <AnimatePresence mode="popLayout">
+              <div className="space-y-2">
+                {displayDecisions.map((decision, index) => {
+                  const ActionIcon = actionIcons[decision.resulting_action]
+                  const triggerConfig = triggerTypeConfig[decision.trigger_type]
+
+                  return (
+                    <motion.div
+                      key={decision.decision_id}
+                      initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      transition={{
+                        duration: 0.2,
+                        delay: index * 0.02,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 25
+                      }}
+                      className={`bg-elevated rounded-lg p-3 border-l-4 transition-colors hover:bg-overlay ${
+                        decision.success ? "border-accent-success" : "border-destructive"
+                      }`}
+                    >
+                      {/* Header */}
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div className={`h-7 w-7 rounded-md flex items-center justify-center ${
+                            decision.success ? "bg-accent-success/10" : "bg-destructive/10"
+                          }`}>
+                            <ActionIcon className={`h-4 w-4 ${
+                              decision.success ? "text-accent-success" : "text-destructive"
+                            }`} />
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] px-1.5 py-0 ${triggerConfig.className}`}
+                          >
+                            {triggerConfig.label}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <ClockIcon className="h-3 w-3" />
+                          {new Date(decision.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+
+                      {/* Reasoning */}
+                      <p className="text-sm text-foreground/80 mb-2 line-clamp-2">
+                        {decision.reasoning_text}
+                      </p>
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-muted-foreground font-mono">
+                          {decision.affected_content_id.slice(0, 12)}...
+                        </span>
+                        <div className="flex items-center gap-3">
+                          <span className="text-accent-primary">
+                            P: {(decision.input_scores.personal_score * 100).toFixed(0)}%
+                          </span>
+                          <span className="text-accent-secondary">
+                            G: {(decision.input_scores.global_score * 100).toFixed(0)}%
+                          </span>
+                          <span className={
+                            decision.input_scores.combined_score >= 0.7
+                              ? "text-hot"
+                              : decision.input_scores.combined_score >= 0.4
+                              ? "text-warm"
+                              : "text-cold"
+                          }>
+                            C: {(decision.input_scores.combined_score * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )
+                })}
+              </div>
+            </AnimatePresence>
+          )}
+        </ScrollArea>
+      </CardContent>
+    </Card>
+  )
 }

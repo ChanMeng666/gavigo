@@ -1,133 +1,83 @@
-import type { InputScores } from '../../types';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Separator } from "@/components/ui/separator"
+import { CombinedScoreBar } from "@/components/ui/score-bar"
+import { ChartIcon, InfoIcon } from "@/components/icons"
+import type { InputScores } from "@/types"
 
 interface ScoreDisplayProps {
-  scores: Record<string, InputScores>;
-  contentTitles: Record<string, string>;
+  scores: Record<string, InputScores>
+  contentTitles: Record<string, string>
   thresholds?: {
-    warmThreshold: number;
-    hotThreshold: number;
-  };
+    warmThreshold: number
+    hotThreshold: number
+  }
 }
 
 export function ScoreDisplay({
   scores,
   contentTitles,
-  thresholds = { warmThreshold: 0.6, hotThreshold: 0.8 },
+  thresholds = { warmThreshold: 0.4, hotThreshold: 0.7 },
 }: ScoreDisplayProps) {
   const scoreEntries = Object.entries(scores).sort(
     ([, a], [, b]) => b.combined_score - a.combined_score
-  );
+  )
 
   return (
-    <div className="bg-gray-900 rounded-lg p-4">
-      <h3 className="text-lg font-semibold text-white mb-4">Real-time Scores</h3>
-      <div className="space-y-3">
-        {scoreEntries.length === 0 ? (
-          <div className="text-gray-500 text-center py-4">No score data available</div>
-        ) : (
-          scoreEntries.map(([contentId, score]) => (
-            <div key={contentId} className="bg-gray-800 rounded-lg p-3">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-white text-sm font-medium truncate max-w-[150px]">
-                  {contentTitles[contentId] || contentId.slice(0, 8)}
-                </span>
-                <span
-                  className={`text-sm font-bold ${
-                    score.combined_score >= thresholds.hotThreshold
-                      ? 'text-red-400'
-                      : score.combined_score >= thresholds.warmThreshold
-                      ? 'text-yellow-400'
-                      : 'text-gray-400'
-                  }`}
-                >
-                  {(score.combined_score * 100).toFixed(0)}%
-                </span>
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <ChartIcon className="h-4 w-4 text-muted-foreground" />
+          Real-time Scores
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ScrollArea className="h-[280px] pr-3">
+          {scoreEntries.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+                <ChartIcon className="h-6 w-6 text-muted-foreground" />
               </div>
-              <div className="space-y-1">
-                <ScoreBar
-                  label="Personal"
-                  value={score.personal_score}
-                  color="bg-blue-500"
-                />
-                <ScoreBar
-                  label="Global"
-                  value={score.global_score}
-                  color="bg-green-500"
-                />
-                <ScoreBar
-                  label="Combined"
-                  value={score.combined_score}
-                  color={
-                    score.combined_score >= thresholds.hotThreshold
-                      ? 'bg-red-500'
-                      : score.combined_score >= thresholds.warmThreshold
-                      ? 'bg-yellow-500'
-                      : 'bg-gray-500'
-                  }
-                  showThresholds
-                  thresholds={thresholds}
-                />
-              </div>
+              <p className="text-muted-foreground text-sm">No score data available</p>
             </div>
-          ))
-        )}
-      </div>
-      <div className="mt-4 pt-4 border-t border-gray-700">
-        <div className="text-xs text-gray-500">
-          <p>Thresholds:</p>
-          <div className="flex gap-4 mt-1">
+          ) : (
+            <div className="space-y-4">
+              {scoreEntries.map(([contentId, score]) => (
+                <div key={contentId} className="bg-elevated rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-foreground truncate max-w-[150px]">
+                      {contentTitles[contentId] || contentId.slice(0, 8)}
+                    </span>
+                  </div>
+                  <CombinedScoreBar
+                    personalScore={score.personal_score}
+                    globalScore={score.global_score}
+                    combinedScore={score.combined_score}
+                    warmThreshold={thresholds.warmThreshold}
+                    hotThreshold={thresholds.hotThreshold}
+                    animate={true}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </ScrollArea>
+
+        <Separator className="my-4" />
+
+        {/* Thresholds Info */}
+        <div className="flex items-start gap-2 text-xs text-muted-foreground">
+          <InfoIcon className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+          <div className="flex flex-wrap gap-x-4 gap-y-1">
             <span>
-              WARM: {(thresholds.warmThreshold * 100).toFixed(0)}%
+              <span className="text-warm">WARM</span>: {(thresholds.warmThreshold * 100).toFixed(0)}%
             </span>
             <span>
-              HOT: {(thresholds.hotThreshold * 100).toFixed(0)}%
+              <span className="text-hot">HOT</span>: {(thresholds.hotThreshold * 100).toFixed(0)}%
             </span>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-interface ScoreBarProps {
-  label: string;
-  value: number;
-  color: string;
-  showThresholds?: boolean;
-  thresholds?: { warmThreshold: number; hotThreshold: number };
-}
-
-function ScoreBar({
-  label,
-  value,
-  color,
-  showThresholds,
-  thresholds,
-}: ScoreBarProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-xs text-gray-500 w-16">{label}</span>
-      <div className="flex-1 h-2 bg-gray-700 rounded-full relative overflow-hidden">
-        <div
-          className={`h-full ${color} rounded-full transition-all duration-300`}
-          style={{ width: `${Math.min(value * 100, 100)}%` }}
-        />
-        {showThresholds && thresholds && (
-          <>
-            <div
-              className="absolute top-0 h-full w-px bg-yellow-500/50"
-              style={{ left: `${thresholds.warmThreshold * 100}%` }}
-            />
-            <div
-              className="absolute top-0 h-full w-px bg-red-500/50"
-              style={{ left: `${thresholds.hotThreshold * 100}%` }}
-            />
-          </>
-        )}
-      </div>
-      <span className="text-xs text-gray-400 w-10 text-right">
-        {(value * 100).toFixed(0)}%
-      </span>
-    </div>
-  );
+      </CardContent>
+    </Card>
+  )
 }
