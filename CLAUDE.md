@@ -2,11 +2,11 @@
 
 > Claude Code project instructions for GAVIGO IRE (Instant Reality Exchange)
 >
-> Last updated: 2026-01-22
+> Last updated: 2026-01-24
 
 ## Project Overview
 
-GAVIGO IRE is an AI-driven container orchestration visualization prototype. It demonstrates intelligent resource management where containers transition between COLD, WARM, and HOT states based on user engagement and AI predictions.
+GAVIGO IRE is an AI-driven container orchestration visualization prototype. It demonstrates intelligent resource management where containers transition between COLD, WARM, and HOT states based on user engagement and AI predictions. The system features a TikTok-style vertical scrolling interface with external iframe games and AI chat integration.
 
 **Live URL**: http://129.212.209.146
 
@@ -14,11 +14,12 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype. It d
 
 | Resource | Status | Details |
 |----------|--------|---------|
-| K8s Cluster | ✅ Running | gavigo-cluster (2 nodes, sgp1) |
-| Redis | ✅ Online | Managed Valkey with TLS |
-| Frontend | ✅ Running | LoadBalancer IP: 129.212.209.146 |
-| Orchestrator | ✅ Running | ClusterIP service |
-| Workloads | ✅ Ready | Cold start (0 replicas) |
+| K8s Cluster | Running | gavigo-cluster (2 nodes, sgp1) |
+| Redis | Online | Managed Valkey with TLS |
+| Frontend | Running | LoadBalancer IP: 129.212.209.146 |
+| Orchestrator | Running | ClusterIP service |
+| External Games | Active | Kongregate iframe integration |
+| AI Service | Ready | OpenAI GPT-4o-mini |
 
 ## Active Technologies
 
@@ -34,6 +35,7 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype. It d
 | Orchestration | Kubernetes | DOKS (DigitalOcean) |
 | WebSocket | gorilla/websocket | 1.5+ |
 | K8s Client | client-go | Latest |
+| AI Backend | OpenAI API | GPT-4o-mini |
 
 ## Project Structure
 
@@ -43,10 +45,11 @@ gavigo/
 │   ├── cmd/orchestrator/   # Entry point (main.go)
 │   ├── internal/
 │   │   ├── api/            # HTTP handlers
+│   │   │   └── handlers.go # REST API endpoints
 │   │   ├── config/         # Configuration
 │   │   ├── engine/         # Rule-based AI logic
-│   │   │   ├── engine.go   # Rules engine
-│   │   │   └── scorer.go   # Scoring system
+│   │   │   ├── rules.go    # 7 trigger types
+│   │   │   └── scorer.go   # Weighted scoring system
 │   │   ├── k8s/            # Kubernetes client
 │   │   │   ├── client.go   # K8s API client
 │   │   │   ├── scaler.go   # Deployment scaling
@@ -56,7 +59,13 @@ gavigo/
 │   │   │   ├── pubsub.go   # Pub/Sub messaging
 │   │   │   └── scores.go   # Score storage
 │   │   ├── websocket/      # WebSocket hub
+│   │   │   ├── handlers.go # Event handlers
+│   │   │   └── hub.go      # Client management
 │   │   └── models/         # Data models
+│   │       ├── content.go  # Content items & cross-domain relations
+│   │       ├── decision.go # AI decisions & actions
+│   │       ├── events.go   # WebSocket events
+│   │       └── session.go  # User sessions
 │   ├── Dockerfile          # Multi-stage Go build
 │   ├── go.mod
 │   └── go.sum
@@ -65,19 +74,41 @@ gavigo/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── dashboard/  # Dashboard UI components
-│   │   │   └── stream/     # Media stream components
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── AIDecisionLog.tsx
+│   │   │   │   ├── ContainerStatus.tsx
+│   │   │   │   ├── ScoreDisplay.tsx
+│   │   │   │   ├── ResourceChart.tsx
+│   │   │   │   ├── DemoControls.tsx
+│   │   │   │   └── ModeIndicator.tsx
+│   │   │   ├── stream/     # TikTok-style stream
+│   │   │   │   ├── MediaStream.tsx
+│   │   │   │   └── TikTokContentView.tsx  # Main content view
+│   │   │   ├── layout/     # Layout components
+│   │   │   │   ├── AppShell.tsx
+│   │   │   │   ├── Header.tsx
+│   │   │   │   ├── ViewToggle.tsx
+│   │   │   │   └── ConnectionStatus.tsx
+│   │   │   └── ui/         # shadcn/ui components
 │   │   ├── hooks/          # Custom React hooks
+│   │   │   ├── useWebSocket.ts  # WebSocket connection
+│   │   │   ├── useEngagement.ts # Focus tracking
+│   │   │   ├── useMediaQuery.ts
+│   │   │   └── useReducedMotion.ts
 │   │   ├── services/       # API clients
+│   │   │   └── api.ts      # REST API client
 │   │   └── types/          # TypeScript types
+│   │       └── index.ts    # All type definitions
 │   ├── Dockerfile          # Multi-stage Node → Nginx build
 │   ├── nginx.conf          # Nginx configuration
 │   ├── package.json
 │   └── package-lock.json
 │
-├── workloads/              # Simulated content containers
-│   ├── game-football/      # Football game workload
-│   ├── game-scifi/         # Sci-Fi game workload
-│   └── ai-service/         # AI service workload
+├── workloads/              # Workload containers
+│   └── ai-service/         # AI chat service
+│       ├── server.js       # Express server with OpenAI
+│       ├── public/         # Static assets
+│       └── Dockerfile
 │
 ├── k8s/                    # Kubernetes manifests
 │   ├── namespace.yaml      # gavigo namespace
@@ -91,9 +122,10 @@ gavigo/
 │   │   ├── service.yaml
 │   │   └── rbac.yaml       # ServiceAccount + Role
 │   └── workloads/
-│       ├── game-football.yaml  # replicas: 0
-│       ├── game-scifi.yaml     # replicas: 0
-│       └── ai-service.yaml     # replicas: 0
+│       └── ai-service.yaml # AI service deployment
+│
+├── docs/                   # Documentation
+│   └── DEMO_GUIDE.md       # Demo walkthrough
 │
 ├── specs/                  # Specification documents
 │   └── 001-ire-prototype/  # Current feature spec
@@ -195,8 +227,8 @@ docker push registry.digitalocean.com/gavigo-registry/frontend:latest
 | `REDIS_URL` | `rediss://...` | DigitalOcean Managed Redis (TLS) |
 | `LOG_LEVEL` | info | Log level |
 | `ENGAGEMENT_THRESHOLD_MS` | 10000 | Engagement threshold |
-| `RECOMMENDATION_THRESHOLD` | 0.6 | Score threshold |
-| `PERSONAL_SCORE_WEIGHT` | 0.6 | Personal score weight |
+| `RECOMMENDATION_THRESHOLD` | 0.6 | Score threshold for warming |
+| `PERSONAL_SCORE_WEIGHT` | 0.4 | Personal score weight |
 | `GLOBAL_SCORE_WEIGHT` | 0.4 | Global score weight |
 
 ### Container Images
@@ -205,8 +237,6 @@ docker push registry.digitalocean.com/gavigo-registry/frontend:latest
 |-----------|------------|
 | Orchestrator | `registry.digitalocean.com/gavigo-registry/orchestrator:latest` |
 | Frontend | `registry.digitalocean.com/gavigo-registry/frontend:latest` |
-| game-football | `registry.digitalocean.com/gavigo-registry/game-football:latest` |
-| game-scifi | `registry.digitalocean.com/gavigo-registry/game-scifi:latest` |
 | ai-service | `registry.digitalocean.com/gavigo-registry/ai-service:latest` |
 
 ## Code Style
@@ -227,17 +257,81 @@ docker push registry.digitalocean.com/gavigo-registry/frontend:latest
 
 ## Architecture Notes
 
+### Content Types (11 items)
+
+**Videos (5):**
+- video-football-1, video-football-2, video-football-3 (theme: football)
+- video-scifi-1, video-scifi-2 (theme: scifi)
+
+**Games - External iframes (5):**
+- game-clicker-heroes (theme: idle) - Kongregate
+- game-mrmine (theme: mining)
+- game-poker-quest (theme: cards)
+- game-grindcraft (theme: craft)
+- game-fray-fight (theme: fighting)
+
+**AI Service (1):**
+- ai-service-tech (theme: tech) - OpenAI GPT-4o-mini
+
+### Scoring Algorithm
+
+```
+Combined Score = (Personal × 0.4) + (Global × 0.4) + (Trend × 0.2)
+```
+
+- Personal: +0.1 per second of focus
+- Global: +0.01 per second (shared across sessions)
+- Trend: 0.0-1.0 viral score
+- Decay: 1% every 5 seconds
+
+### 7 AI Trigger Types
+
+| Trigger | Condition | Action |
+|---------|-----------|--------|
+| CROSS_DOMAIN | 5s focus on content | Inject related content |
+| SWARM_BOOST | viral_score >= 0.7 | Scale to WARM |
+| PROACTIVE_WARM | combined >= 0.6 | Scale to WARM |
+| MODE_CHANGE | 10s focus on game/AI | Change operational mode |
+| RESOURCE_THROTTLE | Mode change | Adjust resource allocation |
+| INITIAL_WARM | Page load | Warm first 2 items |
+| LOOKAHEAD_WARM | Scroll | Warm next 2 items |
+
+### Cross-Domain Relations
+
+```
+football → game-clicker-heroes
+scifi    → game-mrmine
+tech     → ai-service-tech
+```
+
 ### Container States
 - **COLD**: 0 replicas, no resources
 - **WARM**: 1 replica, minimal resources, standby
 - **HOT**: 2+ replicas, full resources, active
 
-### WebSocket Events
-Client → Server:
-- `scroll_update`, `focus_event`, `activation_request`, `deactivation`, `demo_control`
+### Operational Modes
+- **MIXED_STREAM_BROWSING**: Default browsing mode
+- **GAME_FOCUS_MODE**: Focused on game content
+- **AI_SERVICE_MODE**: Focused on AI service
 
-Server → Client:
-- `connection_established`, `decision_made`, `container_state_change`, `score_update`, `mode_change`, `activation_ready`
+### WebSocket Events
+
+**Client → Server:**
+- `scroll_update` - Position, velocity, visible_content
+- `focus_event` - content_id, duration_ms, theme
+- `activation_request` - content_id
+- `deactivation` - content_id
+- `demo_control` - action, target_content_id, value
+
+**Server → Client:**
+- `connection_established` - session_id, initial_content, current_mode
+- `decision_made` - Full AIDecision object with reasoning
+- `container_state_change` - content_id, old_state, new_state
+- `score_update` - content_id, personal_score, global_score, combined_score
+- `mode_change` - old_mode, new_mode, reason
+- `stream_inject` - content item, insert_position, reason
+- `resource_update` - ResourceAllocation object
+- `activation_ready` - content_id, endpoint_url, status
 
 ### Redis Usage
 - **State Store**: Container states, scores, decisions
@@ -251,6 +345,13 @@ The orchestrator service account has permissions to:
 - Scale deployments (update Deployments/scale)
 
 ## Recent Changes
+
+### 2026-01-24
+- Replaced local games with external iframe games (Kongregate)
+- Implemented TikTok-style inline content display
+- Added AI chat integration with OpenAI GPT-4o-mini
+- Added demo controls panel (viral slider, force state, trend spike)
+- Updated documentation with mermaid diagrams
 
 ### 2026-01-22
 - Deployed to DigitalOcean Kubernetes (DOKS)
@@ -291,10 +392,21 @@ kubectl -n gavigo get svc
 kubectl -n gavigo get endpoints
 ```
 
+### WebSocket connection issues
+- Check browser console for WebSocket errors
+- Verify nginx.conf has proper WebSocket proxy configuration
+- Check orchestrator logs for connection attempts
+
+### Game iframe not loading
+- Games are external (Kongregate) - check browser console for CORS/CSP errors
+- Some games may block iframe embedding
+- Verify network connectivity to game servers
+
 ## Documentation Links
 
 - [README.md](./README.md) - Project overview with diagrams
 - [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) - Current deployment status
+- [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 
 <!-- MANUAL ADDITIONS START -->

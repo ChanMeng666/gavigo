@@ -11,7 +11,7 @@
 
 **AI-Driven Container Orchestration Visualization Prototype**
 
-[Live Demo](http://129.212.209.146) | [Documentation](#documentation) | [Architecture](#architecture)
+[Live Demo](http://129.212.209.146) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
 
 </div>
 
@@ -19,13 +19,21 @@
 
 ## Overview
 
-GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating AI-driven container orchestration for mixed-media content delivery. The system showcases intelligent resource management where containers transition between COLD, WARM, and HOT states based on user engagement patterns and AI-driven predictions.
+GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating AI-driven container orchestration for mixed-media content delivery. The system features a **TikTok-style vertical scrolling interface** where containers transition between COLD, WARM, and HOT states based on user engagement patterns and AI-driven predictions.
+
+### Key Highlights
+
+- **TikTok-Style Content Stream**: Full-screen vertical scroll with snap points and inline content activation
+- **External Game Integration**: Iframe-based games from Kongregate and other platforms
+- **AI Chat Service**: OpenAI GPT-4o-mini powered chat interface
+- **Real-Time AI Decisions**: 7 trigger types for intelligent resource management
+- **Weighted Scoring System**: Personal, global, and trend scores combined for predictions
 
 ## Live Deployment
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | http://129.212.209.146 | ✅ Running |
+| Production | http://129.212.209.146 | Running |
 
 **Infrastructure**: DigitalOcean Kubernetes (DOKS) in Singapore (sgp1)
 
@@ -34,21 +42,33 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 ## Key Features
 
 ### AI-Driven Orchestration
-- **Cross-Domain Recommendations**: Automatically suggests related content across different media types (video → game) based on user engagement
-- **Swarm Intelligence**: Detects trending content and proactively warms containers
-- **Proactive Warming**: Predicts user intent and prepares containers before activation
+
+- **Cross-Domain Recommendations**: Automatically suggests related content across different media types based on theme matching (e.g., football video -> idle game)
+- **Swarm Intelligence**: Detects trending content (viral score >= 0.7) and proactively warms containers
+- **Proactive Warming**: Predicts user intent and prepares containers before activation when engagement score exceeds 0.6
+
+### TikTok-Style Content Stream
+
+- **Vertical Scroll**: Full-height content cards with CSS scroll-snap
+- **Inline Activation**: Content plays directly in the stream (no modal popups)
+- **External Game iframes**: Load games from Kongregate and other platforms
+- **AI Chat Interface**: Inline chat with OpenAI integration
+- **Pagination Dots**: Visual navigation indicator
 
 ### Real-Time Dashboard
+
 - Live AI decision log with reasoning explanations
-- Container state visualization (COLD → WARM → HOT)
+- Container state visualization (COLD -> WARM -> HOT)
 - Personal, global, and combined score tracking
 - Resource allocation charts
 - Operational mode indicators
 
-### Interactive Demo
-- Mixed-media content stream with engagement tracking
-- Full-screen content activation experience
-- Demo controls for triggering scenarios
+### Interactive Demo Controls
+
+- Viral score slider for testing swarm intelligence
+- Force state buttons (WARM/COLD)
+- Trend spike trigger
+- Reset demo button
 
 ---
 
@@ -60,6 +80,8 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 graph TB
     subgraph "Frontend Layer"
         FE[React Frontend<br/>TypeScript + Vite]
+        TT[TikTok-Style Stream]
+        DASH[Dashboard]
     end
 
     subgraph "Backend Layer"
@@ -67,16 +89,16 @@ graph TB
         WS[WebSocket Hub]
         API[REST API]
         ENGINE[Rules Engine]
+        SCORER[Scorer]
     end
 
     subgraph "Data Layer"
         REDIS[(Redis/Valkey<br/>State Store)]
     end
 
-    subgraph "Workload Layer"
-        GF[game-football]
-        GS[game-scifi]
-        AI[ai-service]
+    subgraph "External Content"
+        KG[Kongregate Games]
+        OAI[OpenAI API]
     end
 
     subgraph "Infrastructure"
@@ -84,17 +106,88 @@ graph TB
         LB[LoadBalancer]
     end
 
-    FE -->|WebSocket| WS
-    FE -->|HTTP| API
+    FE --> TT
+    FE --> DASH
+    TT -->|WebSocket| WS
+    DASH -->|HTTP| API
     WS --> ORCH
     API --> ORCH
     ORCH --> ENGINE
+    ORCH --> SCORER
     ORCH --> REDIS
     ORCH --> K8S
-    K8S --> GF
-    K8S --> GS
-    K8S --> AI
+    TT -->|iframe| KG
+    TT -->|API| OAI
     LB --> FE
+```
+
+### AI Decision Pipeline
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant WebSocket
+    participant Scorer
+    participant RulesEngine
+    participant Kubernetes
+
+    User->>Frontend: View/Focus on content
+    Frontend->>WebSocket: focus_event (content_id, duration_ms)
+    WebSocket->>Scorer: UpdateScores()
+    Note over Scorer: Personal: +0.1/sec<br/>Global: +0.01/sec
+    Scorer->>RulesEngine: OnScoreUpdate callback
+    RulesEngine->>RulesEngine: Evaluate 7 trigger types
+
+    alt Combined Score > 0.6
+        RulesEngine->>Kubernetes: ScaleDeployment(WARM)
+        RulesEngine->>WebSocket: decision_made event
+    end
+
+    WebSocket->>Frontend: Broadcast to all clients
+    Frontend->>User: Update UI
+```
+
+### Scoring Algorithm
+
+```mermaid
+flowchart TD
+    subgraph "Input Events"
+        FE[Focus Event<br/>duration_ms]
+        TS[Trend Spike<br/>viral_score]
+    end
+
+    subgraph "Score Calculation"
+        PS[Personal Score<br/>+0.1 per second]
+        GS[Global Score<br/>+0.01 per second]
+        VS[Viral Score<br/>0.0 - 1.0]
+    end
+
+    subgraph "Weighted Combination"
+        W1[Personal x 0.4]
+        W2[Global x 0.4]
+        W3[Trend x 0.2]
+        CS[Combined Score]
+    end
+
+    subgraph "Actions"
+        TH{Score >= 0.6?}
+        WARM[Scale to WARM]
+        HOT[Scale to HOT]
+    end
+
+    FE --> PS
+    FE --> GS
+    TS --> VS
+    PS --> W1
+    GS --> W2
+    VS --> W3
+    W1 --> CS
+    W2 --> CS
+    W3 --> CS
+    CS --> TH
+    TH -->|Yes, < 0.8| WARM
+    TH -->|Yes, >= 0.8| HOT
 ```
 
 ### Container State Machine
@@ -102,9 +195,9 @@ graph TB
 ```mermaid
 stateDiagram-v2
     [*] --> COLD: Initial
-    COLD --> WARM: Engagement > threshold
+    COLD --> WARM: Score > 0.6 OR Trend >= 0.7
     COLD --> HOT: Direct activation
-    WARM --> HOT: User activation
+    WARM --> HOT: User activation OR Score > 0.8
     WARM --> COLD: Timeout (no activity)
     HOT --> WARM: User leaves
     HOT --> COLD: Extended inactivity
@@ -125,33 +218,56 @@ stateDiagram-v2
     end note
 ```
 
-### Request Flow
+### AI Trigger Types
+
+```mermaid
+graph LR
+    subgraph "7 Trigger Types"
+        T1[CROSS_DOMAIN<br/>5s focus -> inject related]
+        T2[SWARM_BOOST<br/>viral >= 0.7 -> warm]
+        T3[PROACTIVE_WARM<br/>score >= 0.6 -> warm]
+        T4[MODE_CHANGE<br/>10s focus -> change mode]
+        T5[RESOURCE_THROTTLE<br/>mode-based allocation]
+        T6[INITIAL_WARM<br/>page load -> warm first 2]
+        T7[LOOKAHEAD_WARM<br/>scroll -> warm next 2]
+    end
+
+    subgraph "Actions"
+        A1[INJECT_CONTENT]
+        A2[SCALE_WARM]
+        A3[SCALE_HOT]
+        A4[CHANGE_MODE]
+        A5[THROTTLE_BACKGROUND]
+    end
+
+    T1 --> A1
+    T1 --> A2
+    T2 --> A2
+    T3 --> A2
+    T4 --> A4
+    T5 --> A5
+    T6 --> A2
+    T7 --> A2
+```
+
+### Cross-Domain Content Injection
 
 ```mermaid
 sequenceDiagram
     participant User
     participant Frontend
-    participant Orchestrator
-    participant Redis
-    participant K8s
-    participant Workload
+    participant RulesEngine
+    participant ContentStore
 
-    User->>Frontend: View content
-    Frontend->>Orchestrator: focus_event (WebSocket)
-    Orchestrator->>Redis: Update engagement score
-    Orchestrator->>Orchestrator: Rules Engine evaluation
-
-    alt Score > Threshold
-        Orchestrator->>K8s: Scale deployment (WARM)
-        K8s->>Workload: Create pod
-        Orchestrator->>Frontend: decision_made event
-    end
-
-    User->>Frontend: Activate content
-    Frontend->>Orchestrator: activation_request
-    Orchestrator->>K8s: Scale deployment (HOT)
-    Orchestrator->>Frontend: activation_ready
-    Frontend->>Workload: Load content iframe
+    User->>Frontend: Focus on video (football theme)
+    Note over Frontend: Duration > 5 seconds
+    Frontend->>RulesEngine: focus_event
+    RulesEngine->>ContentStore: Find related content
+    Note over ContentStore: Match: football -> game-clicker-heroes
+    ContentStore-->>RulesEngine: Related game found
+    RulesEngine->>RulesEngine: Generate CROSS_DOMAIN decision
+    RulesEngine->>Frontend: stream_inject event
+    Frontend->>User: Game card appears in stream
 ```
 
 ### Deployment Architecture (DigitalOcean)
@@ -163,17 +279,19 @@ graph TB
             subgraph "gavigo namespace"
                 FE_POD[Frontend Pod<br/>nginx:alpine]
                 ORCH_POD[Orchestrator Pod<br/>Go binary]
-                GF_POD[game-football<br/>replicas: 0-2]
-                GS_POD[game-scifi<br/>replicas: 0-2]
-                AI_POD[ai-service<br/>replicas: 0-2]
             end
 
-            FE_SVC[Frontend Service<br/>LoadBalancer]
-            ORCH_SVC[Orchestrator Service<br/>ClusterIP]
+            FE_SVC[Frontend Service<br/>LoadBalancer :80]
+            ORCH_SVC[Orchestrator Service<br/>ClusterIP :8080]
         end
 
         REDIS_DB[(Managed Redis<br/>Valkey + TLS)]
         REGISTRY[Container Registry<br/>gavigo-registry]
+    end
+
+    subgraph "External Services"
+        KONG[Kongregate<br/>Game iframes]
+        OPENAI[OpenAI API<br/>GPT-4o-mini]
     end
 
     INTERNET((Internet)) --> FE_SVC
@@ -181,12 +299,53 @@ graph TB
     FE_POD --> ORCH_SVC
     ORCH_SVC --> ORCH_POD
     ORCH_POD --> REDIS_DB
-    ORCH_POD --> GF_POD
-    ORCH_POD --> GS_POD
-    ORCH_POD --> AI_POD
+    FE_POD -.->|iframe| KONG
+    ORCH_POD -.->|API| OPENAI
     REGISTRY -.->|Pull images| FE_POD
     REGISTRY -.->|Pull images| ORCH_POD
 ```
+
+---
+
+## Content Items
+
+The demo includes 11 content items across 3 types:
+
+### Videos (5 items)
+
+| ID | Theme | Title | Description |
+|----|-------|-------|-------------|
+| video-football-1 | football | Football Highlights | Amazing football moments |
+| video-football-2 | football | Top Goals 2024 | Best goals of the season |
+| video-football-3 | football | Championship Finals | The ultimate showdown |
+| video-scifi-1 | scifi | Space Documentary | Exploring the cosmos |
+| video-scifi-2 | scifi | Deep Space Journey | Venturing into the unknown |
+
+### Games - External iframes (5 items)
+
+| ID | Theme | Title | Source |
+|----|-------|-------|--------|
+| game-clicker-heroes | idle | Clicker Heroes | Kongregate (150M+ plays) |
+| game-mrmine | mining | Mr.Mine | Kongregate (20M+ plays) |
+| game-poker-quest | cards | Poker Quest | Roguelike poker |
+| game-grindcraft | craft | Grindcraft | Minecraft-style idle (10M+ plays) |
+| game-fray-fight | fighting | Fray Fight | Action fighting |
+
+### AI Service (1 item)
+
+| ID | Theme | Title | Backend |
+|----|-------|-------|---------|
+| ai-service-tech | tech | AI Assistant | OpenAI GPT-4o-mini |
+
+### Cross-Domain Relations
+
+When users engage with content for 5+ seconds, the system recommends related content:
+
+| Video Theme | Recommended Game |
+|-------------|-----------------|
+| football | game-clicker-heroes |
+| scifi | game-mrmine |
+| tech | ai-service-tech |
 
 ---
 
@@ -238,11 +397,23 @@ gavigo/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── dashboard/   # Dashboard components
-│   │   │   └── stream/      # Media stream components
+│   │   │   │   ├── Dashboard.tsx
+│   │   │   │   ├── AIDecisionLog.tsx
+│   │   │   │   ├── ScoreDisplay.tsx
+│   │   │   │   ├── ResourceChart.tsx
+│   │   │   │   ├── DemoControls.tsx
+│   │   │   │   └── ModeIndicator.tsx
+│   │   │   ├── stream/      # TikTok-style stream
+│   │   │   │   ├── MediaStream.tsx
+│   │   │   │   └── TikTokContentView.tsx
+│   │   │   ├── layout/      # Layout components
+│   │   │   └── ui/          # shadcn/ui components
 │   │   ├── hooks/           # Custom React hooks
+│   │   │   ├── useWebSocket.ts
+│   │   │   └── useEngagement.ts
 │   │   ├── services/        # API client
 │   │   └── types/           # TypeScript definitions
-│   ├── Dockerfile           # Multi-stage build (node → nginx)
+│   ├── Dockerfile           # Multi-stage build (node -> nginx)
 │   └── nginx.conf           # Frontend routing config
 │
 ├── orchestrator/            # Go backend service
@@ -251,21 +422,24 @@ gavigo/
 │       ├── api/             # HTTP handlers
 │       ├── config/          # Configuration management
 │       ├── engine/          # Rules engine & scorer
+│       │   ├── rules.go     # 7 trigger types
+│       │   └── scorer.go    # Weighted scoring
 │       ├── k8s/             # Kubernetes client
 │       ├── models/          # Data models
 │       ├── redis/           # Redis client (TLS support)
 │       └── websocket/       # WebSocket hub
 │
-├── workloads/               # Simulated workload containers
-│   ├── game-football/       # Football game workload
-│   ├── game-scifi/          # Sci-Fi game workload
-│   └── ai-service/          # AI service workload
+├── workloads/               # Workload containers
+│   └── ai-service/          # AI chat service (OpenAI)
 │
 ├── k8s/                     # Kubernetes manifests
 │   ├── namespace.yaml       # gavigo namespace
 │   ├── frontend/            # Frontend deployment + service
 │   ├── orchestrator/        # Orchestrator deployment + RBAC
-│   └── workloads/           # Workload deployments (cold start)
+│   └── workloads/           # Workload deployments
+│
+├── docs/                    # Documentation
+│   └── DEMO_GUIDE.md        # Demo walkthrough
 │
 ├── specs/                   # Specification documents
 │   └── 001-ire-prototype/   # IRE prototype specification
@@ -362,22 +536,22 @@ sequenceDiagram
     participant Client
     participant Server
 
-    Note over Client,Server: Client → Server Events
-    Client->>Server: scroll_update
-    Client->>Server: focus_event
-    Client->>Server: activation_request
-    Client->>Server: deactivation
-    Client->>Server: demo_control
+    Note over Client,Server: Client -> Server Events
+    Client->>Server: scroll_update (position, velocity, visible_content)
+    Client->>Server: focus_event (content_id, duration_ms, theme)
+    Client->>Server: activation_request (content_id)
+    Client->>Server: deactivation (content_id)
+    Client->>Server: demo_control (action, target, value)
 
-    Note over Client,Server: Server → Client Events
-    Server->>Client: connection_established
-    Server->>Client: decision_made
-    Server->>Client: container_state_change
-    Server->>Client: score_update
-    Server->>Client: mode_change
-    Server->>Client: stream_inject
-    Server->>Client: resource_update
-    Server->>Client: activation_ready
+    Note over Client,Server: Server -> Client Events
+    Server->>Client: connection_established (session_id, content, mode)
+    Server->>Client: decision_made (trigger, action, reasoning)
+    Server->>Client: container_state_change (content_id, old, new)
+    Server->>Client: score_update (content_id, scores)
+    Server->>Client: mode_change (old_mode, new_mode, reason)
+    Server->>Client: stream_inject (content, position, reason)
+    Server->>Client: resource_update (allocation)
+    Server->>Client: activation_ready (content_id, endpoint_url)
 ```
 
 ---
@@ -386,10 +560,11 @@ sequenceDiagram
 
 | Scenario | Trigger | Expected Behavior |
 |----------|---------|-------------------|
-| Cross-Domain Recommendation | Watch football video for 10s+ | System recommends football game |
+| Cross-Domain Recommendation | Watch football video for 5s+ | System injects game-clicker-heroes |
 | Trend Spike | Click "Trend Spike" button | Swarm intelligence warms containers |
-| Proactive Warming | Extended engagement on content | AI predicts and warms related content |
-| Mode Transition | Focus on game content | System enters Game Focus Mode |
+| Proactive Warming | Extended engagement (score > 0.6) | Container transitions COLD -> WARM |
+| Mode Transition | Focus on game for 10s+ | System enters GAME_FOCUS_MODE |
+| Lookahead Warming | Scroll through content | Next 2 items pre-warmed |
 
 ---
 
@@ -403,8 +578,8 @@ sequenceDiagram
 | `REDIS_URL` | redis://redis:6379 | Redis connection URL |
 | `LOG_LEVEL` | info | Log level (debug/info/warn/error) |
 | `ENGAGEMENT_THRESHOLD_MS` | 10000 | Engagement threshold in ms |
-| `RECOMMENDATION_THRESHOLD` | 0.6 | Score threshold for recommendations |
-| `PERSONAL_SCORE_WEIGHT` | 0.6 | Personal score weight |
+| `RECOMMENDATION_THRESHOLD` | 0.6 | Score threshold for warming |
+| `PERSONAL_SCORE_WEIGHT` | 0.4 | Personal score weight |
 | `GLOBAL_SCORE_WEIGHT` | 0.4 | Global score weight |
 
 ---
@@ -426,8 +601,6 @@ sequenceDiagram
 |-------|---------------|
 | Orchestrator | registry.digitalocean.com/gavigo-registry/orchestrator:latest |
 | Frontend | registry.digitalocean.com/gavigo-registry/frontend:latest |
-| game-football | registry.digitalocean.com/gavigo-registry/game-football:latest |
-| game-scifi | registry.digitalocean.com/gavigo-registry/game-scifi:latest |
 | ai-service | registry.digitalocean.com/gavigo-registry/ai-service:latest |
 
 ### Monthly Cost Estimate
@@ -475,6 +648,7 @@ kubectl -n gavigo exec -it deployment/orchestrator -- sh
 
 - [CLAUDE.md](./CLAUDE.md) - Development guidelines for Claude Code
 - [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) - Current deployment status
+- [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough and technical explanations
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 
 ---
