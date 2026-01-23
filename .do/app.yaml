@@ -5,7 +5,7 @@ services:
   - name: orchestrator
     github:
       repo: ChanMeng666/gavigo
-      branch: 001-ire-prototype
+      branch: main
       deploy_on_push: true
     source_dir: /orchestrator
     environment_slug: go
@@ -30,7 +30,7 @@ static_sites:
   - name: frontend
     github:
       repo: ChanMeng666/gavigo
-      branch: 001-ire-prototype
+      branch: main
       deploy_on_push: true
     source_dir: /frontend
     build_command: npm install && npm run build
