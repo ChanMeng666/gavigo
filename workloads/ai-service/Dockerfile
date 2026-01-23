@@ -1,28 +1,27 @@
-FROM nginx:alpine
+FROM node:20-alpine
 
-# Install stress-ng for background load simulation
-RUN apk add --no-cache stress-ng
+WORKDIR /app
 
-# Create nginx html directory
-RUN mkdir -p /usr/share/nginx/html
+# Copy package files
+COPY package.json ./
+
+# Install dependencies
+RUN npm install --production
 
 # Copy application files
-COPY index.html /usr/share/nginx/html/
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY server.js ./
+COPY public/ ./public/
 
-# Copy entrypoint script for stress simulation
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Environment variables
+ENV PORT=8080
+ENV NODE_ENV=production
 
-# Environment variables for stress configuration
-# STRESS_ENABLED: true/false - enable/disable background stress
-# STRESS_CPU_WORKERS: number of CPU stress workers (default: 1)
-# STRESS_CPU_LOAD: target CPU load percentage 0-100 (default: 20)
-ENV STRESS_ENABLED=true
-ENV STRESS_CPU_WORKERS=1
-ENV STRESS_CPU_LOAD=20
-ENV STRESS_TIMEOUT=0
-
+# Expose port
 EXPOSE 8080
 
-ENTRYPOINT ["/entrypoint.sh"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
+
+# Start the server
+CMD ["node", "server.js"]

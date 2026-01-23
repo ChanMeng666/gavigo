@@ -1,93 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Football Game - GAVIGO IRE</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-        }
-        .icon { font-size: 6rem; margin-bottom: 1rem; }
-        h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
-        p { color: #888; margin-bottom: 2rem; }
-        .status {
-            display: inline-block;
-            padding: 0.5rem 1rem;
-            background: rgba(0, 255, 0, 0.2);
-            border: 1px solid #0f0;
-            border-radius: 9999px;
-            color: #0f0;
-            font-size: 0.875rem;
-        }
-        .game-area {
-            margin-top: 2rem;
-            padding: 2rem;
-            background: rgba(255,255,255,0.1);
-            border-radius: 1rem;
-            width: 300px;
-        }
-        .ball {
-            width: 50px;
-            height: 50px;
-            background: white;
-            border-radius: 50%;
-            margin: 1rem auto;
-            animation: bounce 1s ease-in-out infinite;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-20px); }
-        }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.5rem;
-            max-width: 200px;
-            margin: 1rem auto;
-        }
-        .controls button {
-            padding: 1rem;
-            background: rgba(255,255,255,0.2);
-            border: none;
-            border-radius: 0.5rem;
-            color: white;
-            cursor: pointer;
-            font-size: 1.5rem;
-        }
-        .controls button:hover { background: rgba(255,255,255,0.3); }
-        .controls button:nth-child(1) { grid-column: 2; }
-    </style>
+    <meta charset="utf-8" />
+    <title>Foosball Game</title>
+    <script src="js/SAT.js"></script>
+   <link rel="stylesheet" type="text/css" href="css/style.css" />
 </head>
 <body>
-    <div class="container">
-        <div class="icon">⚽</div>
-        <h1>Football Game</h1>
-        <p>Interactive football gaming experience</p>
-        <div class="status">Container HOT - Active</div>
-        <div class="game-area">
-            <div class="ball"></div>
-            <p style="color: #aaa; font-size: 0.875rem;">Use controls to play</p>
-            <div class="controls">
-                <button>⬆️</button>
-                <button>⬅️</button>
-                <button>⏹️</button>
-                <button>➡️</button>
-                <button style="grid-column: 2;">⬇️</button>
-            </div>
-        </div>
+<div id = "container">
+
+
+    <div id ="startScreen">
+        <div id="title">FoosBall</div>
+        <button id="play" onclick="init()">PLAY</button>
+        <br><br><br>
+        <img src="img/help.png" height="100" width="150" id="help">
+        <br>
+        <span id ="instructions">(Use left and right arrow keys to play)</span>
+        <div id="foot">Written in vanilla Javascript using HTML5 canvas<br><br>By Prashant Baid<br><a href="https://github.com/prashantbaid/football-game" target="_blank">Source Code</a></div>
     </div>
+
+    <div id ="gameOverScreen">
+        <div id="title">FoosBall</div>
+        <button id="playagain" onclick="init()">PLAY AGAIN</button>
+        <br><br><br>
+    </div>
+
+
+    <canvas id="myCanvas" width="480" height="720"></canvas>
+    <div id="score">
+        <div id = "timer">
+            Time Left
+            <div id = "countdown">02:00</div>
+        </div>
+        <h3 id = "blue">Juventus </h3>
+        <div id="away">0</div>
+        <h3 id = "red">Liverpool</h3>
+        <div id="home">0</div>
+        <div id = "status"></div>
+        <div id = "credits"> Created By <br><a href = "http://twitter.com/prashantbaid" target="_blank">@prashantbaid</a></div>
+    </div>
+    
+</div>
 </body>
+<script src="js/football.js"></script>
 </html>

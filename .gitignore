@@ -29,7 +29,11 @@ frontend/.vite/
 
 # Kubernetes secrets
 k8s/secrets/
+k8s/workloads/openai-secret.yaml
 *.kubeconfig
+
+# Claude Code local config
+.claude/
 
 # Build artifacts
 *.log

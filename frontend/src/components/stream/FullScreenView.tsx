@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -103,7 +103,7 @@ export function FullScreenView({
               <AIServiceSimulation title={content.title} />
             )}
             {content.type === "VIDEO" && (
-              <VideoSimulation title={content.title} theme={content.theme} />
+              <VideoPlayer contentId={content.id} title={content.title} theme={content.theme} />
             )}
           </div>
         </motion.div>
@@ -219,35 +219,108 @@ function AIServiceSimulation({ title }: { title: string }) {
   )
 }
 
-// Simulated video player
-function VideoSimulation({ title, theme }: { title: string; theme: string }) {
+// Video content ID to file mapping
+const videoFileMap: Record<string, string> = {
+  "video-football-1": "/videos/football-1.mp4",
+  "video-football-2": "/videos/football-2.mp4",
+  "video-scifi-1": "/videos/scifi-1.mp4",
+}
+
+// Real video player component
+function VideoPlayer({ contentId, title, theme }: { contentId: string; title: string; theme: string }) {
+  const videoRef = useRef<HTMLVideoElement>(null)
   const [isPlaying, setIsPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
+  const [duration, setDuration] = useState(0)
+
+  const videoSrc = videoFileMap[contentId] || "/videos/football-1.mp4"
 
   useEffect(() => {
-    if (!isPlaying) return
-    const interval = setInterval(() => {
-      setProgress((prev) => (prev >= 100 ? 0 : prev + 0.5))
-    }, 100)
-    return () => clearInterval(interval)
+    const video = videoRef.current
+    if (!video) return
+
+    const handleTimeUpdate = () => {
+      if (video.duration) {
+        setProgress((video.currentTime / video.duration) * 100)
+      }
+    }
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration)
+      if (isPlaying) {
+        video.play().catch(() => {})
+      }
+    }
+
+    const handleEnded = () => {
+      video.currentTime = 0
+      video.play().catch(() => {})
+    }
+
+    video.addEventListener("timeupdate", handleTimeUpdate)
+    video.addEventListener("loadedmetadata", handleLoadedMetadata)
+    video.addEventListener("ended", handleEnded)
+
+    return () => {
+      video.removeEventListener("timeupdate", handleTimeUpdate)
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata)
+      video.removeEventListener("ended", handleEnded)
+    }
   }, [isPlaying])
+
+  const togglePlay = () => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (isPlaying) {
+      video.pause()
+    } else {
+      video.play().catch(() => {})
+    }
+    setIsPlaying(!isPlaying)
+  }
+
+  const skip = (seconds: number) => {
+    const video = videoRef.current
+    if (!video) return
+    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds))
+  }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
 
   return (
     <div className="text-center">
-      <div className="relative aspect-video bg-black/50 rounded-lg overflow-hidden mb-4">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-cold to-accent-primary flex items-center justify-center">
-            <contentTypeIcons.VIDEO className="h-10 w-10 text-white" />
-          </div>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-4">
-          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
+      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
+        <video
+          ref={videoRef}
+          src={videoSrc}
+          className="w-full h-full object-contain"
+          playsInline
+          muted
+          loop
+        />
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
+            onClick={(e) => {
+              const video = videoRef.current
+              if (!video) return
+              const rect = e.currentTarget.getBoundingClientRect()
+              const percent = (e.clientX - rect.left) / rect.width
+              video.currentTime = percent * video.duration
+            }}
+          >
             <motion.div
               className="h-full bg-white rounded-full"
-              initial={{ width: 0 }}
-              animate={{ width: `${progress}%` }}
-              transition={{ duration: 0.1 }}
+              style={{ width: `${progress}%` }}
             />
+          </div>
+          <div className="flex justify-between text-xs text-white/70 mt-1">
+            <span>{formatTime((progress / 100) * duration)}</span>
+            <span>{formatTime(duration)}</span>
           </div>
         </div>
       </div>
@@ -257,7 +330,7 @@ function VideoSimulation({ title, theme }: { title: string; theme: string }) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setProgress(Math.max(0, progress - 10))}
+          onClick={() => skip(-10)}
           className="bg-white/10 hover:bg-white/20 text-white"
         >
           <SkipBackIcon className="h-5 w-5" />
@@ -265,7 +338,7 @@ function VideoSimulation({ title, theme }: { title: string; theme: string }) {
         <Button
           variant="ghost"
           size="lg"
-          onClick={() => setIsPlaying(!isPlaying)}
+          onClick={togglePlay}
           className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
         >
           {isPlaying ? (
@@ -277,7 +350,7 @@ function VideoSimulation({ title, theme }: { title: string; theme: string }) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setProgress(Math.min(100, progress + 10))}
+          onClick={() => skip(10)}
           className="bg-white/10 hover:bg-white/20 text-white"
         >
           <SkipForwardIcon className="h-5 w-5" />
