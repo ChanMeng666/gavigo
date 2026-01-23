@@ -45,6 +45,11 @@ import {
   ArrowDown,
   ArrowLeft,
   ArrowRight,
+  Loader2,
+  Heart,
+  Share2,
+  MessageCircle,
+  Bookmark,
   type LucideIcon,
 } from "lucide-react"
 
@@ -121,6 +126,15 @@ export {
   ArrowDown as ArrowDownIcon,
   ArrowLeft as ArrowLeftIcon,
   ArrowRight as ArrowRightIcon,
+  Loader2,
+}
+
+// Social/TikTok-style Icons
+export {
+  Heart as HeartIcon,
+  Share2 as ShareIcon,
+  MessageCircle as CommentIcon,
+  Bookmark as BookmarkIcon,
 }
 
 // Status icon mapping
@@ -160,6 +174,8 @@ export const triggerTypeConfig: Record<TriggerType, { label: string; className: 
   PROACTIVE_WARM: { label: "Proactive Warm", className: "text-warm bg-warm/10" },
   MODE_CHANGE: { label: "Mode Change", className: "text-accent-secondary bg-accent-secondary/10" },
   RESOURCE_THROTTLE: { label: "Resource Throttle", className: "text-hot bg-hot/10" },
+  INITIAL_WARM: { label: "Initial Warm", className: "text-accent-success bg-accent-success/10" },
+  LOOKAHEAD_WARM: { label: "Lookahead Warm", className: "text-accent-primary bg-accent-primary/10" },
 }
 
 // Status config with labels and colors

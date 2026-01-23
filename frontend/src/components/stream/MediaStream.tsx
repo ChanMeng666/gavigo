@@ -1,7 +1,7 @@
 import { useRef, useEffect, useCallback, useState } from "react"
-import { ContentCard } from "./ContentCard"
+import { PhoneMockup } from "./PhoneMockup"
+import { TikTokContentView } from "./TikTokContentView"
 import { useEngagement } from "@/hooks/useEngagement"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { StreamIcon } from "@/components/icons"
 import type {
@@ -27,92 +27,42 @@ export function MediaStream({
   onScrollUpdate,
   onActivationRequest,
 }: MediaStreamProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [focusedContentId, setFocusedContentId] = useState<string | null>(null)
-  const [visibleContent, setVisibleContent] = useState<string[]>([])
-  const lastScrollPosition = useRef(0)
+  const [currentContentId, setCurrentContentId] = useState<string | null>(null)
+  const [currentTheme, setCurrentTheme] = useState<string | null>(null)
   const lastScrollTime = useRef(Date.now())
 
-  const { startFocus, endFocus, createVisibilityObserver } = useEngagement({
+  const { startFocus, endFocus } = useEngagement({
     onFocusEvent,
     reportIntervalMs: 1000,
   })
 
-  // Track scroll events
-  const handleScroll = useCallback(() => {
-    if (!containerRef.current) return
-
-    const now = Date.now()
-    const timeDiff = now - lastScrollTime.current
-    const scrollTop = containerRef.current.scrollTop
-    const scrollDiff = scrollTop - lastScrollPosition.current
-    const velocity = timeDiff > 0 ? scrollDiff / timeDiff : 0
-
-    onScrollUpdate({
-      position: scrollTop,
-      velocity,
-      visible_content: visibleContent,
-    })
-
-    lastScrollPosition.current = scrollTop
-    lastScrollTime.current = now
-  }, [onScrollUpdate, visibleContent])
-
-  // Set up visibility observer
-  useEffect(() => {
-    const observer = createVisibilityObserver((contentId, theme, isVisible) => {
-      if (isVisible) {
-        setVisibleContent((prev) => {
-          if (!prev.includes(contentId)) {
-            return [...prev, contentId]
-          }
-          return prev
-        })
-        // Auto-start focus on visible content
-        if (!focusedContentId) {
-          setFocusedContentId(contentId)
-          startFocus(contentId, theme)
-        }
-      } else {
-        setVisibleContent((prev) => prev.filter((id) => id !== contentId))
-        if (focusedContentId === contentId) {
-          endFocus()
-          setFocusedContentId(null)
-        }
-      }
-    })
-
-    // Observe all content cards
-    const cards = document.querySelectorAll("[data-content-id]")
-    cards.forEach((card) => observer.observe(card))
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [content, createVisibilityObserver, startFocus, endFocus, focusedContentId])
-
-  // Set up scroll listener
-  useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    container.addEventListener("scroll", handleScroll)
-    return () => container.removeEventListener("scroll", handleScroll)
-  }, [handleScroll])
-
-  const handleMouseEnter = useCallback(
+  // Handle content change (when user scrolls to new content)
+  const handleContentChange = useCallback(
     (contentId: string, theme: string) => {
-      setFocusedContentId(contentId)
+      // End focus on previous content
+      if (currentContentId && currentContentId !== contentId) {
+        endFocus()
+      }
+
+      // Start focus on new content
+      setCurrentContentId(contentId)
+      setCurrentTheme(theme)
       startFocus(contentId, theme)
+
+      // Send scroll update
+      const now = Date.now()
+      const timeDiff = now - lastScrollTime.current
+      onScrollUpdate({
+        position: 0,
+        velocity: timeDiff > 0 ? 100 / timeDiff : 0,
+        visible_content: [contentId],
+      })
+      lastScrollTime.current = now
     },
-    [startFocus]
+    [currentContentId, endFocus, startFocus, onScrollUpdate]
   )
 
-  const handleMouseLeave = useCallback(() => {
-    endFocus()
-    setFocusedContentId(null)
-  }, [endFocus])
-
+  // Handle activation request
   const handleActivate = useCallback(
     (contentId: string) => {
       onActivationRequest({ content_id: contentId })
@@ -120,63 +70,69 @@ export function MediaStream({
     [onActivationRequest]
   )
 
+  // Start focus on first content when loaded
+  useEffect(() => {
+    if (content.length > 0 && !currentContentId) {
+      const firstItem = content[0]
+      setCurrentContentId(firstItem.id)
+      setCurrentTheme(firstItem.theme)
+      startFocus(firstItem.id, firstItem.theme)
+    }
+  }, [content, currentContentId, startFocus])
+
   return (
-    <div className="h-full flex flex-col bg-base">
+    <div className="h-full flex flex-col bg-gradient-to-br from-base via-elevated to-base">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-border bg-surface/50">
-        <div className="flex items-center gap-2">
-          <StreamIcon className="h-5 w-5 text-accent-primary" />
-          <h2 className="text-lg font-display font-semibold text-foreground">
-            Mixed Media Stream
-          </h2>
-        </div>
-        <p className="text-muted-foreground text-sm mt-1">
-          Scroll and interact to trigger AI recommendations
-        </p>
-      </div>
-
-      {/* Content stream */}
-      <ScrollArea className="flex-1" ref={containerRef}>
-        <div className="p-4">
-          {content.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-64 text-center">
-              <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                <StreamIcon className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-muted-foreground">Loading content...</p>
-            </div>
-          ) : (
-            <div className="grid gap-4 grid-cols-1">
-              {content.map((item) => (
-                <ContentCard
-                  key={item.id}
-                  content={item}
-                  containerStatus={containerStates[item.id] || item.container_status}
-                  isActive={focusedContentId === item.id}
-                  onActivate={handleActivate}
-                  onMouseEnter={() => handleMouseEnter(item.id, item.theme)}
-                  onMouseLeave={handleMouseLeave}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </ScrollArea>
-
-      {/* Footer with stats */}
-      <div className="flex-shrink-0 p-3 border-t border-border bg-surface/50">
-        <div className="flex items-center justify-between text-sm">
+      <div className="flex-shrink-0 p-3 border-b border-border bg-surface/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <StreamIcon className="h-4 w-4 text-accent-primary" />
+            <h2 className="text-sm font-display font-semibold text-foreground">
+              Content Stream
+            </h2>
+          </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-[10px]">
               {content.length} items
             </Badge>
-            <Badge variant="outline" className="text-[10px]">
-              {visibleContent.length} visible
-            </Badge>
           </div>
-          {focusedContentId && (
-            <span className="text-xs text-accent-primary font-mono">
-              {focusedContentId.slice(0, 12)}...
+        </div>
+      </div>
+
+      {/* Phone mockup with TikTok content view */}
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
+        {content.length === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center">
+            <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
+              <StreamIcon className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <p className="text-muted-foreground">Loading content...</p>
+          </div>
+        ) : (
+          <PhoneMockup>
+            <TikTokContentView
+              content={content}
+              containerStates={containerStates}
+              onActivate={handleActivate}
+              onContentChange={handleContentChange}
+            />
+          </PhoneMockup>
+        )}
+      </div>
+
+      {/* Footer with current content info */}
+      <div className="flex-shrink-0 p-2 border-t border-border bg-surface/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            {currentTheme && (
+              <Badge variant="outline" className="text-[10px]">
+                #{currentTheme}
+              </Badge>
+            )}
+          </div>
+          {currentContentId && (
+            <span className="text-muted-foreground font-mono text-[10px]">
+              {currentContentId}
             </span>
           )}
         </div>

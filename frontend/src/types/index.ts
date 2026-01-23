@@ -2,7 +2,7 @@
 export type ContentType = 'GAME' | 'AI_SERVICE' | 'VIDEO';
 export type ContainerStatus = 'COLD' | 'WARM' | 'HOT';
 export type OperationalMode = 'MIXED_STREAM_BROWSING' | 'GAME_FOCUS_MODE' | 'AI_SERVICE_MODE';
-export type TriggerType = 'CROSS_DOMAIN' | 'SWARM_BOOST' | 'PROACTIVE_WARM' | 'MODE_CHANGE' | 'RESOURCE_THROTTLE';
+export type TriggerType = 'CROSS_DOMAIN' | 'SWARM_BOOST' | 'PROACTIVE_WARM' | 'MODE_CHANGE' | 'RESOURCE_THROTTLE' | 'INITIAL_WARM' | 'LOOKAHEAD_WARM';
 export type ActionType = 'INJECT_CONTENT' | 'SCALE_WARM' | 'SCALE_HOT' | 'THROTTLE_BACKGROUND' | 'CHANGE_MODE';
 
 export interface ContentItem {

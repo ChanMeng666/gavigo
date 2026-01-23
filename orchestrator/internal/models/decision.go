@@ -14,6 +14,8 @@ const (
 	TriggerProactiveWarm    TriggerType = "PROACTIVE_WARM"
 	TriggerModeChange       TriggerType = "MODE_CHANGE"
 	TriggerResourceThrottle TriggerType = "RESOURCE_THROTTLE"
+	TriggerInitialWarm      TriggerType = "INITIAL_WARM"      // 页面加载时预热
+	TriggerLookahead        TriggerType = "LOOKAHEAD_WARM"    // 滚动前瞻预热
 )
 
 type ActionType string

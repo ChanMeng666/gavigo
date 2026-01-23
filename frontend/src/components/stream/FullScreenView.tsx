@@ -11,10 +11,6 @@ import {
   PauseIcon,
   SkipForwardIcon,
   SkipBackIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
-  ArrowLeftIcon,
-  ArrowRightIcon,
 } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import type { ContentItem, ContainerStatus } from "@/types"
@@ -97,10 +93,10 @@ export function FullScreenView({
         >
           <div className="bg-black/30 rounded-2xl p-8 backdrop-blur-sm border border-white/10">
             {content.type === "GAME" && (
-              <GameSimulation title={content.title} theme={content.theme} />
+              <GamePlayer deploymentName={content.deployment_name} title={content.title} />
             )}
             {content.type === "AI_SERVICE" && (
-              <AIServiceSimulation title={content.title} />
+              <AIServiceChat title={content.title} />
             )}
             {content.type === "VIDEO" && (
               <VideoPlayer contentId={content.id} title={content.title} theme={content.theme} />
@@ -128,54 +124,92 @@ export function FullScreenView({
   )
 }
 
-// Simulated game interface
-function GameSimulation({ title, theme }: { title: string; theme: string }) {
+// Game deployment to URL mapping
+const gameUrlMap: Record<string, string> = {
+  "game-football": "/workloads/game-football/",
+  "game-scifi": "/workloads/game-scifi/",
+}
+
+// Real game player component with iframe embedding
+function GamePlayer({ deploymentName, title }: { deploymentName: string; title: string }) {
+  const gameUrl = gameUrlMap[deploymentName] || "#"
+  const [isLoading, setIsLoading] = useState(true)
+
   return (
     <div className="text-center">
-      <div className="h-20 w-20 mx-auto rounded-2xl bg-gradient-to-br from-hot to-warm flex items-center justify-center mb-6">
-        <contentTypeIcons.GAME className="h-10 w-10 text-white" />
+      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-hot to-warm flex items-center justify-center animate-pulse">
+              <contentTypeIcons.GAME className="h-8 w-8 text-white" />
+            </div>
+          </div>
+        )}
+        <iframe
+          src={gameUrl}
+          title={title}
+          className="w-full h-full border-0"
+          allow="fullscreen"
+          onLoad={() => setIsLoading(false)}
+        />
       </div>
-      <h2 className="text-2xl font-display font-bold text-white mb-4">{title}</h2>
-      <p className="text-white/70 mb-8">
-        Interactive {theme} gaming experience is now active
-      </p>
-      <div className="grid grid-cols-3 gap-3 max-w-xs mx-auto">
-        <div />
-        <Button variant="ghost" size="lg" className="bg-white/10 hover:bg-white/20 text-white">
-          <ArrowUpIcon className="h-5 w-5" />
-        </Button>
-        <div />
-        <Button variant="ghost" size="lg" className="bg-white/10 hover:bg-white/20 text-white">
-          <ArrowLeftIcon className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="lg" className="bg-white/10 hover:bg-white/20 text-white">
-          <ArrowDownIcon className="h-5 w-5" />
-        </Button>
-        <Button variant="ghost" size="lg" className="bg-white/10 hover:bg-white/20 text-white">
-          <ArrowRightIcon className="h-5 w-5" />
-        </Button>
-      </div>
-      <p className="text-white/50 text-xs mt-6">
-        Simulated game controls - actual game would load here
+      <h2 className="text-2xl font-display font-bold text-white mb-2">{title}</h2>
+      <p className="text-white/50 text-xs mt-2">
+        Use Arrow keys or WASD to move, SPACE to shoot
       </p>
     </div>
   )
 }
 
-// Simulated AI service interface
-function AIServiceSimulation({ title }: { title: string }) {
-  const [messages, setMessages] = useState<string[]>([])
-  const [input, setInput] = useState("")
+// Chat message type
+interface ChatMessage {
+  role: 'user' | 'assistant'
+  content: string
+}
 
-  const handleSubmit = (e: React.FormEvent) => {
+// Real AI service chat interface with OpenAI backend
+function AIServiceChat({ title }: { title: string }) {
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [input, setInput] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim()) return
-    setMessages((prev) => [
-      ...prev,
-      `You: ${input}`,
-      `AI: I'm a simulated AI response for "${input}"`,
-    ])
+    if (!input.trim() || isLoading) return
+
+    const userMessage = input.trim()
     setInput("")
+    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setIsLoading(true)
+
+    try {
+      const response = await fetch('/workloads/ai-service/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage }),
+      })
+      const data = await response.json()
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: data.response || 'Sorry, I could not process your request.'
+      }])
+    } catch (error) {
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: 'Sorry, I could not connect to the AI service. Please try again.'
+      }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -188,19 +222,36 @@ function AIServiceSimulation({ title }: { title: string }) {
       </div>
       <div className="bg-black/30 rounded-lg p-4 h-48 overflow-y-auto mb-4 scrollbar-thin">
         {messages.length === 0 ? (
-          <p className="text-white/50 text-center text-sm">Start a conversation...</p>
+          <p className="text-white/50 text-center text-sm">Start a conversation with the AI...</p>
         ) : (
-          messages.map((msg, i) => (
-            <p
-              key={i}
-              className={cn(
-                "mb-2 text-sm",
-                msg.startsWith("You:") ? "text-accent-primary" : "text-accent-success"
-              )}
-            >
-              {msg}
-            </p>
-          ))
+          <>
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={cn(
+                  "mb-3 text-sm",
+                  msg.role === 'user' ? "text-right" : "text-left"
+                )}
+              >
+                <span className={cn(
+                  "inline-block px-3 py-2 rounded-lg max-w-[80%]",
+                  msg.role === 'user'
+                    ? "bg-accent-primary/30 text-white"
+                    : "bg-accent-success/30 text-white"
+                )}>
+                  {msg.content}
+                </span>
+              </div>
+            ))}
+            {isLoading && (
+              <div className="text-left mb-3">
+                <span className="inline-block px-3 py-2 rounded-lg bg-accent-success/30 text-white/70">
+                  Thinking...
+                </span>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </>
         )}
       </div>
       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -209,10 +260,16 @@ function AIServiceSimulation({ title }: { title: string }) {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Type a message..."
-          className="flex-1 bg-white/10 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 placeholder:text-white/30"
+          disabled={isLoading}
+          className="flex-1 bg-white/10 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-primary/50 placeholder:text-white/30 disabled:opacity-50"
         />
-        <Button type="submit" variant="secondary" className="bg-white/20 hover:bg-white/30">
-          Send
+        <Button
+          type="submit"
+          variant="secondary"
+          className="bg-white/20 hover:bg-white/30"
+          disabled={isLoading}
+        >
+          {isLoading ? '...' : 'Send'}
         </Button>
       </form>
     </div>
@@ -223,7 +280,9 @@ function AIServiceSimulation({ title }: { title: string }) {
 const videoFileMap: Record<string, string> = {
   "video-football-1": "/videos/football-1.mp4",
   "video-football-2": "/videos/football-2.mp4",
+  "video-football-3": "/videos/football-3.mp4",
   "video-scifi-1": "/videos/scifi-1.mp4",
+  "video-scifi-2": "/videos/scifi-2.mp4",
 }
 
 // Real video player component

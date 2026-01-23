@@ -164,6 +164,14 @@ func (e *RulesEngine) checkCrossDomainRecommendation(
 				e.OnInject(content, 1, "Cross-domain recommendation based on theme affinity")
 			}
 
+			// IMPORTANT: Also warm the injected content so it's ready when user scrolls to it
+			if content.ContainerStatus == models.StatusCold && e.OnScaleAction != nil {
+				e.makeDecision(models.TriggerCrossDomain, content.ID, boostedScores,
+					models.ActionScaleWarm,
+					fmt.Sprintf("Cross-domain pre-warming: preparing %s for seamless activation", content.Title))
+				e.OnScaleAction(content.ID, models.StatusWarm)
+			}
+
 			session.MarkInjected(content.ID)
 			break // Only inject one recommendation at a time
 		}
@@ -233,6 +241,51 @@ func (e *RulesEngine) checkModeChange(session *models.UserSession, content *mode
 		}
 
 		session.CurrentMode = newMode
+	}
+}
+
+// ProcessInitialLoad handles initial page load - pre-warms first N content items
+func (e *RulesEngine) ProcessInitialLoad(content []*models.ContentItem, warmCount int) {
+	log.Printf("Processing initial load: warming first %d items", warmCount)
+
+	for i := 0; i < warmCount && i < len(content); i++ {
+		if content[i].ContainerStatus == models.StatusCold {
+			e.makeDecision(models.TriggerInitialWarm, content[i].ID, models.InputScores{},
+				models.ActionScaleWarm,
+				fmt.Sprintf("Initial page load - pre-warming content item %d (%s)", i+1, content[i].Title))
+		}
+	}
+}
+
+// ProcessScrollUpdate handles scroll position updates for lookahead warming
+func (e *RulesEngine) ProcessScrollUpdate(visibleContent []string, allContent []*models.ContentItem) {
+	if len(visibleContent) == 0 || len(allContent) == 0 {
+		return
+	}
+
+	// Find the position of the last visible content
+	lastVisibleIdx := -1
+	for _, visibleID := range visibleContent {
+		for i, c := range allContent {
+			if c.ID == visibleID && i > lastVisibleIdx {
+				lastVisibleIdx = i
+			}
+		}
+	}
+
+	if lastVisibleIdx == -1 {
+		return
+	}
+
+	// Pre-warm the next 2 content items (lookahead)
+	lookaheadCount := 2
+	for j := lastVisibleIdx + 1; j <= lastVisibleIdx+lookaheadCount && j < len(allContent); j++ {
+		if allContent[j].ContainerStatus == models.StatusCold {
+			log.Printf("Lookahead warming: content=%s at position %d", allContent[j].ID, j)
+			e.makeDecision(models.TriggerLookahead, allContent[j].ID, models.InputScores{},
+				models.ActionScaleWarm,
+				fmt.Sprintf("Lookahead warming - user approaching content (%s)", allContent[j].Title))
+		}
 	}
 }
 

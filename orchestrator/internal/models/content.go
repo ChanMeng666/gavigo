@@ -32,8 +32,8 @@ type ContentItem struct {
 
 // CrossDomainRelation maps video themes to related game content
 var CrossDomainRelations = map[string]string{
-	"football": "game-football",
-	"scifi":    "game-scifi",
+	"football": "game-football", // Football videos trigger space shooter 1
+	"scifi":    "game-scifi",    // Scifi videos trigger space shooter 2
 	"tech":     "ai-service-tech",
 }
 
@@ -71,12 +71,32 @@ func DefaultContent() []ContentItem {
 			DeploymentName:  "video-server",
 		},
 		{
+			ID:              "video-scifi-2",
+			Type:            ContentTypeVideo,
+			Theme:           "scifi",
+			Title:           "Deep Space Journey",
+			Description:     "Venturing into the unknown",
+			ThumbnailURL:    "/assets/video-scifi-2.png",
+			ContainerStatus: StatusCold,
+			DeploymentName:  "video-server",
+		},
+		{
+			ID:              "video-football-3",
+			Type:            ContentTypeVideo,
+			Theme:           "football",
+			Title:           "Championship Finals",
+			Description:     "The ultimate showdown",
+			ThumbnailURL:    "/assets/video-football-3.png",
+			ContainerStatus: StatusCold,
+			DeploymentName:  "video-server",
+		},
+		{
 			ID:              "game-football",
 			Type:            ContentTypeGame,
-			Theme:           "football",
-			Title:           "Football Game",
-			Description:     "Interactive football experience",
-			ThumbnailURL:    "/assets/game-football.png",
+			Theme:           "scifi",
+			Title:           "Generic Space Shooter",
+			Description:     "Classic arcade space shooter",
+			ThumbnailURL:    "/assets/game-space-1.png",
 			ContainerStatus: StatusCold,
 			DeploymentName:  "game-football",
 		},
@@ -84,9 +104,9 @@ func DefaultContent() []ContentItem {
 			ID:              "game-scifi",
 			Type:            ContentTypeGame,
 			Theme:           "scifi",
-			Title:           "Space Adventure",
-			Description:     "Explore the galaxy",
-			ThumbnailURL:    "/assets/game-scifi.png",
+			Title:           "Deep Space Defender",
+			Description:     "Advanced space combat with power-ups",
+			ThumbnailURL:    "/assets/game-space-2.png",
 			ContainerStatus: StatusCold,
 			DeploymentName:  "game-scifi",
 		},

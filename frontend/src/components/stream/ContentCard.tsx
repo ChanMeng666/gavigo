@@ -1,9 +1,9 @@
-import { forwardRef } from "react"
+import { forwardRef, useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StatusIndicator } from "@/components/ui/status-indicator"
 import { contentTypeIcons, contentTypeConfig } from "@/components/icons"
-import { PlayIcon } from "@/components/icons"
+import { PlayIcon, Loader2 } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import type { ContentItem, ContainerStatus } from "@/types"
 
@@ -20,6 +20,25 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(
   ({ content, containerStatus, isActive, onActivate, onMouseEnter, onMouseLeave }, ref) => {
     const TypeIcon = contentTypeIcons[content.type]
     const typeConfig = contentTypeConfig[content.type]
+
+    // Track when content is transitioning from COLD (warming in progress)
+    const [wasJustCold, setWasJustCold] = useState(containerStatus === "COLD")
+    const [isWarming, setIsWarming] = useState(false)
+
+    useEffect(() => {
+      if (containerStatus === "COLD") {
+        setWasJustCold(true)
+        setIsWarming(false)
+      } else if (wasJustCold) {
+        // Transitioned from COLD to WARM/HOT - show brief warming animation
+        setIsWarming(true)
+        const timer = setTimeout(() => {
+          setIsWarming(false)
+          setWasJustCold(false)
+        }, 500)
+        return () => clearTimeout(timer)
+      }
+    }, [containerStatus, wasJustCold])
 
     return (
       <div
@@ -112,15 +131,28 @@ export const ContentCard = forwardRef<HTMLDivElement, ContentCardProps>(
               containerStatus === "HOT" ? "hot" :
               containerStatus === "WARM" ? "warm" : "secondary"
             }
-            className="mt-4 w-full gap-2"
+            className={cn(
+              "mt-4 w-full gap-2",
+              containerStatus === "COLD" && isActive && "animate-pulse"
+            )}
             size="sm"
           >
-            <PlayIcon className="h-4 w-4" />
-            {containerStatus === "COLD"
-              ? "Not Ready"
-              : containerStatus === "HOT"
-              ? "Launch Now"
-              : "Activate"}
+            {isWarming ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Warming...
+              </>
+            ) : containerStatus === "COLD" ? (
+              <>
+                <Loader2 className={cn("h-4 w-4", isActive && "animate-spin")} />
+                {isActive ? "Preparing..." : "Not Ready"}
+              </>
+            ) : (
+              <>
+                <PlayIcon className="h-4 w-4" />
+                {containerStatus === "HOT" ? "Launch Now" : "Activate"}
+              </>
+            )}
           </Button>
         </div>
       </div>

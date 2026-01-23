@@ -1,7 +1,6 @@
 import { useState, useCallback, useEffect } from "react"
-import { AnimatePresence } from "framer-motion"
 import { Dashboard } from "./components/dashboard"
-import { MediaStream, FullScreenView } from "./components/stream"
+import { MediaStream } from "./components/stream"
 import { AppShell, AppShellMain, Header } from "./components/layout"
 import type { ViewMode } from "./components/layout/ViewToggle"
 import { useWebSocket } from "./hooks/useWebSocket"
@@ -36,7 +35,6 @@ function App() {
   const [scores, setScores] = useState<Record<string, InputScores>>({})
   const [resourceHistory, setResourceHistory] = useState<ResourceAllocation[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("split")
-  const [fullScreenContent, setFullScreenContent] = useState<ContentItem | null>(null)
 
   // Responsive
   const isMobile = useIsMobile()
@@ -126,15 +124,6 @@ function App() {
   const handleActivationReady = useCallback((payload: ActivationReadyPayload) => {
     console.log("Activation ready:", payload)
     setActiveContentId(payload.content_id)
-
-    // Find the content and show full screen view
-    setContent((prev) => {
-      const item = prev.find((c) => c.id === payload.content_id)
-      if (item) {
-        setFullScreenContent({ ...item, container_status: payload.status })
-      }
-      return prev
-    })
   }, [])
 
   const {
@@ -143,7 +132,6 @@ function App() {
     sendScrollUpdate,
     sendFocusEvent,
     sendActivationRequest,
-    sendDeactivation,
     sendDemoControl,
   } = useWebSocket({
     url: wsUrl,
@@ -214,7 +202,6 @@ function App() {
       setResourceHistory([])
       setCurrentMode("MIXED_STREAM_BROWSING")
       setActiveContentId(null)
-      setFullScreenContent(null)
       // Refetch content
       const contentData = await api.getContent()
       setContent(contentData)
@@ -245,23 +232,10 @@ function App() {
   const handleActivationRequest = useCallback(
     (payload: ActivationRequestPayload) => {
       sendActivationRequest(payload)
-      // Immediately show loading state
-      const item = content.find((c) => c.id === payload.content_id)
-      if (item) {
-        setFullScreenContent(item)
-        setActiveContentId(payload.content_id)
-      }
+      setActiveContentId(payload.content_id)
     },
-    [sendActivationRequest, content]
+    [sendActivationRequest]
   )
-
-  const handleDeactivate = useCallback(() => {
-    if (activeContentId) {
-      sendDeactivation(activeContentId)
-    }
-    setFullScreenContent(null)
-    setActiveContentId(null)
-  }, [sendDeactivation, activeContentId])
 
   return (
     <AppShell>
@@ -272,17 +246,6 @@ function App() {
         connected={connected}
         sessionId={sessionId ?? undefined}
       />
-
-      {/* Full screen view when content is activated */}
-      <AnimatePresence>
-        {fullScreenContent && (
-          <FullScreenView
-            content={fullScreenContent}
-            containerStatus={containerStates[fullScreenContent.id] || fullScreenContent.container_status}
-            onDeactivate={handleDeactivate}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Main layout */}
       <AppShellMain>

@@ -6,11 +6,13 @@ RUN apk add --no-cache stress-ng
 # Create nginx html directory
 RUN mkdir -p /usr/share/nginx/html
 
-# Copy application files
+# Copy application files (Generic Space Shooter)
 COPY index.html /usr/share/nginx/html/
+COPY about.html /usr/share/nginx/html/
 COPY css/ /usr/share/nginx/html/css/
 COPY js/ /usr/share/nginx/html/js/
-COPY img/ /usr/share/nginx/html/img/
+COPY images/ /usr/share/nginx/html/images/
+COPY sound/ /usr/share/nginx/html/sound/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy entrypoint script for stress simulation

@@ -127,6 +127,21 @@ func main() {
 	}
 
 	// Wire up message handlers
+	msgHandler.OnScrollUpdate = func(client *websocket.Client, position int, velocity float64, visibleContent []string) {
+		// Convert content to pointers for rules engine
+		allContent := handlers.GetContent()
+		contentPtrs := make([]*models.ContentItem, len(allContent))
+		for i := range allContent {
+			contentPtrs[i] = &allContent[i]
+		}
+
+		// Process scroll update for lookahead warming
+		rulesEngine.ProcessScrollUpdate(visibleContent, contentPtrs)
+
+		log.Printf("Scroll update: position=%d, velocity=%.2f, visible=%d items",
+			position, velocity, len(visibleContent))
+	}
+
 	msgHandler.OnFocusEvent = func(client *websocket.Client, contentID string, durationMS int, theme string) {
 		scores := scorer.RecordFocusEvent(client.SessionID, contentID, durationMS, theme)
 
@@ -222,6 +237,20 @@ func main() {
 		scorer.Reset()
 		log.Println("Full reset triggered via API")
 	}
+
+	// Trigger initial warming for first 2 content items
+	// This ensures users see "Activate" instead of "Not Ready" on page load
+	go func() {
+		// Small delay to ensure everything is initialized
+		time.Sleep(100 * time.Millisecond)
+		allContent := handlers.GetContent()
+		contentPtrs := make([]*models.ContentItem, len(allContent))
+		for i := range allContent {
+			contentPtrs[i] = &allContent[i]
+		}
+		rulesEngine.ProcessInitialLoad(contentPtrs, 2)
+		log.Println("Initial warming completed for first 2 content items")
+	}()
 
 	// Set up HTTP server
 	mux := http.NewServeMux()

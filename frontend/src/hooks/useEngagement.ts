@@ -85,6 +85,7 @@ export function useEngagement(options: UseEngagementOptions) {
   }, [reportIntervalMs, reportFocus]);
 
   // Track visibility of content items using Intersection Observer
+  // Optimized for lookahead detection - triggers before content fully enters viewport
   const createVisibilityObserver = useCallback((
     onVisibilityChange: (contentId: string, theme: string, isVisible: boolean) => void
   ) => {
@@ -99,8 +100,8 @@ export function useEngagement(options: UseEngagementOptions) {
         });
       },
       {
-        threshold: 0.5, // 50% visible
-        rootMargin: '0px',
+        threshold: 0.1, // Lowered to 10% - trigger earlier for proactive warming
+        rootMargin: '200px 0px 200px 0px', // Detect 200px before entering viewport
       }
     );
   }, []);
