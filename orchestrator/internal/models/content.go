@@ -32,14 +32,15 @@ type ContentItem struct {
 
 // CrossDomainRelation maps video themes to related game content
 var CrossDomainRelations = map[string]string{
-	"football": "game-football", // Football videos trigger space shooter 1
-	"scifi":    "game-scifi",    // Scifi videos trigger space shooter 2
+	"football": "game-clicker-heroes",
+	"scifi":    "game-mrmine",
 	"tech":     "ai-service-tech",
 }
 
 // DefaultContent returns the initial content items for the demo
 func DefaultContent() []ContentItem {
 	return []ContentItem{
+		// Videos
 		{
 			ID:              "video-football-1",
 			Type:            ContentTypeVideo,
@@ -90,32 +91,64 @@ func DefaultContent() []ContentItem {
 			ContainerStatus: StatusCold,
 			DeploymentName:  "video-server",
 		},
+		// Games (external iframe)
 		{
-			ID:              "game-football",
+			ID:              "game-clicker-heroes",
 			Type:            ContentTypeGame,
-			Theme:           "scifi",
-			Title:           "Generic Space Shooter",
-			Description:     "Classic arcade space shooter",
-			ThumbnailURL:    "/assets/game-space-1.png",
+			Theme:           "idle",
+			Title:           "Clicker Heroes",
+			Description:     "150M+ plays - #2 on Kongregate all time",
+			ThumbnailURL:    "/assets/game-clicker-heroes.png",
 			ContainerStatus: StatusCold,
-			DeploymentName:  "game-football",
+			DeploymentName:  "game-clicker-heroes",
 		},
 		{
-			ID:              "game-scifi",
+			ID:              "game-mrmine",
 			Type:            ContentTypeGame,
-			Theme:           "scifi",
-			Title:           "Deep Space Defender",
-			Description:     "Advanced space combat with power-ups",
-			ThumbnailURL:    "/assets/game-space-2.png",
+			Theme:           "mining",
+			Title:           "Mr.Mine",
+			Description:     "20M+ plays - Idle mining game",
+			ThumbnailURL:    "/assets/game-mrmine.png",
 			ContainerStatus: StatusCold,
-			DeploymentName:  "game-scifi",
+			DeploymentName:  "game-mrmine",
 		},
+		{
+			ID:              "game-poker-quest",
+			Type:            ContentTypeGame,
+			Theme:           "cards",
+			Title:           "Poker Quest",
+			Description:     "Roguelike poker adventure game",
+			ThumbnailURL:    "/assets/game-poker-quest.png",
+			ContainerStatus: StatusCold,
+			DeploymentName:  "game-poker-quest",
+		},
+		{
+			ID:              "game-grindcraft",
+			Type:            ContentTypeGame,
+			Theme:           "craft",
+			Title:           "Grindcraft",
+			Description:     "10M+ plays - Minecraft-style idle crafting",
+			ThumbnailURL:    "/assets/game-grindcraft.png",
+			ContainerStatus: StatusCold,
+			DeploymentName:  "game-grindcraft",
+		},
+		{
+			ID:              "game-fray-fight",
+			Type:            ContentTypeGame,
+			Theme:           "fighting",
+			Title:           "Fray Fight",
+			Description:     "Action-packed fighting game",
+			ThumbnailURL:    "/assets/game-fray-fight.png",
+			ContainerStatus: StatusCold,
+			DeploymentName:  "game-fray-fight",
+		},
+		// AI Service
 		{
 			ID:              "ai-service-tech",
 			Type:            ContentTypeAIService,
 			Theme:           "tech",
 			Title:           "AI Assistant",
-			Description:     "Smart AI helper",
+			Description:     "Smart AI helper powered by OpenAI",
 			ThumbnailURL:    "/assets/ai-service.png",
 			ContainerStatus: StatusCold,
 			DeploymentName:  "ai-service",

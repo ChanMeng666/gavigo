@@ -126,8 +126,11 @@ export function FullScreenView({
 
 // Game deployment to URL mapping
 const gameUrlMap: Record<string, string> = {
-  "game-football": "/workloads/game-football/",
-  "game-scifi": "/workloads/game-scifi/",
+  "game-clicker-heroes": "https://cdn.clickerheroes.com/gamebuild/index.php",
+  "game-mrmine": "https://mrmine.com/game/",
+  "game-poker-quest": "https://playsaurus.com/kongPokerQuest63/",
+  "game-grindcraft": "https://grindcraft.com/game.php",
+  "game-fray-fight": "https://frayfight.com/game/",
 }
 
 // Real game player component with iframe embedding
@@ -149,13 +152,13 @@ function GamePlayer({ deploymentName, title }: { deploymentName: string; title: 
           src={gameUrl}
           title={title}
           className="w-full h-full border-0"
-          allow="fullscreen"
+          allow="autoplay; payment; fullscreen; microphone; clipboard-read; focus-without-user-activation; screen-wake-lock; gamepad; clipboard-write"
           onLoad={() => setIsLoading(false)}
         />
       </div>
       <h2 className="text-2xl font-display font-bold text-white mb-2">{title}</h2>
       <p className="text-white/50 text-xs mt-2">
-        Use Arrow keys or WASD to move, SPACE to shoot
+        Click to play
       </p>
     </div>
   )
