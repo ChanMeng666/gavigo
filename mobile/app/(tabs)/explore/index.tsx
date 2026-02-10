@@ -1,40 +1,58 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
-  TextInput,
+  ScrollView,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useFeedStore } from '@/stores/feedStore';
-import type { ContentItem } from '@/types';
+import { TextInput, Chip, Badge, EmptyState } from '@/components/ui';
+import type { ContentItem, ContentType } from '@/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
-const typeEmoji: Record<string, string> = {
-  VIDEO: '🎬',
-  GAME: '🎮',
-  AI_SERVICE: '🤖',
+const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+  VIDEO: 'play-circle',
+  GAME: 'game-controller',
+  AI_SERVICE: 'sparkles',
 };
 
-const statusColors: Record<string, string> = {
-  COLD: '#3b82f6',
-  WARM: '#eab308',
-  HOT: '#22c55e',
+const typeGradientColors: Record<string, string> = {
+  VIDEO: '#7c3aed',
+  GAME: '#3b82f6',
+  AI_SERVICE: '#06b6d4',
 };
+
+interface FilterDef {
+  key: string;
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  typeFilter?: ContentType;
+}
+
+const filters: FilterDef[] = [
+  { key: 'all', label: 'All', icon: 'grid-outline' },
+  { key: 'video', label: 'Videos', icon: 'play-circle-outline', typeFilter: 'VIDEO' },
+  { key: 'game', label: 'Games', icon: 'game-controller-outline', typeFilter: 'GAME' },
+  { key: 'ai', label: 'AI', icon: 'sparkles-outline', typeFilter: 'AI_SERVICE' },
+];
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const content = useFeedStore((s) => s.content);
   const containerStates = useFeedStore((s) => s.containerStates);
+  const setCurrentIndex = useFeedStore((s) => s.setCurrentIndex);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState<string>('all');
-
-  const filters = ['all', 'video', 'game', 'ai'];
+  const [refreshing, setRefreshing] = useState(false);
 
   const filteredContent = content.filter((item) => {
     const matchesSearch =
@@ -42,57 +60,93 @@ export default function ExploreScreen() {
       item.title.toLowerCase().includes(search.toLowerCase()) ||
       item.theme.toLowerCase().includes(search.toLowerCase());
 
+    const filterDef = filters.find((f) => f.key === activeFilter);
     const matchesFilter =
-      activeFilter === 'all' ||
-      (activeFilter === 'video' && item.type === 'VIDEO') ||
-      (activeFilter === 'game' && item.type === 'GAME') ||
-      (activeFilter === 'ai' && item.type === 'AI_SERVICE');
+      activeFilter === 'all' || item.type === filterDef?.typeFilter;
 
     return matchesSearch && matchesFilter;
   });
 
+  const getFilterCount = (key: string) => {
+    const filterDef = filters.find((f) => f.key === key);
+    if (key === 'all') return content.length;
+    return content.filter((item) => item.type === filterDef?.typeFilter).length;
+  };
+
+  const handleCardPress = useCallback(
+    (item: ContentItem) => {
+      const idx = content.findIndex((c) => c.id === item.id);
+      if (idx >= 0) {
+        setCurrentIndex(idx);
+        router.push('/(tabs)/feed');
+      }
+    },
+    [content, setCurrentIndex, router]
+  );
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 1000);
+  }, []);
+
   const renderCard = ({ item }: { item: ContentItem }) => {
     const status = containerStates[item.id] || item.container_status;
+    const gradientColor = typeGradientColors[item.type] || '#7c3aed';
+    const iconName = typeIcons[item.type] || 'cube';
+    const score = item.combined_score || 0;
 
     return (
       <TouchableOpacity
-        className="mb-4"
+        className="mb-3"
         style={{ width: CARD_WIDTH }}
         activeOpacity={0.8}
+        onPress={() => handleCardPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${item.title}, ${status}`}
       >
-        <View className="bg-surface rounded-2xl overflow-hidden border border-border">
-          {/* Thumbnail area */}
-          <View className="h-36 bg-elevated items-center justify-center">
-            <Text className="text-4xl">{typeEmoji[item.type] || '📦'}</Text>
+        <View className="bg-bg-surface rounded-card border border-border overflow-hidden">
+          {/* Thumbnail */}
+          <View
+            className="h-36 items-center justify-center"
+            style={{ backgroundColor: gradientColor + '15' }}
+          >
+            <Ionicons
+              name={iconName}
+              size={40}
+              color={gradientColor + '40'}
+            />
+            {/* Type badge top-right */}
+            <View className="absolute top-2 right-2 bg-black/50 rounded-bl-xl px-2 py-1 flex-row items-center gap-1">
+              <Ionicons name={iconName} size={10} color="white" />
+              <Text className="text-micro text-white">
+                {item.type === 'AI_SERVICE' ? 'AI' : item.type === 'VIDEO' ? 'Video' : 'Game'}
+              </Text>
+            </View>
           </View>
+
+          {/* Score bar */}
+          {score > 0 && (
+            <View className="h-[3px] bg-accent-subtle">
+              <View
+                className="h-full bg-accent"
+                style={{ width: `${Math.min(score * 100, 100)}%` }}
+              />
+            </View>
+          )}
 
           {/* Info */}
           <View className="p-3">
-            <Text className="text-white font-semibold text-sm" numberOfLines={1}>
+            <Text
+              className="text-caption font-semibold text-text-primary"
+              numberOfLines={1}
+            >
               {item.title}
             </Text>
-            <Text className="text-white/50 text-xs mt-1" numberOfLines={1}>
-              {item.description}
-            </Text>
-
-            {/* Status and theme */}
             <View className="flex-row items-center justify-between mt-2">
-              <Text className="text-white/60 text-xs">#{item.theme}</Text>
-              <View
-                className="flex-row items-center gap-1 px-2 py-0.5 rounded-full"
-                style={{ backgroundColor: statusColors[status] + '22' }}
-              >
-                <View
-                  className="w-1.5 h-1.5 rounded-full"
-                  style={{ backgroundColor: statusColors[status] }}
-                />
-                <Text
-                  className="text-[10px] font-medium"
-                  style={{ color: statusColors[status] }}
-                >
-                  {status}
-                </Text>
-              </View>
+              <Text className="text-micro text-text-tertiary">
+                #{item.theme}
+              </Text>
+              <Badge status={status} />
             </View>
           </View>
         </View>
@@ -101,45 +155,49 @@ export default function ExploreScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-bg-base" style={{ paddingTop: insets.top }}>
       {/* Header */}
       <View className="px-4 pb-3">
-        <Text className="text-white text-2xl font-bold mb-4">Explore</Text>
+        <Text
+          className="text-h1 text-text-primary mb-0.5"
+          accessibilityRole="header"
+        >
+          Explore
+        </Text>
+        <Text className="text-caption text-text-secondary mb-4">
+          Discover content
+        </Text>
 
         {/* Search */}
-        <View className="flex-row items-center bg-surface border border-border rounded-xl px-3 gap-2 mb-3">
-          <Ionicons name="search" size={18} color="rgba(255,255,255,0.4)" />
+        <View className="mb-3">
           <TextInput
             value={search}
             onChangeText={setSearch}
             placeholder="Search content..."
-            placeholderTextColor="rgba(255,255,255,0.3)"
-            className="flex-1 py-3 text-white text-sm"
+            variant="search"
+            leftIcon="search"
+            rightIcon={search ? 'close-circle' : undefined}
+            onRightIconPress={() => setSearch('')}
           />
         </View>
 
-        {/* Filters */}
-        <View className="flex-row gap-2">
+        {/* Filter chips */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="gap-2"
+          contentContainerStyle={{ gap: 8 }}
+        >
           {filters.map((filter) => (
-            <TouchableOpacity
-              key={filter}
-              onPress={() => setActiveFilter(filter)}
-              className={`px-4 py-1.5 rounded-full ${
-                activeFilter === filter
-                  ? 'bg-accent-primary'
-                  : 'bg-surface border border-border'
-              }`}
-            >
-              <Text
-                className={`text-sm font-medium ${
-                  activeFilter === filter ? 'text-white' : 'text-white/60'
-                }`}
-              >
-                {filter.charAt(0).toUpperCase() + filter.slice(1)}
-              </Text>
-            </TouchableOpacity>
+            <Chip
+              key={filter.key}
+              label={`${filter.label} (${getFilterCount(filter.key)})`}
+              selected={activeFilter === filter.key}
+              onPress={() => setActiveFilter(filter.key)}
+              leftIcon={filter.icon}
+            />
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {/* Grid */}
@@ -151,10 +209,20 @@ export default function ExploreScreen() {
         contentContainerStyle={{ paddingHorizontal: 16 }}
         columnWrapperStyle={{ justifyContent: 'space-between' }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#7c3aed"
+            colors={['#7c3aed']}
+          />
+        }
         ListEmptyComponent={
-          <View className="items-center py-20">
-            <Text className="text-white/40 text-sm">No content found</Text>
-          </View>
+          <EmptyState
+            icon="search-outline"
+            title="No matches"
+            subtitle="Try a different search or filter"
+          />
         }
       />
     </View>

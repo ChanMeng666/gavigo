@@ -1,7 +1,9 @@
 import { TouchableOpacity, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSocialStore } from '@/stores/socialStore';
 import { useAuthStore } from '@/stores/authStore';
 import { api } from '@/services/api';
+import { Button, Chip } from '@/components/ui';
 
 interface FollowButtonProps {
   userId: string;
@@ -31,31 +33,23 @@ export function FollowButton({ userId, compact = false }: FollowButtonProps) {
 
   if (compact) {
     return (
-      <TouchableOpacity
+      <Chip
+        label={isFollowing ? 'Following' : 'Follow'}
+        selected={!isFollowing}
         onPress={handlePress}
-        className={`px-3 py-0.5 rounded-md ${
-          isFollowing ? 'bg-white/10' : 'bg-white/20'
-        }`}
-        activeOpacity={0.7}
-      >
-        <Text className="text-white text-xs font-medium">
-          {isFollowing ? 'Following' : 'Follow'}
-        </Text>
-      </TouchableOpacity>
+        leftIcon={isFollowing ? 'checkmark-outline' : 'add-outline'}
+        compact
+      />
     );
   }
 
   return (
-    <TouchableOpacity
+    <Button
+      label={isFollowing ? 'Following' : 'Follow'}
       onPress={handlePress}
-      className={`px-6 py-2 rounded-lg ${
-        isFollowing ? 'bg-surface border border-border' : 'bg-accent-primary'
-      }`}
-      activeOpacity={0.7}
-    >
-      <Text className="text-white font-semibold text-sm">
-        {isFollowing ? 'Following' : 'Follow'}
-      </Text>
-    </TouchableOpacity>
+      variant={isFollowing ? 'secondary' : 'primary'}
+      size="md"
+      fullWidth
+    />
   );
 }

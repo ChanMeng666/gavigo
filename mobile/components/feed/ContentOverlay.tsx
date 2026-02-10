@@ -1,9 +1,10 @@
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LikeButton } from '@/components/social/LikeButton';
 import { CommentButton } from '@/components/social/CommentButton';
 import { ShareButton } from '@/components/social/ShareButton';
 import { FollowButton } from '@/components/social/FollowButton';
+import { Avatar, Badge, Chip } from '@/components/ui';
 import type { ContentItem, ContainerStatus } from '@/types';
 
 interface ContentOverlayProps {
@@ -11,16 +12,10 @@ interface ContentOverlayProps {
   containerStatus: ContainerStatus;
 }
 
-const typeEmoji: Record<string, string> = {
-  VIDEO: '🎬',
-  GAME: '🎮',
-  AI_SERVICE: '🤖',
-};
-
-const statusColors: Record<ContainerStatus, string> = {
-  COLD: '#3b82f6',
-  WARM: '#eab308',
-  HOT: '#22c55e',
+const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+  VIDEO: 'play-circle',
+  GAME: 'game-controller',
+  AI_SERVICE: 'sparkles',
 };
 
 export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
@@ -34,6 +29,14 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
 
   return (
     <>
+      {/* Bottom gradient scrim for text readability */}
+      <View className="absolute bottom-0 left-0 right-0" pointerEvents="none">
+        <View style={{ height: 30, backgroundColor: 'rgba(0,0,0,0.05)' }} />
+        <View style={{ height: 60, backgroundColor: 'rgba(0,0,0,0.2)' }} />
+        <View style={{ height: 100, backgroundColor: 'rgba(0,0,0,0.4)' }} />
+        <View style={{ height: 160, backgroundColor: 'rgba(0,0,0,0.7)' }} />
+      </View>
+
       {/* Bottom info overlay */}
       <View
         className="absolute bottom-0 left-0 right-14 p-4"
@@ -41,33 +44,26 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
       >
         {/* Creator info */}
         <View className="flex-row items-center gap-2 mb-2">
-          <View className="w-8 h-8 rounded-full bg-purple-600 items-center justify-center">
-            <Text className="text-xs font-bold text-white">
-              {item.theme[0].toUpperCase()}
-            </Text>
-          </View>
-          <Text className="text-white font-semibold text-sm">
+          <Avatar name={item.theme} size="sm" />
+          <Text className="text-body font-semibold text-text-primary">
             @gavigo_{item.theme}
           </Text>
           <FollowButton userId={`gavigo_${item.theme}`} compact />
         </View>
 
         {/* Title and description */}
-        <Text className="text-white font-bold text-base mb-1">
+        <Text className="text-h3 text-text-primary mb-1" numberOfLines={2}>
           {item.title}
         </Text>
-        <Text className="text-white/70 text-sm mb-2" numberOfLines={2}>
+        <Text className="text-caption text-text-primary/70 mb-2" numberOfLines={2}>
           {item.description}
         </Text>
 
         {/* Tags */}
         <View className="flex-row flex-wrap gap-1.5">
-          <Text className="text-white/80 text-xs">#{item.theme}</Text>
-          <Text className="text-white/80 text-xs">
-            #{item.type.toLowerCase()}
-          </Text>
-          <Text className="text-white/80 text-xs">#gavigo</Text>
-          <Text className="text-white/80 text-xs">#ire</Text>
+          <Chip label={`#${item.theme}`} compact />
+          <Chip label={`#${item.type.toLowerCase()}`} compact />
+          <Chip label="#gavigo" compact />
         </View>
       </View>
 
@@ -78,28 +74,18 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
         <ShareButton contentId={item.id} title={item.title} />
 
         {/* Content type indicator */}
-        <View className="w-11 h-11 rounded-full bg-purple-600/80 items-center justify-center">
-          <Text className="text-lg">{typeEmoji[item.type] || '📦'}</Text>
+        <View className="w-11 h-11 rounded-full bg-accent/60 items-center justify-center">
+          <Ionicons
+            name={typeIcons[item.type] || 'cube'}
+            size={22}
+            color="white"
+          />
         </View>
       </View>
 
       {/* Container status badge */}
       <View className="absolute top-4 right-3" pointerEvents="none">
-        <View
-          className="flex-row items-center gap-1.5 px-2 py-1 rounded-full"
-          style={{ backgroundColor: statusColors[containerStatus] + '33' }}
-        >
-          <View
-            className="w-2 h-2 rounded-full"
-            style={{ backgroundColor: statusColors[containerStatus] }}
-          />
-          <Text
-            className="text-[10px] font-medium"
-            style={{ color: statusColors[containerStatus] }}
-          >
-            {containerStatus}
-          </Text>
-        </View>
+        <Badge status={containerStatus} />
       </View>
     </>
   );

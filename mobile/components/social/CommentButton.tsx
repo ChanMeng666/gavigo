@@ -1,6 +1,7 @@
-import { useState, useCallback } from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
+import { useRef, useCallback } from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { useSocialStore } from '@/stores/socialStore';
 import { CommentSheet } from './CommentSheet';
 
@@ -10,7 +11,7 @@ interface CommentButtonProps {
 }
 
 export function CommentButton({ contentId, initialCount }: CommentButtonProps) {
-  const [isOpen, setIsOpen] = useState(false);
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const commentCount = useSocialStore(
     (s) => s.commentCounts[contentId] ?? initialCount
   );
@@ -20,8 +21,9 @@ export function CommentButton({ contentId, initialCount }: CommentButtonProps) {
     return n.toString();
   };
 
-  const handleOpen = useCallback(() => setIsOpen(true), []);
-  const handleClose = useCallback(() => setIsOpen(false), []);
+  const handleOpen = useCallback(() => {
+    bottomSheetRef.current?.present();
+  }, []);
 
   return (
     <>
@@ -29,18 +31,18 @@ export function CommentButton({ contentId, initialCount }: CommentButtonProps) {
         onPress={handleOpen}
         className="items-center gap-1"
         activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Comment, ${formatCount(commentCount)} comments`}
       >
         <View className="w-11 h-11 rounded-full bg-white/10 items-center justify-center">
           <Ionicons name="chatbubble-outline" size={24} color="white" />
         </View>
-        <Text className="text-white text-xs font-medium">
+        <Text className="text-micro text-text-primary">
           {formatCount(commentCount)}
         </Text>
       </TouchableOpacity>
 
-      {isOpen && (
-        <CommentSheet contentId={contentId} onClose={handleClose} />
-      )}
+      <CommentSheet contentId={contentId} bottomSheetRef={bottomSheetRef} />
     </>
   );
 }

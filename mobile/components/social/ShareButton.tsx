@@ -1,5 +1,10 @@
-import { View, TouchableOpacity, Text, Share, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, Share, Platform } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { IconButton } from '@/components/ui';
 
 interface ShareButtonProps {
   contentId: string;
@@ -7,7 +12,18 @@ interface ShareButtonProps {
 }
 
 export function ShareButton({ contentId, title }: ShareButtonProps) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   const handleShare = async () => {
+    scale.value = withSpring(0.9, { damping: 6 });
+    setTimeout(() => {
+      scale.value = withSpring(1, { damping: 6 });
+    }, 100);
+
     try {
       await Share.share({
         message:
@@ -23,15 +39,16 @@ export function ShareButton({ contentId, title }: ShareButtonProps) {
   };
 
   return (
-    <TouchableOpacity
-      onPress={handleShare}
-      className="items-center gap-1"
-      activeOpacity={0.7}
-    >
-      <View className="w-11 h-11 rounded-full bg-white/10 items-center justify-center">
-        <Ionicons name="share-social-outline" size={24} color="white" />
-      </View>
-      <Text className="text-white text-xs font-medium">Share</Text>
-    </TouchableOpacity>
+    <View className="items-center gap-1">
+      <Animated.View style={animatedStyle}>
+        <IconButton
+          icon="share-social-outline"
+          variant="filled"
+          onPress={handleShare}
+          accessibilityLabel="Share"
+        />
+      </Animated.View>
+      <Text className="text-micro text-text-primary">Share</Text>
+    </View>
   );
 }

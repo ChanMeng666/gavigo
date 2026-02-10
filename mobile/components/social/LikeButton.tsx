@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   withSequence,
+  withTiming,
 } from 'react-native-reanimated';
 import { useSocialStore } from '@/stores/socialStore';
 import { api } from '@/services/api';
@@ -23,22 +24,31 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
   const toggleLike = useSocialStore((s) => s.toggleLike);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const scale = useSharedValue(1);
+  const flashOpacity = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  const flashStyle = useAnimatedStyle(() => ({
+    opacity: flashOpacity.value,
+  }));
+
   const handlePress = async () => {
-    // Optimistic update
     toggleLike(contentId);
 
-    // Animate
     scale.value = withSequence(
       withSpring(1.3, { damping: 4, stiffness: 300 }),
       withSpring(1, { damping: 6, stiffness: 200 })
     );
 
-    // API call (fire and forget)
+    if (!isLiked) {
+      flashOpacity.value = withSequence(
+        withTiming(1, { duration: 50 }),
+        withTiming(0, { duration: 200 })
+      );
+    }
+
     if (isAuthenticated) {
       try {
         if (!isLiked) {
@@ -47,7 +57,6 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
           await api.unlikeContent(contentId);
         }
       } catch {
-        // Revert on error
         toggleLike(contentId);
       }
     }
@@ -64,11 +73,13 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
       onPress={handlePress}
       className="items-center gap-1"
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`Like, ${formatCount(likeCount)} likes`}
     >
       <Animated.View
         style={animatedStyle}
         className={`w-11 h-11 rounded-full items-center justify-center ${
-          isLiked ? 'bg-red-500' : 'bg-white/10'
+          isLiked ? 'bg-error' : 'bg-white/10'
         }`}
       >
         <Ionicons
@@ -76,8 +87,13 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
           size={24}
           color="white"
         />
+        <Animated.View
+          style={[flashStyle]}
+          className="absolute inset-0 rounded-full bg-white"
+          pointerEvents="none"
+        />
       </Animated.View>
-      <Text className="text-white text-xs font-medium">
+      <Text className="text-micro text-text-primary">
         {formatCount(likeCount)}
       </Text>
     </TouchableOpacity>

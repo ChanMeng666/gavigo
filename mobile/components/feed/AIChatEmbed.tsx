@@ -9,7 +9,15 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import { getApiBase } from '@/services/api';
+import { IconButton } from '@/components/ui';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -18,6 +26,34 @@ interface ChatMessage {
 
 interface AIChatEmbedProps {
   isVisible: boolean;
+}
+
+function TypingDot({ delay }: { delay: number }) {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(1.4, { duration: 250 }),
+          withTiming(1, { duration: 250 })
+        ),
+        -1
+      );
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [scale, delay]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={style}
+      className="w-1.5 h-1.5 rounded-full bg-text-tertiary"
+    />
+  );
 }
 
 export function AIChatEmbed({ isVisible: _isVisible }: AIChatEmbedProps) {
@@ -77,13 +113,21 @@ export function AIChatEmbed({ isVisible: _isVisible }: AIChatEmbedProps) {
       }`}
     >
       <View
-        className={`max-w-[80%] px-3 py-2 ${
+        className={`max-w-[78%] px-3 py-2 ${
           item.role === 'user'
-            ? 'bg-emerald-500 rounded-2xl rounded-br-md'
-            : 'bg-white/10 rounded-2xl rounded-bl-md'
+            ? 'bg-accent rounded-2xl rounded-br-sm'
+            : 'bg-bg-surface border border-border rounded-2xl rounded-bl-sm'
         }`}
       >
-        <Text className="text-white text-sm">{item.content}</Text>
+        {item.role === 'assistant' && (
+          <Ionicons
+            name="sparkles"
+            size={12}
+            color="#a78bfa"
+            style={{ position: 'absolute', top: 6, right: 8 }}
+          />
+        )}
+        <Text className="text-body text-text-primary">{item.content}</Text>
       </View>
     </View>
   );
@@ -91,20 +135,20 @@ export function AIChatEmbed({ isVisible: _isVisible }: AIChatEmbedProps) {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="absolute inset-0 bg-gradient-to-b from-emerald-900/50 to-black"
+      className="absolute inset-0 bg-bg-base"
       keyboardVerticalOffset={100}
     >
       {/* Header */}
-      <View className="p-4 border-b border-white/10">
+      <View className="p-4 border-b border-border-subtle">
         <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 rounded-full bg-emerald-500 items-center justify-center">
-            <Ionicons name="chatbubble-ellipses" size={20} color="white" />
+          <View className="h-10 w-10 rounded-full bg-accent items-center justify-center">
+            <Ionicons name="sparkles" size={20} color="white" />
           </View>
           <View>
-            <Text className="text-white font-semibold text-sm">
+            <Text className="text-body font-semibold text-text-primary">
               AI Assistant
             </Text>
-            <Text className="text-emerald-400 text-xs">Online</Text>
+            <Text className="text-micro text-accent-light">Online</Text>
           </View>
         </View>
       </View>
@@ -120,54 +164,55 @@ export function AIChatEmbed({ isVisible: _isVisible }: AIChatEmbedProps) {
         ListEmptyComponent={
           <View className="flex-1 items-center justify-center pt-20">
             <Ionicons
-              name="chatbubble-ellipses-outline"
+              name="sparkles-outline"
               size={48}
-              color="rgba(255,255,255,0.2)"
+              color="rgba(167,139,250,0.3)"
             />
-            <Text className="text-white/40 text-sm mt-4">
+            <Text className="text-text-secondary text-body mt-4">
               Start a conversation with AI
             </Text>
-            <Text className="text-white/30 text-xs mt-1">
+            <Text className="text-text-tertiary text-caption mt-1">
               Powered by OpenAI
             </Text>
           </View>
         }
       />
 
-      {/* Loading indicator */}
+      {/* Typing indicator */}
       {isLoading && (
-        <View className="px-4 pb-2">
-          <View className="flex-row justify-start">
-            <View className="bg-white/10 px-4 py-2 rounded-2xl rounded-bl-md flex-row gap-1">
-              <View className="w-2 h-2 bg-white/50 rounded-full" />
-              <View className="w-2 h-2 bg-white/50 rounded-full" />
-              <View className="w-2 h-2 bg-white/50 rounded-full" />
-            </View>
+        <View className="px-4 pb-2 flex-row items-center gap-2">
+          <View className="w-8 h-8 rounded-full bg-accent items-center justify-center">
+            <Ionicons name="sparkles" size={16} color="white" />
+          </View>
+          <View className="bg-bg-surface border border-border px-4 py-2 rounded-2xl rounded-bl-sm flex-row gap-1.5">
+            <TypingDot delay={0} />
+            <TypingDot delay={150} />
+            <TypingDot delay={300} />
           </View>
         </View>
       )}
 
       {/* Input */}
-      <View className="p-3 border-t border-white/10 bg-black/50">
+      <View className="p-3 border-t border-border-subtle bg-bg-base">
         <View className="flex-row gap-2">
           <TextInput
             value={input}
             onChangeText={setInput}
             placeholder="Type a message..."
-            placeholderTextColor="rgba(255,255,255,0.3)"
+            placeholderTextColor="#555568"
             editable={!isLoading}
             onSubmitEditing={handleSend}
             returnKeyType="send"
-            className="flex-1 bg-white/10 text-white rounded-full px-4 py-2.5 text-sm"
+            className="flex-1 bg-bg-surface text-body text-text-primary rounded-pill px-4 py-2.5"
           />
-          <TouchableOpacity
+          <IconButton
+            icon="send"
+            variant="accent"
+            size={18}
             onPress={handleSend}
             disabled={isLoading || !input.trim()}
-            className="h-10 w-10 rounded-full bg-emerald-500 items-center justify-center"
-            style={{ opacity: isLoading || !input.trim() ? 0.5 : 1 }}
-          >
-            <Ionicons name="send" size={18} color="white" />
-          </TouchableOpacity>
+            accessibilityLabel="Send message"
+          />
         </View>
       </View>
     </KeyboardAvoidingView>

@@ -1,22 +1,67 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+  FadeInUp,
+} from 'react-native-reanimated';
 import { getApiBase } from '@/services/api';
+import { IconButton, EmptyState, Chip } from '@/components/ui';
+import { TextInput as RNTextInput } from 'react-native';
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  failed?: boolean;
 }
+
+function TypingDot({ delay }: { delay: number }) {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      scale.value = withRepeat(
+        withSequence(
+          withTiming(1.4, { duration: 250 }),
+          withTiming(1, { duration: 250 })
+        ),
+        -1
+      );
+    }, delay);
+    return () => clearTimeout(timeout);
+  }, [scale, delay]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  return (
+    <Animated.View
+      style={style}
+      className="w-1.5 h-1.5 rounded-full bg-text-tertiary"
+    />
+  );
+}
+
+const SUGGESTIONS = [
+  'What is GAVIGO?',
+  'Tell me about AI',
+  'How does orchestration work?',
+];
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
@@ -31,10 +76,10 @@ export default function ChatScreen() {
     }
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    const userMessage = text.trim();
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
@@ -68,57 +113,127 @@ export default function ChatScreen() {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: 'Sorry, I could not connect to the AI service.',
+          failed: true,
         },
       ]);
     } finally {
       setIsLoading(false);
     }
+  }, [isLoading]);
+
+  const handleSend = () => sendMessage(input);
+
+  const handleClear = () => {
+    Alert.alert('Clear Chat', 'Remove all messages?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Clear', style: 'destructive', onPress: () => setMessages([]) },
+    ]);
+  };
+
+  const handleRetry = (msg: ChatMessage) => {
+    // Remove the failed message and re-send
+    setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+    // Find the last user message before this failed one
+    const idx = messages.findIndex((m) => m.id === msg.id);
+    if (idx > 0) {
+      const lastUserMsg = messages[idx - 1];
+      if (lastUserMsg.role === 'user') {
+        sendMessage(lastUserMsg.content);
+      }
+    }
   };
 
   const renderMessage = ({ item }: { item: ChatMessage }) => (
-    <View
+    <Animated.View
+      entering={FadeInUp.duration(200)}
       className={`flex-row mb-3 ${
         item.role === 'user' ? 'justify-end' : 'justify-start'
       }`}
     >
       {item.role === 'assistant' && (
-        <View className="w-8 h-8 rounded-full bg-emerald-500 items-center justify-center mr-2 mt-1">
+        <View className="w-8 h-8 rounded-full bg-accent items-center justify-center mr-2 mt-1">
           <Ionicons name="sparkles" size={16} color="white" />
         </View>
       )}
-      <View
-        className={`max-w-[75%] px-4 py-3 ${
-          item.role === 'user'
-            ? 'bg-accent-primary rounded-2xl rounded-br-md'
-            : 'bg-surface border border-border rounded-2xl rounded-bl-md'
-        }`}
-      >
-        <Text className="text-white text-sm leading-5">{item.content}</Text>
+      <View className="max-w-[78%]">
+        <View
+          className={`px-4 py-3 ${
+            item.role === 'user'
+              ? 'bg-accent rounded-2xl rounded-br-sm'
+              : 'bg-bg-surface border border-border rounded-2xl rounded-bl-sm'
+          }`}
+        >
+          {item.role === 'assistant' && (
+            <Ionicons
+              name="sparkles"
+              size={12}
+              color="#a78bfa"
+              style={{ position: 'absolute', top: 8, right: 10 }}
+            />
+          )}
+          <Text className="text-body text-text-primary leading-5">
+            {item.content}
+          </Text>
+        </View>
+        <Text className="text-micro text-text-tertiary mt-0.5 ml-1">
+          just now
+        </Text>
+        {item.failed && (
+          <TouchableOpacity
+            onPress={() => handleRetry(item)}
+            className="flex-row items-center gap-1 mt-1 ml-1"
+            accessibilityRole="button"
+            accessibilityLabel="Retry sending message"
+          >
+            <Ionicons name="alert-circle" size={12} color="#f87171" />
+            <Text className="text-micro text-error">Failed to send</Text>
+            <Text className="text-micro text-accent-light ml-1">Retry</Text>
+          </TouchableOpacity>
+        )}
       </View>
-    </View>
+    </Animated.View>
   );
 
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-background"
+      className="flex-1 bg-bg-base"
       keyboardVerticalOffset={90}
     >
       {/* Header */}
       <View
-        className="px-4 pb-4 border-b border-border"
+        className="px-4 pb-4 border-b border-border-subtle"
         style={{ paddingTop: insets.top + 8 }}
       >
-        <View className="flex-row items-center gap-3">
-          <View className="h-10 w-10 rounded-full bg-emerald-500 items-center justify-center">
-            <Ionicons name="sparkles" size={20} color="white" />
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-3">
+            <View className="h-10 w-10 rounded-full bg-accent items-center justify-center">
+              <Ionicons name="sparkles" size={20} color="white" />
+            </View>
+            <View>
+              <View className="flex-row items-center gap-1.5">
+                <Text
+                  className="text-h3 text-text-primary"
+                  accessibilityRole="header"
+                >
+                  AI Assistant
+                </Text>
+                <View className="w-1.5 h-1.5 rounded-full bg-success" />
+              </View>
+              <Text className="text-micro text-accent-light">
+                Powered by GPT-4o-mini
+              </Text>
+            </View>
           </View>
-          <View>
-            <Text className="text-white font-bold text-lg">AI Assistant</Text>
-            <Text className="text-emerald-400 text-xs">
-              Powered by OpenAI GPT-4o-mini
-            </Text>
-          </View>
+          {messages.length > 0 && (
+            <TouchableOpacity
+              onPress={handleClear}
+              accessibilityRole="button"
+              accessibilityLabel="Clear chat"
+            >
+              <Text className="text-caption text-text-secondary">Clear</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -132,16 +247,21 @@ export default function ChatScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View className="items-center pt-20">
-            <View className="h-20 w-20 rounded-full bg-emerald-500/10 items-center justify-center mb-4">
-              <Ionicons name="sparkles" size={40} color="#10b981" />
+            <EmptyState
+              icon="sparkles"
+              title="Start a conversation"
+              subtitle="Ask me anything about tech, science, or AI"
+              compact
+            />
+            <View className="flex-row flex-wrap gap-2 mt-4 justify-center px-4">
+              {SUGGESTIONS.map((s) => (
+                <Chip
+                  key={s}
+                  label={s}
+                  onPress={() => sendMessage(s)}
+                />
+              ))}
             </View>
-            <Text className="text-white font-semibold text-lg mb-2">
-              AI Assistant
-            </Text>
-            <Text className="text-white/40 text-sm text-center px-8">
-              Ask me anything about tech, science, or just chat! I'm here to
-              help.
-            </Text>
           </View>
         }
       />
@@ -149,39 +269,40 @@ export default function ChatScreen() {
       {/* Typing indicator */}
       {isLoading && (
         <View className="px-4 pb-2 flex-row items-center gap-2">
-          <View className="w-8 h-8 rounded-full bg-emerald-500 items-center justify-center">
+          <View className="w-8 h-8 rounded-full bg-accent items-center justify-center">
             <Ionicons name="sparkles" size={16} color="white" />
           </View>
-          <View className="bg-surface border border-border px-4 py-2 rounded-2xl rounded-bl-md flex-row gap-1.5">
-            <View className="w-2 h-2 bg-white/40 rounded-full" />
-            <View className="w-2 h-2 bg-white/40 rounded-full" />
-            <View className="w-2 h-2 bg-white/40 rounded-full" />
+          <View className="bg-bg-surface border border-border px-4 py-2 rounded-2xl rounded-bl-sm flex-row gap-1.5">
+            <TypingDot delay={0} />
+            <TypingDot delay={150} />
+            <TypingDot delay={300} />
           </View>
         </View>
       )}
 
       {/* Input */}
-      <View className="p-4 border-t border-border">
+      <View className="p-4 border-t border-border-subtle">
         <View className="flex-row gap-2">
-          <TextInput
+          <RNTextInput
             value={input}
             onChangeText={setInput}
             placeholder="Ask anything..."
-            placeholderTextColor="rgba(255,255,255,0.3)"
+            placeholderTextColor="#555568"
             editable={!isLoading}
             onSubmitEditing={handleSend}
             returnKeyType="send"
             multiline
-            className="flex-1 bg-surface border border-border text-white rounded-2xl px-4 py-3 text-sm max-h-24"
+            accessibilityLabel="Message input"
+            className="flex-1 bg-bg-surface border border-border text-text-primary rounded-pill px-4 py-3 text-body max-h-24"
           />
-          <TouchableOpacity
+          <IconButton
+            icon="send"
+            variant="accent"
+            size={20}
             onPress={handleSend}
             disabled={isLoading || !input.trim()}
-            className="h-12 w-12 rounded-full bg-emerald-500 items-center justify-center self-end"
-            style={{ opacity: isLoading || !input.trim() ? 0.5 : 1 }}
-          >
-            <Ionicons name="send" size={20} color="white" />
-          </TouchableOpacity>
+            accessibilityLabel="Send message"
+          />
         </View>
       </View>
     </KeyboardAvoidingView>

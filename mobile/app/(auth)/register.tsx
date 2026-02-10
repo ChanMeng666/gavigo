@@ -1,23 +1,39 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
-  ActivityIndicator,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
   Alert,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { signUpWithEmail } from '@/services/firebase';
+import { Button, TextInput, IconButton } from '@/components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Password strength
+  const passwordStrength = useMemo(() => {
+    if (password.length === 0) return { level: 0, color: 'transparent', width: '0%' };
+    if (password.length < 6) return { level: 1, color: '#f87171', width: '33%' };
+    const hasMixed = /[a-z]/.test(password) && /[A-Z]/.test(password);
+    const hasNumbers = /[0-9]/.test(password);
+    if (password.length >= 8 && (hasMixed || hasNumbers))
+      return { level: 3, color: '#34d399', width: '100%' };
+    return { level: 2, color: '#fbbf24', width: '66%' };
+  }, [password]);
 
   const handleRegister = async () => {
     if (!username.trim() || !email.trim() || !password.trim()) {
@@ -54,108 +70,129 @@ export default function RegisterScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-background"
+      className="flex-1 bg-bg-base"
     >
-      <View className="flex-1 justify-center px-8">
-        {/* Header */}
-        <View className="items-center mb-10">
-          <Text className="text-3xl font-bold text-white tracking-tight">
-            Create Account
-          </Text>
-          <Text className="text-sm text-gray-400 mt-1">
-            Join the Instant Reality Exchange
-          </Text>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Back button */}
+        <View
+          className="absolute left-2"
+          style={{ top: insets.top + 4 }}
+        >
+          <IconButton
+            icon="chevron-back"
+            variant="ghost"
+            onPress={() => router.back()}
+            accessibilityLabel="Go back"
+          />
         </View>
 
-        {/* Form */}
-        <View className="gap-4">
-          <View>
-            <Text className="text-gray-400 text-sm mb-2 ml-1">Username</Text>
+        <View className="px-8">
+          {/* Header */}
+          <View className="items-center mb-10">
+            <Text
+              className="text-h1 text-text-primary"
+              accessibilityRole="header"
+            >
+              Create Account
+            </Text>
+            <Text className="text-caption text-text-secondary mt-1">
+              Join the Instant Reality Exchange
+            </Text>
+          </View>
+
+          {/* Form */}
+          <View className="gap-4">
             <TextInput
+              label="Username"
               value={username}
               onChangeText={setUsername}
               placeholder="Choose a username"
-              placeholderTextColor="#555"
               autoCapitalize="none"
               autoComplete="username"
-              className="bg-surface border border-border rounded-xl px-4 py-3.5 text-white text-base"
+              leftIcon="person-outline"
             />
-          </View>
 
-          <View>
-            <Text className="text-gray-400 text-sm mb-2 ml-1">Email</Text>
             <TextInput
+              label="Email"
               value={email}
               onChangeText={setEmail}
               placeholder="your@email.com"
-              placeholderTextColor="#555"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
-              className="bg-surface border border-border rounded-xl px-4 py-3.5 text-white text-base"
+              leftIcon="mail-outline"
             />
-          </View>
 
-          <View>
-            <Text className="text-gray-400 text-sm mb-2 ml-1">Password</Text>
-            <TextInput
-              value={password}
-              onChangeText={setPassword}
-              placeholder="Min 6 characters"
-              placeholderTextColor="#555"
-              secureTextEntry
-              autoComplete="new-password"
-              className="bg-surface border border-border rounded-xl px-4 py-3.5 text-white text-base"
-            />
-          </View>
+            <View>
+              <TextInput
+                label="Password"
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Min 6 characters"
+                secureTextEntry={!showPassword}
+                autoComplete="new-password"
+                rightIcon={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                onRightIconPress={() => setShowPassword(!showPassword)}
+              />
+              {/* Password strength bar */}
+              {password.length > 0 && (
+                <View className="h-1 rounded-full bg-border mt-2 overflow-hidden">
+                  <View
+                    className="h-full rounded-full"
+                    style={{
+                      width: passwordStrength.width,
+                      backgroundColor: passwordStrength.color,
+                    }}
+                  />
+                </View>
+              )}
+            </View>
 
-          <View>
-            <Text className="text-gray-400 text-sm mb-2 ml-1">
-              Confirm Password
-            </Text>
             <TextInput
+              label="Confirm Password"
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               placeholder="Re-enter password"
-              placeholderTextColor="#555"
-              secureTextEntry
+              secureTextEntry={!showConfirm}
               autoComplete="new-password"
-              className="bg-surface border border-border rounded-xl px-4 py-3.5 text-white text-base"
+              rightIcon={showConfirm ? 'eye-off-outline' : 'eye-outline'}
+              onRightIconPress={() => setShowConfirm(!showConfirm)}
+              error={
+                confirmPassword && confirmPassword !== password
+                  ? 'Passwords do not match'
+                  : undefined
+              }
+            />
+
+            <Button
+              label="Create Account"
+              onPress={handleRegister}
+              loading={loading}
+              size="lg"
+              fullWidth
             />
           </View>
 
-          <TouchableOpacity
-            onPress={handleRegister}
-            disabled={loading}
-            className="bg-accent-primary rounded-xl py-4 items-center mt-2"
-            activeOpacity={0.8}
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-white font-semibold text-base">
-                Create Account
+          {/* Link back */}
+          <View className="mt-6 items-center">
+            <View className="flex-row items-center gap-1">
+              <Text className="text-text-secondary text-body">
+                Already have an account?
               </Text>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {/* Link back to login */}
-        <View className="mt-6 items-center">
-          <View className="flex-row items-center gap-1">
-            <Text className="text-gray-500 text-sm">
-              Already have an account?
-            </Text>
-            <Link href="/(auth)/login" asChild>
-              <TouchableOpacity>
-                <Text className="text-accent-primary font-semibold text-sm">
-                  Sign In
-                </Text>
-              </TouchableOpacity>
-            </Link>
+              <Link href="/(auth)/login" asChild>
+                <TouchableOpacity>
+                  <Text className="text-accent font-semibold text-body">
+                    Sign In
+                  </Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

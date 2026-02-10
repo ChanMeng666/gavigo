@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { View, Text, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { VideoPlayer } from './VideoPlayer';
 import { GameEmbed } from './GameEmbed';
 import { AIChatEmbed } from './AIChatEmbed';
 import { ContentOverlay } from './ContentOverlay';
+import { Badge, EmptyState } from '@/components/ui';
 import type { ContentItem, ContainerStatus } from '@/types';
 
 interface ContentCardProps {
@@ -12,53 +15,63 @@ interface ContentCardProps {
   onActivate: (contentId: string) => void;
 }
 
+const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+  VIDEO: 'play-circle',
+  GAME: 'game-controller',
+  AI_SERVICE: 'sparkles',
+};
+
+const statusColors: Record<ContainerStatus, string> = {
+  COLD: '#60a5fa',
+  WARM: '#fbbf24',
+  HOT: '#34d399',
+};
+
 function LoadingState({
   item,
   status,
+  timedOut,
+  onRetry,
 }: {
   item: ContentItem;
   status: ContainerStatus;
+  timedOut: boolean;
+  onRetry: () => void;
 }) {
-  const statusMessages: Record<ContainerStatus, string> = {
-    COLD: 'Spinning up container...',
-    WARM: 'Almost ready...',
-    HOT: 'Loading content...',
-  };
+  if (timedOut) {
+    return (
+      <View className="absolute inset-0 items-center justify-center bg-bg-base">
+        <EmptyState
+          icon="time-outline"
+          title="Taking too long"
+          subtitle="The container is still spinning up"
+          actionLabel="Retry"
+          onAction={onRetry}
+        />
+      </View>
+    );
+  }
 
-  const statusColors: Record<ContainerStatus, string> = {
-    COLD: '#3b82f6',
-    WARM: '#eab308',
-    HOT: '#22c55e',
-  };
+  const color = statusColors[status];
+  const iconName = typeIcons[item.type] || 'cube';
 
   return (
-    <View className="absolute inset-0 items-center justify-center bg-gray-900">
+    <View className="absolute inset-0 items-center justify-center bg-bg-base">
       <View
-        className="h-24 w-24 rounded-3xl items-center justify-center mb-6"
-        style={{ backgroundColor: statusColors[status] + '33' }}
+        className="w-[72px] h-[72px] rounded-full items-center justify-center mb-4"
+        style={{ backgroundColor: color + '1F' }}
       >
-        <Text className="text-4xl">
-          {item.type === 'VIDEO' ? '🎬' : item.type === 'GAME' ? '🎮' : '🤖'}
-        </Text>
+        <Ionicons name={iconName} size={32} color={color} />
       </View>
-      <Text className="text-white font-bold text-lg mb-2">{item.title}</Text>
-      <View className="flex-row items-center gap-2">
-        <ActivityIndicator color={statusColors[status]} size="small" />
-        <Text className="text-white/60 text-sm">{statusMessages[status]}</Text>
-      </View>
-
-      {/* Status badge */}
-      <View
-        className="absolute bottom-20 flex-row items-center gap-2 px-3 py-1.5 rounded-full"
-        style={{ backgroundColor: statusColors[status] + '22' }}
-      >
-        <View
-          className="w-2 h-2 rounded-full"
-          style={{ backgroundColor: statusColors[status] }}
-        />
-        <Text style={{ color: statusColors[status] }} className="text-xs font-medium">
-          {status}
+      <Text className="text-h3 text-text-primary mb-2">{item.title}</Text>
+      <ActivityIndicator color="#7c3aed" size="small" />
+      {status === 'COLD' && (
+        <Text className="text-caption text-text-tertiary mt-3">
+          Tap to activate
         </Text>
+      )}
+      <View className="absolute bottom-20">
+        <Badge status={status} />
       </View>
     </View>
   );
@@ -72,11 +85,30 @@ export function ContentCard({
 }: ContentCardProps) {
   const isReady = containerStatus === 'HOT';
   const isLoading = containerStatus === 'COLD' || containerStatus === 'WARM';
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setTimedOut(true), 30000);
+    return () => clearTimeout(timer);
+  }, [isLoading, containerStatus]);
 
   return (
-    <View className="flex-1 bg-black">
-      {/* Content area */}
-      {isLoading && <LoadingState item={item} status={containerStatus} />}
+    <View className="flex-1 bg-bg-base">
+      {isLoading && (
+        <LoadingState
+          item={item}
+          status={containerStatus}
+          timedOut={timedOut}
+          onRetry={() => {
+            setTimedOut(false);
+            onActivate(item.id);
+          }}
+        />
+      )}
 
       {isReady && item.type === 'VIDEO' && (
         <VideoPlayer contentId={item.id} isVisible={isVisible} />

@@ -1,28 +1,84 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import {
   View,
   FlatList,
   Dimensions,
+  RefreshControl,
   type ViewToken,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useFeedStore } from '@/stores/feedStore';
 import { ContentCard } from '@/components/feed/ContentCard';
+import { SkeletonLoader, EmptyState } from '@/components/ui';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+
+function FeedSkeleton() {
+  return (
+    <View className="flex-1 bg-bg-base">
+      <SkeletonLoader variant="rect" height="100%" />
+      {/* Action buttons skeleton */}
+      <View className="absolute right-3 bottom-32 items-center gap-5">
+        <SkeletonLoader variant="circle" width={44} height={44} />
+        <SkeletonLoader variant="circle" width={44} height={44} />
+        <SkeletonLoader variant="circle" width={44} height={44} />
+      </View>
+      {/* Overlay skeleton */}
+      <View className="absolute bottom-4 left-4 right-14">
+        <SkeletonLoader variant="circle" width={32} height={32} />
+        <SkeletonLoader variant="text" width="60%" height={16} style={{ marginTop: 12 }} />
+        <SkeletonLoader variant="text" width="80%" height={12} style={{ marginTop: 8 }} />
+      </View>
+    </View>
+  );
+}
+
+function ConnectionDot({ connected }: { connected: boolean }) {
+  const opacity = useSharedValue(1);
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 300 });
+  }, [connected, opacity]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return (
+    <Animated.View
+      style={[
+        style,
+        {
+          width: 8,
+          height: 8,
+          borderRadius: 4,
+          backgroundColor: connected ? '#34d399' : '#f87171',
+        },
+      ]}
+      pointerEvents="none"
+    />
+  );
+}
 
 export default function FeedScreen() {
   const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const lastScrollTime = useRef(Date.now());
-  const itemHeight = SCREEN_HEIGHT - insets.bottom - 60; // account for tab bar
+  const [refreshing, setRefreshing] = useState(false);
+  const itemHeight = SCREEN_HEIGHT - insets.bottom - 60;
 
   const {
     content,
     containerStates,
     currentIndex,
+    connected,
     setContent,
     setContainerStates,
     updateContainerState,
@@ -98,7 +154,6 @@ export default function FeedScreen() {
           endFocusRef.current();
           startFocusRef.current(item.id, item.theme);
 
-          // Send scroll update
           const now = Date.now();
           const timeDiff = now - lastScrollTime.current;
           wsRef.current.sendScrollUpdate({
@@ -110,7 +165,6 @@ export default function FeedScreen() {
           });
           lastScrollTime.current = now;
 
-          // Send activation request
           wsRef.current.sendActivationRequest({ content_id: item.id });
         }
       }
@@ -121,6 +175,13 @@ export default function FeedScreen() {
     itemVisiblePercentThreshold: 50,
     minimumViewTime: 100,
   }).current;
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Reconnect WebSocket to re-fetch content
+    ws.reconnect?.();
+    setTimeout(() => setRefreshing(false), 1500);
+  }, [ws]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: (typeof content)[0]; index: number }) => (
@@ -138,8 +199,30 @@ export default function FeedScreen() {
     [itemHeight, containerStates, currentIndex, ws]
   );
 
+  if (content.length === 0 && !connected) {
+    return <FeedSkeleton />;
+  }
+
+  if (content.length === 0 && connected) {
+    return (
+      <View className="flex-1 bg-bg-base">
+        <EmptyState
+          icon="film-outline"
+          title="No Content"
+          subtitle="Content will appear here when available"
+        />
+      </View>
+    );
+  }
+
+  // Scroll progress
+  const thumbHeight = content.length > 0 ? 40 / content.length : 40;
+  const thumbOffset = content.length > 1
+    ? (currentIndex / (content.length - 1)) * (40 - thumbHeight)
+    : 0;
+
   return (
-    <View className="flex-1 bg-black">
+    <View className="flex-1 bg-bg-base">
       <FlatList
         ref={flatListRef}
         data={content}
@@ -160,22 +243,37 @@ export default function FeedScreen() {
         removeClippedSubviews
         maxToRenderPerBatch={3}
         windowSize={5}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            tintColor="#7c3aed"
+            colors={['#7c3aed']}
+          />
+        }
       />
 
-      {/* Pagination dots */}
+      {/* Connection indicator */}
       <View
-        className="absolute right-1 items-center gap-1.5"
-        style={{ top: '50%', transform: [{ translateY: -50 }] }}
+        className="absolute"
+        style={{ top: insets.top + 8, left: 16 }}
         pointerEvents="none"
       >
-        {content.map((_, index) => (
+        <ConnectionDot connected={connected} />
+      </View>
+
+      {/* Vertical scroll progress bar */}
+      <View
+        className="absolute right-1.5 items-center"
+        style={{ top: '50%', transform: [{ translateY: -20 }] }}
+        pointerEvents="none"
+      >
+        <View className="w-0.5 rounded-full bg-white/10" style={{ height: 40 }}>
           <View
-            key={index}
-            className={`w-1 rounded-full ${
-              index === currentIndex ? 'h-4 bg-white' : 'h-1.5 bg-white/30'
-            }`}
+            className="w-full rounded-full bg-white/60"
+            style={{ height: thumbHeight, marginTop: thumbOffset }}
           />
-        ))}
+        </View>
       </View>
     </View>
   );
