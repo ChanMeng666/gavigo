@@ -633,6 +633,7 @@ kubectl -n gavigo get endpoints
 - [docs/DEPLOYMENT_STATUS.md](./docs/DEPLOYMENT_STATUS.md) - Current deployment status
 - [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
+- [docs/EXPO_WEB_PITFALLS.md](./docs/EXPO_WEB_PITFALLS.md) - Expo web platform pitfalls and debugging guide
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->
