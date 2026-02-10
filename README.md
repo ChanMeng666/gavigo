@@ -5,11 +5,12 @@
 ![GAVIGO](https://img.shields.io/badge/GAVIGO-IRE-blue?style=for-the-badge)
 ![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?style=for-the-badge&logo=go&logoColor=white)
 ![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![React Native](https://img.shields.io/badge/React_Native-Expo_54-000020?style=for-the-badge&logo=expo&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
 ![DigitalOcean](https://img.shields.io/badge/DigitalOcean-0080FF?style=for-the-badge&logo=digitalocean&logoColor=white)
 
-**AI-Driven Container Orchestration Visualization Prototype**
+**AI-Driven Container Orchestration Visualization with Mobile App**
 
 [Live Demo](http://129.212.209.146) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
 
@@ -19,21 +20,28 @@
 
 ## Overview
 
-GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating AI-driven container orchestration for mixed-media content delivery. The system features a **TikTok-style vertical scrolling interface** where containers transition between COLD, WARM, and HOT states based on user engagement patterns and AI-driven predictions.
+GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating AI-driven container orchestration for mixed-media content delivery. It features:
+
+- A **React Native mobile app** (Expo) with TikTok-style vertical feed, social features (likes, comments, follows), and Firebase Auth — runs on iOS, Android, and Web
+- A **React dashboard** for investors showing real-time AI decisions, container states, scores, and resource allocation
+- A **Go backend orchestrator** handling WebSocket communication, AI rules engine, Kubernetes scaling, and social API
+- The mobile web build is **embedded as an iframe** inside the dashboard's phone mockup, creating a split-screen demo experience
 
 ### Key Highlights
 
 - **TikTok-Style Content Stream**: Full-screen vertical scroll with snap points and inline content activation
+- **Social Features**: Likes with animation, comments via bottom sheet, follow system, native share
 - **External Game Integration**: Iframe-based games from Kongregate and other platforms
 - **AI Chat Service**: OpenAI GPT-4o-mini powered chat interface
 - **Real-Time AI Decisions**: 7 trigger types for intelligent resource management
 - **Weighted Scoring System**: Personal, global, and trend scores combined for predictions
+- **Cross-Platform**: Single codebase runs on iOS, Android, and Web
 
 ## Live Deployment
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | http://129.212.209.146  ⭐ https://gavigo.chanmeng.org/ | Running |
+| Production | http://129.212.209.146  /  https://gavigo.chanmeng.org/ | Running |
 
 **Infrastructure**: DigitalOcean Kubernetes (DOKS) in Singapore (sgp1)
 
@@ -41,19 +49,19 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 
 ## Key Features
 
+### Mobile App (React Native + Expo)
+
+- **4 Tabs**: Feed, Explore, AI Chat, Profile
+- **TikTok-Style Feed**: Vertical FlatList with paging, auto-play videos, game embeds, AI chat
+- **Social**: Like (animated heart), Comment (bottom sheet), Follow, Share (native share sheet)
+- **Auth**: Firebase Auth on native (email/password, Google, Apple), demo auto-login on web
+- **Real-Time**: WebSocket connection for container state updates, score changes, AI decisions
+
 ### AI-Driven Orchestration
 
 - **Cross-Domain Recommendations**: Automatically suggests related content across different media types based on theme matching (e.g., football video -> idle game)
 - **Swarm Intelligence**: Detects trending content (viral score >= 0.7) and proactively warms containers
 - **Proactive Warming**: Predicts user intent and prepares containers before activation when engagement score exceeds 0.6
-
-### TikTok-Style Content Stream
-
-- **Vertical Scroll**: Full-height content cards with CSS scroll-snap
-- **Inline Activation**: Content plays directly in the stream (no modal popups)
-- **External Game iframes**: Load games from Kongregate and other platforms
-- **AI Chat Interface**: Inline chat with OpenAI integration
-- **Pagination Dots**: Visual navigation indicator
 
 ### Real-Time Dashboard
 
@@ -78,22 +86,34 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 
 ```mermaid
 graph TB
-    subgraph "Frontend Layer"
-        FE[React Frontend<br/>TypeScript + Vite]
-        TT[TikTok-Style Stream]
-        DASH[Dashboard]
+    subgraph "Mobile App Layer"
+        MA[React Native + Expo<br/>iOS / Android / Web]
+        FEED[TikTok Feed]
+        SOCIAL[Social Features]
+        AUTH[Firebase Auth]
+    end
+
+    subgraph "Dashboard Layer"
+        FE[React Dashboard<br/>TypeScript + Vite]
+        PHONE[Phone Mockup<br/>iframe → Mobile Web]
+        DASH[Dashboard Panel]
+    end
+
+    subgraph "Proxy Layer"
+        NGINX[Frontend nginx<br/>Reverse Proxy]
     end
 
     subgraph "Backend Layer"
         ORCH[Orchestrator<br/>Go 1.21+]
         WS[WebSocket Hub]
-        API[REST API]
+        API[REST API + Social API]
         ENGINE[Rules Engine]
         SCORER[Scorer]
     end
 
     subgraph "Data Layer"
         REDIS[(Redis/Valkey<br/>State Store)]
+        MEMSOCIAL[(In-Memory<br/>Social Store)]
     end
 
     subgraph "External Content"
@@ -106,20 +126,41 @@ graph TB
         LB[LoadBalancer]
     end
 
-    FE --> TT
+    MA --> FEED
+    MA --> SOCIAL
+    MA --> AUTH
+    FE --> PHONE
     FE --> DASH
-    TT -->|WebSocket| WS
-    DASH -->|HTTP| API
+
+    LB --> NGINX
+    NGINX -->|/| FE
+    NGINX -->|^~ /mobile/| MA
+    NGINX -->|/api/| API
+    NGINX -->|/ws| WS
+
     WS --> ORCH
     API --> ORCH
     ORCH --> ENGINE
     ORCH --> SCORER
     ORCH --> REDIS
+    ORCH --> MEMSOCIAL
     ORCH --> K8S
-    TT -->|iframe| KG
-    TT -->|API| OAI
-    LB --> FE
+    FEED -->|iframe| KG
+    FEED -->|API| OAI
 ```
+
+### Request Routing (nginx)
+
+```
+Internet → LoadBalancer :80 → Frontend nginx
+    ├── /               → React Dashboard (SPA)
+    ├── ^~ /mobile/     → Mobile Web App (Expo web build, proxied to mobile-web service)
+    ├── /api/           → Orchestrator (Go REST API)
+    ├── /ws             → Orchestrator (WebSocket, with Upgrade headers)
+    └── ^~ /workloads/  → AI Service, Game workloads
+```
+
+> **Note**: `^~` prefix match on `/mobile/` and `/workloads/` is required to prevent the static asset caching regex from intercepting proxied JS/CSS files.
 
 ### AI Decision Pipeline
 
@@ -250,26 +291,6 @@ graph LR
     T7 --> A2
 ```
 
-### Cross-Domain Content Injection
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Frontend
-    participant RulesEngine
-    participant ContentStore
-
-    User->>Frontend: Focus on video (football theme)
-    Note over Frontend: Duration > 5 seconds
-    Frontend->>RulesEngine: focus_event
-    RulesEngine->>ContentStore: Find related content
-    Note over ContentStore: Match: football -> game-clicker-heroes
-    ContentStore-->>RulesEngine: Related game found
-    RulesEngine->>RulesEngine: Generate CROSS_DOMAIN decision
-    RulesEngine->>Frontend: stream_inject event
-    Frontend->>User: Game card appears in stream
-```
-
 ### Deployment Architecture (DigitalOcean)
 
 ```mermaid
@@ -279,10 +300,12 @@ graph TB
             subgraph "gavigo namespace"
                 FE_POD[Frontend Pod<br/>nginx:alpine]
                 ORCH_POD[Orchestrator Pod<br/>Go binary]
+                MW_POD[Mobile-Web Pod<br/>nginx:alpine]
             end
 
             FE_SVC[Frontend Service<br/>LoadBalancer :80]
             ORCH_SVC[Orchestrator Service<br/>ClusterIP :8080]
+            MW_SVC[Mobile-Web Service<br/>ClusterIP :80]
         end
 
         REDIS_DB[(Managed Redis<br/>Valkey + TLS)]
@@ -292,17 +315,22 @@ graph TB
     subgraph "External Services"
         KONG[Kongregate<br/>Game iframes]
         OPENAI[OpenAI API<br/>GPT-4o-mini]
+        FIREBASE[Firebase Auth]
     end
 
     INTERNET((Internet)) --> FE_SVC
     FE_SVC --> FE_POD
-    FE_POD --> ORCH_SVC
+    FE_POD -->|^~ /mobile/| MW_SVC
+    MW_SVC --> MW_POD
+    FE_POD -->|/api/, /ws| ORCH_SVC
     ORCH_SVC --> ORCH_POD
     ORCH_POD --> REDIS_DB
     FE_POD -.->|iframe| KONG
     ORCH_POD -.->|API| OPENAI
+    MW_POD -.->|Auth| FIREBASE
     REGISTRY -.->|Pull images| FE_POD
     REGISTRY -.->|Pull images| ORCH_POD
+    REGISTRY -.->|Pull images| MW_POD
 ```
 
 ---
@@ -361,15 +389,21 @@ When users engage with content for 5+ seconds, the system recommends related con
 
 ## Technology Stack
 
-### Backend
+### Mobile App
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Go | 1.21+ | Orchestrator service |
-| gorilla/websocket | 1.5+ | Real-time communication |
-| client-go | Latest | Kubernetes API |
-| go-redis | v9 | State management |
+| React Native | 0.81 | Cross-platform mobile framework |
+| Expo | SDK 54 | Managed workflow, OTA updates, web support |
+| Expo Router | v6 | File-based navigation with deep linking |
+| NativeWind | v4 | TailwindCSS for React Native |
+| Zustand | 5.x | Lightweight state management |
+| Firebase Auth | 23.x | Authentication (email/password, Google, Apple) |
+| expo-av | 16.x | Native video playback |
+| react-native-webview | 13.x | Game iframe embedding (native) |
+| react-native-reanimated | v4 | 60fps native animations |
+| @gorhom/bottom-sheet | v5 | Comment panel |
 
-### Frontend
+### Dashboard (Frontend)
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | React | 18 | UI framework |
@@ -379,13 +413,22 @@ When users engage with content for 5+ seconds, the system recommends related con
 | shadcn/ui | Latest | UI components |
 | Recharts | Latest | Data visualization |
 
+### Backend
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Go | 1.21+ | Orchestrator service |
+| gorilla/websocket | 1.5+ | Real-time communication |
+| client-go | Latest | Kubernetes API |
+| go-redis | v9 | State management |
+
 ### Infrastructure
 | Technology | Provider | Purpose |
 |------------|----------|---------|
 | Kubernetes | DigitalOcean DOKS | Container orchestration |
 | Redis | DigitalOcean Managed (Valkey) | State store + TLS |
-| Container Registry | DigitalOcean | Image storage |
+| Container Registry | DigitalOcean | Image storage (4 images) |
 | LoadBalancer | DigitalOcean | External access |
+| Firebase | Google | Mobile authentication |
 
 ---
 
@@ -393,61 +436,75 @@ When users engage with content for 5+ seconds, the system recommends related con
 
 ```
 gavigo/
-├── frontend/                 # React frontend application
+├── mobile/                      # React Native + Expo mobile app
+│   ├── app/                     # Expo Router file-based routing
+│   │   ├── index.tsx            # Root redirect (auth → feed, guest → login)
+│   │   ├── _layout.tsx          # Root layout with AuthGuard
+│   │   ├── (auth)/              # Auth screens
+│   │   │   ├── login.tsx        # Email/password login
+│   │   │   ├── register.tsx     # Create account
+│   │   │   └── forgot-password.tsx
+│   │   └── (tabs)/              # Main app tabs
+│   │       ├── _layout.tsx      # Tab bar (4 tabs)
+│   │       ├── feed/index.tsx   # TikTok-style vertical feed
+│   │       ├── explore/index.tsx # Content grid + filters
+│   │       ├── chat/index.tsx   # AI chat interface
+│   │       └── profile/index.tsx # User profile + settings
+│   ├── components/
+│   │   ├── feed/                # ContentCard, VideoPlayer, GameEmbed, AIChatEmbed
+│   │   ├── social/              # LikeButton, CommentSheet, FollowButton, ShareButton
+│   │   ├── profile/             # Profile UI components
+│   │   └── ui/                  # Base UI components
+│   ├── hooks/                   # useAuth(.web), useWebSocket, useEngagement
+│   ├── services/                # api.ts, firebase(.web).ts
+│   ├── stores/                  # authStore, feedStore, socialStore (Zustand)
+│   ├── types/                   # TypeScript types
+│   ├── Dockerfile               # node:20-alpine → nginx:alpine
+│   └── app.json                 # Expo config (baseUrl: /mobile)
+│
+├── frontend/                    # React dashboard (investor demo)
 │   ├── src/
 │   │   ├── components/
-│   │   │   ├── dashboard/   # Dashboard components
-│   │   │   │   ├── Dashboard.tsx
-│   │   │   │   ├── AIDecisionLog.tsx
-│   │   │   │   ├── ScoreDisplay.tsx
-│   │   │   │   ├── ResourceChart.tsx
-│   │   │   │   ├── DemoControls.tsx
-│   │   │   │   └── ModeIndicator.tsx
-│   │   │   ├── stream/      # TikTok-style stream
-│   │   │   │   ├── MediaStream.tsx
-│   │   │   │   └── TikTokContentView.tsx
-│   │   │   ├── layout/      # Layout components
-│   │   │   └── ui/          # shadcn/ui components
-│   │   ├── hooks/           # Custom React hooks
-│   │   │   ├── useWebSocket.ts
-│   │   │   └── useEngagement.ts
-│   │   ├── services/        # API client
-│   │   └── types/           # TypeScript definitions
-│   ├── Dockerfile           # Multi-stage build (node -> nginx)
-│   └── nginx.conf           # Frontend routing config
+│   │   │   ├── dashboard/       # AI Decision Log, Container Status, Scores, etc.
+│   │   │   ├── stream/          # MediaStream, PhoneMockup, TikTokContentView
+│   │   │   ├── layout/          # AppShell, Header, ConnectionStatus
+│   │   │   └── ui/              # shadcn/ui components
+│   │   ├── hooks/               # useWebSocket, useEngagement
+│   │   ├── services/            # REST API client
+│   │   └── types/               # TypeScript definitions
+│   ├── Dockerfile               # Sets VITE_RN_WEB_URL=/mobile/
+│   └── nginx.conf               # Reverse proxy with ^~ locations
 │
-├── orchestrator/            # Go backend service
-│   ├── cmd/orchestrator/    # Application entry point
+├── orchestrator/                # Go backend service
+│   ├── cmd/orchestrator/        # Entry point
 │   └── internal/
-│       ├── api/             # HTTP handlers
-│       ├── config/          # Configuration management
-│       ├── engine/          # Rules engine & scorer
-│       │   ├── rules.go     # 7 trigger types
-│       │   └── scorer.go    # Weighted scoring
-│       ├── k8s/             # Kubernetes client
-│       ├── models/          # Data models
-│       ├── redis/           # Redis client (TLS support)
-│       └── websocket/       # WebSocket hub
+│       ├── api/                 # handlers.go + social_handlers.go
+│       ├── config/              # Configuration
+│       ├── engine/              # Rules engine (7 triggers) + Scorer
+│       ├── k8s/                 # Kubernetes client, scaler, watcher
+│       ├── models/              # Content, Decision, Events, Session, Social
+│       ├── redis/               # Redis client (TLS), Pub/Sub, Scores
+│       └── websocket/           # WebSocket hub + handlers
 │
-├── workloads/               # Workload containers
-│   └── ai-service/          # AI chat service (OpenAI)
+├── workloads/                   # Workload containers
+│   └── ai-service/              # AI chat (Express + OpenAI)
 │
-├── k8s/                     # Kubernetes manifests
-│   ├── namespace.yaml       # gavigo namespace
-│   ├── frontend/            # Frontend deployment + service
-│   ├── orchestrator/        # Orchestrator deployment + RBAC
-│   └── workloads/           # Workload deployments
+├── k8s/                         # Kubernetes manifests
+│   ├── frontend/                # Frontend deployment + LoadBalancer
+│   ├── orchestrator/            # Orchestrator deployment + RBAC
+│   ├── mobile-web/              # Mobile web deployment + ClusterIP
+│   └── workloads/               # AI service deployment
 │
-├── docs/                    # Documentation
-│   └── DEMO_GUIDE.md        # Demo walkthrough
+├── docs/                        # Documentation
+│   ├── DEMO_GUIDE.md            # Demo walkthrough
+│   └── DEPLOYMENT_STATUS.md     # Current deployment status
 │
-├── specs/                   # Specification documents
-│   └── 001-ire-prototype/   # IRE prototype specification
+├── specs/                       # Specification documents
+│   └── 001-ire-prototype/       # IRE prototype specification
 │
-├── CLAUDE.md                # Claude Code instructions
-├── DEPLOYMENT_STATUS.md     # Current deployment status
-├── docker-compose.yml       # Local development setup
-└── Makefile                 # Build automation
+├── CLAUDE.md                    # Claude Code instructions
+├── docker-compose.yml           # Local development
+└── Makefile                     # Build automation
 ```
 
 ---
@@ -456,8 +513,8 @@ gavigo/
 
 ### Prerequisites
 - Docker & Docker Compose
-- Node.js 18+ (for development)
-- Go 1.21+ (for development)
+- Node.js 20+ (for development)
+- Go 1.21+ (for backend development)
 - kubectl (for Kubernetes deployment)
 - doctl (for DigitalOcean deployment)
 
@@ -486,10 +543,15 @@ docker compose logs -f
 cd orchestrator
 go run cmd/orchestrator/main.go
 
-# Terminal 2: Start frontend
+# Terminal 2: Start frontend dashboard
 cd frontend
 npm install
 npm run dev
+
+# Terminal 3: Start mobile app (web)
+cd mobile
+npm install
+npx expo start --web
 ```
 
 ### Kubernetes Deployment (DigitalOcean)
@@ -498,10 +560,19 @@ npm run dev
 # Configure kubectl
 doctl kubernetes cluster kubeconfig save gavigo-cluster
 
+# Build and push all images
+docker build -t registry.digitalocean.com/gavigo-registry/orchestrator:latest -f orchestrator/Dockerfile orchestrator/
+docker build -t registry.digitalocean.com/gavigo-registry/frontend:latest -f frontend/Dockerfile frontend/
+docker build -t registry.digitalocean.com/gavigo-registry/mobile-web:latest -f mobile/Dockerfile mobile/
+docker push registry.digitalocean.com/gavigo-registry/orchestrator:latest
+docker push registry.digitalocean.com/gavigo-registry/frontend:latest
+docker push registry.digitalocean.com/gavigo-registry/mobile-web:latest
+
 # Deploy all components
 kubectl apply -f k8s/namespace.yaml
 kubectl apply -f k8s/orchestrator/
 kubectl apply -f k8s/frontend/
+kubectl apply -f k8s/mobile-web/
 kubectl apply -f k8s/workloads/
 
 # Check status
@@ -515,12 +586,13 @@ kubectl -n gavigo get svc frontend
 
 ## API Reference
 
-### REST Endpoints
+### Core REST Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/v1/health` | Health check |
 | GET | `/api/v1/content` | List all content items |
+| GET | `/api/v1/content/:id` | Get single content item |
 | GET | `/api/v1/containers` | Get container states |
 | GET | `/api/v1/decisions` | Get AI decision history |
 | GET | `/api/v1/scores` | Get content scores |
@@ -528,6 +600,19 @@ kubectl -n gavigo get svc frontend
 | GET | `/api/v1/resources` | Get resource allocation |
 | POST | `/api/v1/demo/reset` | Reset demo state |
 | POST | `/api/v1/demo/trend-spike` | Trigger trend spike |
+
+### Social API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/users/me` | Get current user profile |
+| POST | `/api/v1/users/profile` | Create/update profile |
+| POST | `/api/v1/content/:id/like` | Like content |
+| DELETE | `/api/v1/content/:id/like` | Unlike content |
+| GET | `/api/v1/content/:id/comments` | Get comments |
+| POST | `/api/v1/content/:id/comments` | Post comment |
+| POST | `/api/v1/users/:id/follow` | Follow user |
+| DELETE | `/api/v1/users/:id/follow` | Unfollow user |
 
 ### WebSocket Events
 
@@ -565,6 +650,7 @@ sequenceDiagram
 | Proactive Warming | Extended engagement (score > 0.6) | Container transitions COLD -> WARM |
 | Mode Transition | Focus on game for 10s+ | System enters GAME_FOCUS_MODE |
 | Lookahead Warming | Scroll through content | Next 2 items pre-warmed |
+| Social Interaction | Like/comment on content | Counts update in real-time |
 
 ---
 
@@ -581,6 +667,12 @@ sequenceDiagram
 | `RECOMMENDATION_THRESHOLD` | 0.6 | Score threshold for warming |
 | `PERSONAL_SCORE_WEIGHT` | 0.4 | Personal score weight |
 | `GLOBAL_SCORE_WEIGHT` | 0.4 | Global score weight |
+
+### Environment Variables (Frontend)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_RN_WEB_URL` | `/mobile/` | URL for mobile web iframe (empty = CSS fallback) |
 
 ---
 
@@ -601,6 +693,7 @@ sequenceDiagram
 |-------|---------------|
 | Orchestrator | registry.digitalocean.com/gavigo-registry/orchestrator:latest |
 | Frontend | registry.digitalocean.com/gavigo-registry/frontend:latest |
+| Mobile Web | registry.digitalocean.com/gavigo-registry/mobile-web:latest |
 | ai-service | registry.digitalocean.com/gavigo-registry/ai-service:latest |
 
 ### Monthly Cost Estimate
@@ -627,12 +720,14 @@ kubectl -n gavigo describe pod <pod-name>
 ```bash
 kubectl -n gavigo logs -l app=orchestrator
 kubectl -n gavigo logs -l app=frontend
+kubectl -n gavigo logs -l app=mobile-web
 ```
 
 ### Restart Deployment
 ```bash
 kubectl -n gavigo rollout restart deployment/orchestrator
 kubectl -n gavigo rollout restart deployment/frontend
+kubectl -n gavigo rollout restart deployment/mobile-web
 ```
 
 ### Check Redis Connection
@@ -642,12 +737,17 @@ kubectl -n gavigo exec -it deployment/orchestrator -- sh
 # Check REDIS_URL environment variable
 ```
 
+### Mobile Web Black Screen
+- Verify nginx has `^~` on `/mobile/` location
+- Check mobile-web pod: `kubectl -n gavigo get pods -l app=mobile-web`
+- Test proxy: `kubectl -n gavigo exec deployment/frontend -- wget -qO- http://mobile-web:80/`
+
 ---
 
 ## Documentation
 
 - [CLAUDE.md](./CLAUDE.md) - Development guidelines for Claude Code
-- [DEPLOYMENT_STATUS.md](./DEPLOYMENT_STATUS.md) - Current deployment status
+- [docs/DEPLOYMENT_STATUS.md](./docs/DEPLOYMENT_STATUS.md) - Current deployment status
 - [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough and technical explanations
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 
