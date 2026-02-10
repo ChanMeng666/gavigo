@@ -133,6 +133,29 @@ func (s *SocialStore) ToggleLike(userID, contentID string) (bool, int) {
 	return true, len(s.likes[contentID])
 }
 
+// SetLike ensures a like exists. Returns totalCount.
+func (s *SocialStore) SetLike(userID, contentID string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.likes[contentID] == nil {
+		s.likes[contentID] = make(map[string]bool)
+	}
+	s.likes[contentID][userID] = true
+	return len(s.likes[contentID])
+}
+
+// RemoveLike ensures a like is removed. Returns totalCount.
+func (s *SocialStore) RemoveLike(userID, contentID string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if s.likes[contentID] != nil {
+		delete(s.likes[contentID], userID)
+	}
+	return len(s.likes[contentID])
+}
+
 // IsLiked checks if a user has liked content
 func (s *SocialStore) IsLiked(userID, contentID string) bool {
 	s.mu.RLock()

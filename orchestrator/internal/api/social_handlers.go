@@ -128,24 +128,17 @@ func (h *SocialHandlers) handleLike(w http.ResponseWriter, r *http.Request, cont
 
 	switch r.Method {
 	case http.MethodPost:
-		liked, count := h.store.ToggleLike(uid, contentID)
-		if !liked {
-			// Was already liked, toggle back (we want to like)
-			liked, count = h.store.ToggleLike(uid, contentID)
-		}
+		count := h.store.SetLike(uid, contentID)
 		writeJSON(w, map[string]interface{}{
-			"liked": liked,
+			"liked": true,
 			"count": count,
 		})
 
 	case http.MethodDelete:
-		isLiked := h.store.IsLiked(uid, contentID)
-		if isLiked {
-			h.store.ToggleLike(uid, contentID)
-		}
+		count := h.store.RemoveLike(uid, contentID)
 		writeJSON(w, map[string]interface{}{
 			"liked": false,
-			"count": h.store.GetLikeCount(contentID),
+			"count": count,
 		})
 
 	default:
