@@ -178,10 +178,8 @@ export default function FeedScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    // Reconnect WebSocket to re-fetch content
-    ws.reconnect?.();
     setTimeout(() => setRefreshing(false), 1500);
-  }, [ws]);
+  }, []);
 
   const renderItem = useCallback(
     ({ item, index }: { item: (typeof content)[0]; index: number }) => (

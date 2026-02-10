@@ -31,17 +31,9 @@ interface UseWebSocketOptions {
 }
 
 export function useWebSocket(options: UseWebSocketOptions) {
-  const {
-    onConnectionEstablished,
-    onDecisionMade,
-    onContainerStateChange,
-    onScoreUpdate,
-    onModeChange,
-    onStreamInject,
-    onResourceUpdate,
-    onActivationReady,
-    onError,
-  } = options;
+  // Store options in a ref so handleMessage/connect remain stable
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const [connected, setConnected] = useState(false);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -50,54 +42,45 @@ export function useWebSocket(options: UseWebSocketOptions) {
 
   const handleMessage = useCallback(
     (message: WebSocketMessage) => {
+      const opts = optionsRef.current;
       switch (message.type) {
         case 'connection_established': {
           const connPayload = message.payload as ConnectionEstablishedPayload;
           setSessionId(connPayload.session_id);
-          onConnectionEstablished?.(connPayload);
+          opts.onConnectionEstablished?.(connPayload);
           break;
         }
         case 'decision_made':
-          onDecisionMade?.(message.payload as AIDecision);
+          opts.onDecisionMade?.(message.payload as AIDecision);
           break;
         case 'container_state_change':
-          onContainerStateChange?.(
+          opts.onContainerStateChange?.(
             message.payload as ContainerStateChangePayload
           );
           break;
         case 'score_update':
-          onScoreUpdate?.(message.payload as ScoreUpdatePayload);
+          opts.onScoreUpdate?.(message.payload as ScoreUpdatePayload);
           break;
         case 'mode_change':
-          onModeChange?.(message.payload as ModeChangePayload);
+          opts.onModeChange?.(message.payload as ModeChangePayload);
           break;
         case 'stream_inject':
-          onStreamInject?.(message.payload as StreamInjectPayload);
+          opts.onStreamInject?.(message.payload as StreamInjectPayload);
           break;
         case 'resource_update':
-          onResourceUpdate?.(message.payload as ResourceAllocation);
+          opts.onResourceUpdate?.(message.payload as ResourceAllocation);
           break;
         case 'activation_ready':
-          onActivationReady?.(message.payload as ActivationReadyPayload);
+          opts.onActivationReady?.(message.payload as ActivationReadyPayload);
           break;
         case 'error':
-          onError?.(message.payload as ErrorPayload);
+          opts.onError?.(message.payload as ErrorPayload);
           break;
         default:
           console.log('Unknown message type:', message.type);
       }
     },
-    [
-      onConnectionEstablished,
-      onDecisionMade,
-      onContainerStateChange,
-      onScoreUpdate,
-      onModeChange,
-      onStreamInject,
-      onResourceUpdate,
-      onActivationReady,
-      onError,
-    ]
+    [] // Stable — reads from optionsRef
   );
 
   const connect = useCallback(() => {

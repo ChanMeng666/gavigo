@@ -50,8 +50,15 @@ function TypingDot({ delay }: { delay: number }) {
 
   return (
     <Animated.View
-      style={style}
-      className="w-1.5 h-1.5 rounded-full bg-text-tertiary"
+      style={[
+        style,
+        {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: '#555568',
+        },
+      ]}
     />
   );
 }

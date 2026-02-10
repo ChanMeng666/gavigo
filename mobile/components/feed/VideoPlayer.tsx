@@ -139,8 +139,18 @@ export function VideoPlayer({ contentId, isVisible }: VideoPlayerProps) {
 
         {/* Pause indicator */}
         <Animated.View
-          style={[pauseStyle]}
-          className="absolute inset-0 items-center justify-center"
+          style={[
+            pauseStyle,
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
           pointerEvents="none"
         >
           <View className="h-16 w-16 rounded-full bg-black/30 items-center justify-center">
@@ -150,8 +160,18 @@ export function VideoPlayer({ contentId, isVisible }: VideoPlayerProps) {
 
         {/* Double-tap heart animation */}
         <Animated.View
-          style={[heartStyle]}
-          className="absolute inset-0 items-center justify-center"
+          style={[
+            heartStyle,
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
           pointerEvents="none"
         >
           <Ionicons name="heart" size={80} color="#f87171" />

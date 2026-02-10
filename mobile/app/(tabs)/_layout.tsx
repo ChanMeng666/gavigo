@@ -48,7 +48,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen
-        name="feed"
+        name="feed/index"
         options={{
           title: 'Feed',
           tabBarIcon: ({ color, size, focused }) => (
@@ -62,7 +62,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="explore/index"
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, size, focused }) => (
@@ -76,7 +76,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="chat/index"
         options={{
           title: 'AI Chat',
           tabBarIcon: ({ color, size, focused }) => (
@@ -90,7 +90,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (

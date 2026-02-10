@@ -92,8 +92,16 @@ export function GameEmbed({ deploymentName, isVisible }: GameEmbedProps) {
 
       {isLoaded && (
         <Animated.View
-          style={[hintStyle]}
-          className="absolute bottom-2 left-0 right-0 items-center"
+          style={[
+            hintStyle,
+            {
+              position: 'absolute',
+              bottom: 8,
+              left: 0,
+              right: 0,
+              alignItems: 'center',
+            },
+          ]}
           pointerEvents="none"
         >
           <Chip label="Tap to play" leftIcon="game-controller" compact />

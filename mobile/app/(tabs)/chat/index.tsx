@@ -51,8 +51,15 @@ function TypingDot({ delay }: { delay: number }) {
 
   return (
     <Animated.View
-      style={style}
-      className="w-1.5 h-1.5 rounded-full bg-text-tertiary"
+      style={[
+        style,
+        {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: '#555568',
+        },
+      ]}
     />
   );
 }
@@ -146,9 +153,11 @@ export default function ChatScreen() {
   const renderMessage = ({ item }: { item: ChatMessage }) => (
     <Animated.View
       entering={FadeInUp.duration(200)}
-      className={`flex-row mb-3 ${
-        item.role === 'user' ? 'justify-end' : 'justify-start'
-      }`}
+      style={{
+        flexDirection: 'row',
+        marginBottom: 12,
+        justifyContent: item.role === 'user' ? 'flex-end' : 'flex-start',
+      }}
     >
       {item.role === 'assistant' && (
         <View className="w-8 h-8 rounded-full bg-accent items-center justify-center mr-2 mt-1">

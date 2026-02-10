@@ -77,10 +77,17 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
       accessibilityLabel={`Like, ${formatCount(likeCount)} likes`}
     >
       <Animated.View
-        style={animatedStyle}
-        className={`w-11 h-11 rounded-full items-center justify-center ${
-          isLiked ? 'bg-error' : 'bg-white/10'
-        }`}
+        style={[
+          animatedStyle,
+          {
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isLiked ? '#f87171' : 'rgba(255,255,255,0.1)',
+          },
+        ]}
       >
         <Ionicons
           name={isLiked ? 'heart' : 'heart-outline'}
@@ -88,8 +95,18 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
           color="white"
         />
         <Animated.View
-          style={[flashStyle]}
-          className="absolute inset-0 rounded-full bg-white"
+          style={[
+            flashStyle,
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              borderRadius: 22,
+              backgroundColor: 'white',
+            },
+          ]}
           pointerEvents="none"
         />
       </Animated.View>

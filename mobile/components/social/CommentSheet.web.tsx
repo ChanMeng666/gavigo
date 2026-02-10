@@ -21,6 +21,7 @@ import { Avatar, EmptyState, IconButton } from '@/components/ui';
 import type { Comment } from '@/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const EMPTY_COMMENTS: Comment[] = [];
 
 interface CommentSheetProps {
   contentId: string;
@@ -33,7 +34,7 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const comments = useSocialStore((s) => s.comments[contentId] ?? []);
+  const comments = useSocialStore((s) => s.comments[contentId] ?? EMPTY_COMMENTS);
   const addComment = useSocialStore((s) => s.addComment);
   const setComments = useSocialStore((s) => s.setComments);
   const user = useAuthStore((s) => s.user);

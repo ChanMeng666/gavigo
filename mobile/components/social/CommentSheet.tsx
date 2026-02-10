@@ -20,13 +20,15 @@ interface CommentSheetProps {
   bottomSheetRef: React.RefObject<BottomSheetModal | null>;
 }
 
+const EMPTY_COMMENTS: Comment[] = [];
+
 export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
   const insets = useSafeAreaInsets();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const snapPoints = useMemo(() => ['55%', '85%'], []);
 
-  const comments = useSocialStore((s) => s.comments[contentId] ?? []);
+  const comments = useSocialStore((s) => s.comments[contentId] ?? EMPTY_COMMENTS);
   const addComment = useSocialStore((s) => s.addComment);
   const setComments = useSocialStore((s) => s.setComments);
   const user = useAuthStore((s) => s.user);
