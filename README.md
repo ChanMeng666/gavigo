@@ -14,6 +14,8 @@
 
 [Live Demo](http://129.212.209.146) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
 
+[![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg)](https://www.digitalocean.com/?refcode=9ad5295b63f3&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
+
 </div>
 
 ---
