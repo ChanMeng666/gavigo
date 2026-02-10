@@ -12,6 +12,9 @@ RUN npm ci
 # Copy source code
 COPY . .
 
+# Set env var for React Native Web iframe URL
+ENV VITE_RN_WEB_URL=/mobile/
+
 # Build the application
 RUN npm run build
 
