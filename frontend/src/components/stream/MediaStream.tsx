@@ -12,6 +12,10 @@ import type {
   ActivationRequestPayload,
 } from "@/types"
 
+// When a React Native Web build is available, set this to the URL
+// e.g., "/mobile-web" or "http://localhost:8081" in dev
+const RN_WEB_URL = import.meta.env.VITE_RN_WEB_URL || ""
+
 interface MediaStreamProps {
   content: ContentItem[]
   containerStates: Record<string, ContainerStatus>
@@ -30,6 +34,7 @@ export function MediaStream({
   const [currentContentId, setCurrentContentId] = useState<string | null>(null)
   const [currentTheme, setCurrentTheme] = useState<string | null>(null)
   const lastScrollTime = useRef(Date.now())
+  const useNativeApp = !!RN_WEB_URL
 
   const { startFocus, endFocus } = useEngagement({
     onFocusEvent,
@@ -90,6 +95,11 @@ export function MediaStream({
             <h2 className="text-sm font-display font-semibold text-foreground">
               Content Stream
             </h2>
+            {useNativeApp && (
+              <Badge variant="default" className="text-[10px] bg-green-600">
+                Native
+              </Badge>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="text-[10px]">
@@ -99,9 +109,19 @@ export function MediaStream({
         </div>
       </div>
 
-      {/* Phone mockup with TikTok content view */}
+      {/* Phone mockup with content view */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
-        {content.length === 0 ? (
+        {useNativeApp ? (
+          /* React Native Web app embedded in PhoneMockup via iframe */
+          <PhoneMockup>
+            <iframe
+              src={RN_WEB_URL}
+              title="GAVIGO IRE Mobile App"
+              className="w-full h-full border-0"
+              allow="autoplay; fullscreen; microphone; clipboard-read; clipboard-write"
+            />
+          </PhoneMockup>
+        ) : content.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
               <StreamIcon className="h-6 w-6 text-muted-foreground" />
@@ -109,6 +129,7 @@ export function MediaStream({
             <p className="text-muted-foreground">Loading content...</p>
           </div>
         ) : (
+          /* Fallback: existing CSS-based TikTok view in PhoneMockup */
           <PhoneMockup>
             <TikTokContentView
               content={content}

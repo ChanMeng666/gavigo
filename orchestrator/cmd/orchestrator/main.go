@@ -55,6 +55,10 @@ func main() {
 	// Initialize API handlers
 	handlers := api.NewHandlers(scorer)
 
+	// Initialize social store and handlers
+	socialStore := models.NewSocialStore()
+	socialHandlers := api.NewSocialHandlers(socialStore)
+
 	// Initialize message handler
 	msgHandler := websocket.NewMessageHandler(hub)
 	msgHandler.Setup()
@@ -258,6 +262,9 @@ func main() {
 	// Register API routes
 	handlers.RegisterRoutes(mux)
 
+	// Register social routes (likes, comments, follows, profiles)
+	socialHandlers.RegisterRoutes(mux)
+
 	// WebSocket endpoint
 	mux.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		websocket.ServeWs(hub, w, r, handlers.GetContent(), handlers.GetCurrentMode())
@@ -266,9 +273,12 @@ func main() {
 	// Serve static files for frontend (in production)
 	mux.Handle("/", http.FileServer(http.Dir("./static")))
 
+	// Wrap with auth middleware (permissive - dev mode, no Firebase verifier)
+	authHandler := api.AuthMiddleware(nil)(mux)
+
 	server := &http.Server{
 		Addr:    ":" + cfg.Port,
-		Handler: mux,
+		Handler: authHandler,
 	}
 
 	// Graceful shutdown

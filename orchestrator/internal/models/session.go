@@ -12,6 +12,7 @@ const (
 
 type UserSession struct {
 	SessionID        string                 `json:"session_id"`
+	UserID           string                 `json:"user_id,omitempty"` // Firebase UID when authenticated
 	CurrentMode      OperationalMode        `json:"current_mode"`
 	ScrollPosition   int                    `json:"scroll_position"`
 	ScrollVelocity   float64                `json:"scroll_velocity"`

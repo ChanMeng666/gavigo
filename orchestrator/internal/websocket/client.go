@@ -40,6 +40,7 @@ type Client struct {
 	conn      *websocket.Conn
 	send      chan []byte
 	SessionID string
+	UserID    string // Firebase UID when authenticated
 }
 
 // NewClient creates a new client from an HTTP connection
@@ -165,6 +166,14 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, initialContent []
 		return
 	}
 
+	// Extract auth token from query parameter (mobile clients pass token via ?token=xxx)
+	if token := r.URL.Query().Get("token"); token != "" {
+		// In dev mode, derive a user ID from the token
+		// In production, this should verify the Firebase token
+		client.UserID = "ws-" + token[:min(8, len(token))]
+		log.Printf("WebSocket client authenticated: session=%s, user=%s", client.SessionID, client.UserID)
+	}
+
 	// Send initial connection established message
 	containerStates := make(map[string]models.ContainerStatus)
 	for _, c := range initialContent {
@@ -184,4 +193,11 @@ func ServeWs(hub *Hub, w http.ResponseWriter, r *http.Request, initialContent []
 	// Start goroutines for reading and writing
 	go client.WritePump()
 	go client.ReadPump()
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
