@@ -108,23 +108,19 @@ export function useWebSocket(options: UseWebSocketOptions) {
     const ws = new WebSocket(url);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
       setConnected(true);
     };
 
     ws.onclose = () => {
-      console.log('WebSocket disconnected');
       setConnected(false);
       setSessionId(null);
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        console.log('Attempting to reconnect...');
         connect();
       }, 3000);
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    ws.onerror = () => {
     };
 
     ws.onmessage = (event) => {

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -73,22 +73,35 @@ export default function FeedScreen() {
     reportIntervalMs: 1000,
   });
 
-  const onViewableItemsChanged = useCallback(
+  // Use refs for values accessed inside onViewableItemsChanged
+  // so the callback itself never changes (FlatList requirement)
+  const currentIndexRef = useRef(currentIndex);
+  const startFocusRef = useRef(startFocus);
+  const endFocusRef = useRef(endFocus);
+  const wsRef = useRef(ws);
+
+  useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
+  useEffect(() => { startFocusRef.current = startFocus; }, [startFocus]);
+  useEffect(() => { endFocusRef.current = endFocus; }, [endFocus]);
+  useEffect(() => { wsRef.current = ws; }, [ws]);
+
+  // Stable callback that never changes - reads latest values from refs
+  const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0) {
         const firstVisible = viewableItems[0];
         const index = firstVisible.index ?? 0;
         const item = firstVisible.item;
 
-        if (item && index !== currentIndex) {
+        if (item && index !== currentIndexRef.current) {
           setCurrentIndex(index);
-          endFocus();
-          startFocus(item.id, item.theme);
+          endFocusRef.current();
+          startFocusRef.current(item.id, item.theme);
 
           // Send scroll update
           const now = Date.now();
           const timeDiff = now - lastScrollTime.current;
-          ws.sendScrollUpdate({
+          wsRef.current.sendScrollUpdate({
             position: index,
             velocity: timeDiff > 0 ? 100 / timeDiff : 0,
             visible_content: viewableItems
@@ -98,12 +111,11 @@ export default function FeedScreen() {
           lastScrollTime.current = now;
 
           // Send activation request
-          ws.sendActivationRequest({ content_id: item.id });
+          wsRef.current.sendActivationRequest({ content_id: item.id });
         }
       }
-    },
-    [currentIndex, setCurrentIndex, startFocus, endFocus, ws]
-  );
+    }
+  ).current;
 
   const viewabilityConfig = useRef({
     itemVisiblePercentThreshold: 50,
