@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { useAuthStore } from '@/stores/authStore';
 import type {
   ContentItem,
@@ -9,10 +10,19 @@ import type {
   Comment,
 } from '@/types';
 
-// Configure this for your environment
-const API_BASE = __DEV__
-  ? 'http://localhost:8080/api/v1'
-  : 'http://129.212.209.146/api/v1';
+function getBaseUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // On web, use same origin (nginx proxies /api/ to orchestrator)
+    return `${window.location.origin}/api/v1`;
+  }
+  // On native
+  if (typeof __DEV__ !== 'undefined' && __DEV__) {
+    return 'http://localhost:8080/api/v1';
+  }
+  return 'http://129.212.209.146/api/v1';
+}
+
+const API_BASE = getBaseUrl();
 
 interface HealthResponse {
   status: string;
@@ -159,6 +169,10 @@ export function getApiBase(): string {
 }
 
 export function getWsUrl(): string {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${protocol}//${window.location.host}/ws`;
+  }
   const base = getApiBase();
   return base.replace(/^http/, 'ws') + '/ws';
 }
