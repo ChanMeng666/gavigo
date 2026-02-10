@@ -2,7 +2,7 @@
 
 > A comprehensive guide to testing and understanding all features of the GAVIGO IRE prototype.
 
-**Live Demo**: http://129.212.209.146
+**Live Demo**: https://gavigo.chanmeng.org/
 
 ---
 
@@ -51,7 +51,7 @@ GAVIGO IRE (Instant Reality Exchange) demonstrates AI-driven container orchestra
 
 ### Access the Demo
 
-1. Open your browser and navigate to: **http://129.212.209.146**
+1. Open your browser and navigate to: **https://gavigo.chanmeng.org/**
 2. The page will automatically connect via WebSocket
 3. Look for the green "Connected" indicator in the header
 
@@ -286,9 +286,9 @@ flowchart LR
     end
 
     subgraph "Weights"
-        W1[× 0.4]
-        W2[× 0.4]
-        W3[× 0.2]
+        W1["× 0.4"]
+        W2["× 0.4"]
+        W3["× 0.2"]
     end
 
     subgraph "Output"
@@ -392,8 +392,8 @@ flowchart TD
     CB -->|No| WAIT[Continue Tracking]
     CB -->|Yes| DEC[Generate Decision]
     DEC --> K8S[Scale Deployment]
-    K8S --> WARM[Replicas: 0 → 1]
-    WARM --> BC[Broadcast State Change]
+    K8S --> WARM["Replicas: 0 → 1"]
+    WARM --> BC["Broadcast State Change"]
     BC --> UI[Update UI Badge]
 ```
 
@@ -776,5 +776,3 @@ GAVIGO IRE demonstrates several key concepts:
 3. **Cross-Domain Discovery**: Content recommendations across media types
 4. **Real-Time Communication**: WebSocket-based instant updates
 5. **Modern UX**: TikTok-style interface with inline activation
-
-For technical details, see [README.md](../README.md) and [CLAUDE.md](../CLAUDE.md).

@@ -33,7 +33,7 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | http://129.212.209.146 | Running |
+| Production | http://129.212.209.146  ⭐ https://gavigo.chanmeng.org/ | Running |
 
 **Infrastructure**: DigitalOcean Kubernetes (DOKS) in Singapore (sgp1)
 
