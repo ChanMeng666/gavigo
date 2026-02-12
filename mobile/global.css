@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Ensure video elements fill their container on web */
+/* Ensure expo-av video elements fill their container on web.
+   expo-av sets inline styles (width/height based on natural dimensions)
+   after video metadata loads, which shifts the video from center to left.
+   !important overrides those inline styles. */
 video {
-  object-fit: cover;
+  object-fit: cover !important;
+  width: 100% !important;
+  height: 100% !important;
 }
