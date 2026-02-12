@@ -19,6 +19,8 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { getApiBase } from '@/services/api';
+import { supabase } from '@/services/supabase';
+import { useAuthStore } from '@/stores/authStore';
 import { IconButton, EmptyState, Chip } from '@/components/ui';
 import { TextInput as RNTextInput } from 'react-native';
 
@@ -27,6 +29,14 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   failed?: boolean;
+}
+
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 function TypingDot({ delay }: { delay: number }) {
@@ -76,6 +86,50 @@ export default function ChatScreen() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const conversationIdRef = useRef(generateUUID());
+  const userId = useAuthStore((s) => s.firebaseUid);
+
+  // Load most recent conversation on mount
+  useEffect(() => {
+    if (!userId) return;
+
+    (async () => {
+      try {
+        // Get the most recent conversation_id for this user
+        const { data: recent } = await supabase
+          .from('chat_messages')
+          .select('conversation_id')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (recent) {
+          conversationIdRef.current = recent.conversation_id;
+
+          // Load all messages for that conversation
+          const { data: msgs } = await supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('conversation_id', recent.conversation_id)
+            .order('created_at', { ascending: true });
+
+          if (msgs && msgs.length > 0) {
+            setMessages(
+              msgs.map((m) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+              }))
+            );
+          }
+        }
+      } catch {
+        // Start fresh
+      }
+    })();
+  }, [userId]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -83,64 +137,99 @@ export default function ChatScreen() {
     }
   }, [messages]);
 
-  const sendMessage = useCallback(async (text: string) => {
-    if (!text.trim() || isLoading) return;
+  const persistMessage = useCallback(
+    async (role: 'user' | 'assistant', content: string) => {
+      if (!userId) return;
+      try {
+        await supabase.from('chat_messages').insert({
+          user_id: userId,
+          conversation_id: conversationIdRef.current,
+          role,
+          content,
+        });
+      } catch {
+        // Non-critical
+      }
+    },
+    [userId]
+  );
 
-    const userMessage = text.trim();
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: userMessage,
-    };
+  const sendMessage = useCallback(
+    async (text: string) => {
+      if (!text.trim() || isLoading) return;
 
-    setInput('');
-    setMessages((prev) => [...prev, userMsg]);
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(
-        `${getApiBase()}/workloads/ai-service/api/chat`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: userMessage }),
-        }
-      );
-      const data = await response.json();
-      const assistantMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response || 'Sorry, I could not process your request.',
+      const userMessage = text.trim();
+      const userMsg: ChatMessage = {
+        id: Date.now().toString(),
+        role: 'user',
+        content: userMessage,
       };
-      setMessages((prev) => [...prev, assistantMsg]);
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
+
+      setInput('');
+      setMessages((prev) => [...prev, userMsg]);
+      setIsLoading(true);
+
+      // Persist user message
+      persistMessage('user', userMessage);
+
+      try {
+        const response = await fetch(
+          `${getApiBase()}/workloads/ai-service/api/chat`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage }),
+          }
+        );
+        const data = await response.json();
+        const assistantContent =
+          data.response || 'Sorry, I could not process your request.';
+        const assistantMsg: ChatMessage = {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content: 'Sorry, I could not connect to the AI service.',
-          failed: true,
-        },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [isLoading]);
+          content: assistantContent,
+        };
+        setMessages((prev) => [...prev, assistantMsg]);
+
+        // Persist assistant message
+        persistMessage('assistant', assistantContent);
+      } catch {
+        const failContent = 'Sorry, I could not connect to the AI service.';
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: (Date.now() + 1).toString(),
+            role: 'assistant',
+            content: failContent,
+            failed: true,
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [isLoading, persistMessage]
+  );
 
   const handleSend = () => sendMessage(input);
 
   const handleClear = () => {
-    Alert.alert('Clear Chat', 'Remove all messages?', [
+    Alert.alert('Clear Chat', 'Start a new conversation?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Clear', style: 'destructive', onPress: () => setMessages([]) },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: () => {
+          setMessages([]);
+          // New conversation ID (old messages preserved in DB)
+          conversationIdRef.current = generateUUID();
+        },
+      },
     ]);
   };
 
   const handleRetry = (msg: ChatMessage) => {
-    // Remove the failed message and re-send
     setMessages((prev) => prev.filter((m) => m.id !== msg.id));
-    // Find the last user message before this failed one
     const idx = messages.findIndex((m) => m.id === msg.id);
     if (idx > 0) {
       const lastUserMsg = messages[idx - 1];

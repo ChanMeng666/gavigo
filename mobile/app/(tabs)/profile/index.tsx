@@ -1,7 +1,10 @@
+import { useEffect } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { signOut } from '@/services/firebase';
+import { supabase } from '@/services/supabase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { SettingsItem } from '@/components/profile/SettingsItem';
@@ -9,7 +12,41 @@ import { Button } from '@/components/ui';
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const user = useAuthStore((s) => s.user);
+  const firebaseUid = useAuthStore((s) => s.firebaseUid);
+  const setUser = useAuthStore((s) => s.setUser);
+
+  // Refresh profile from Supabase on mount
+  useEffect(() => {
+    if (!firebaseUid) return;
+
+    (async () => {
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', firebaseUid)
+          .single();
+
+        if (profile) {
+          setUser({
+            id: profile.id,
+            firebase_uid: firebaseUid,
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+            bio: profile.bio || '',
+            followers_count: profile.followers_count,
+            following_count: profile.following_count,
+            likes_count: profile.likes_count,
+            created_at: profile.created_at,
+          });
+        }
+      } catch {
+        // Use cached
+      }
+    })();
+  }, [firebaseUid, setUser]);
 
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -22,12 +59,16 @@ export default function ProfileScreen() {
     ]);
   };
 
+  const handleEditProfile = () => {
+    router.push('/(tabs)/profile/edit');
+  };
+
   return (
     <ScrollView
       className="flex-1 bg-bg-base"
       contentContainerStyle={{ paddingTop: insets.top }}
     >
-      <ProfileHeader user={user} />
+      <ProfileHeader user={user} onEditProfile={handleEditProfile} />
 
       <View className="px-4">
         <SettingsSection title="Account">

@@ -1,8 +1,6 @@
-import { TouchableOpacity, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useSocialStore } from '@/stores/socialStore';
 import { useAuthStore } from '@/stores/authStore';
-import { api } from '@/services/api';
+import { toggleFollow as toggleFollowApi } from '@/services/social';
 import { Button, Chip } from '@/components/ui';
 
 interface FollowButtonProps {
@@ -16,16 +14,14 @@ export function FollowButton({ userId, compact = false }: FollowButtonProps) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const handlePress = async () => {
+    // Optimistic update
     toggleFollow(userId);
 
     if (isAuthenticated) {
       try {
-        if (!isFollowing) {
-          await api.followUser(userId);
-        } else {
-          await api.unfollowUser(userId);
-        }
+        await toggleFollowApi(userId);
       } catch {
+        // Revert on error
         toggleFollow(userId);
       }
     }

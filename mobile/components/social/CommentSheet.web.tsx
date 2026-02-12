@@ -1,5 +1,4 @@
 // Web-specific CommentSheet fallback — uses Modal instead of @gorhom/bottom-sheet
-// which may have issues inside iframe contexts
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -16,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSocialStore } from '@/stores/socialStore';
 import { useAuthStore } from '@/stores/authStore';
-import { api } from '@/services/api';
+import { getComments, postComment } from '@/services/social';
 import { Avatar, EmptyState, IconButton } from '@/components/ui';
 import type { Comment } from '@/types';
 
@@ -53,8 +52,19 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
     if (!visible) return;
     (async () => {
       try {
-        const data = await api.getComments(contentId);
-        setComments(contentId, data);
+        const data = await getComments(contentId);
+        setComments(
+          contentId,
+          data.map((c) => ({
+            id: c.id,
+            user_id: c.user_id,
+            content_id: c.video_id,
+            text: c.text,
+            username: c.username,
+            avatar_url: c.avatar_url,
+            created_at: c.created_at,
+          }))
+        );
       } catch {
         // Use existing
       }
@@ -67,6 +77,7 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
     const text = input.trim();
     setInput('');
 
+    // Optimistic update
     const tempComment: Comment = {
       id: Date.now().toString(),
       user_id: user?.id ?? '',
@@ -80,7 +91,7 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
 
     setLoading(true);
     try {
-      await api.postComment(contentId, text);
+      await postComment(contentId, text);
     } catch {
       // Shown optimistically
     } finally {

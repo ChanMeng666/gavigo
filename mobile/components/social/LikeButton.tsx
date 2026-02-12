@@ -8,8 +8,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useSocialStore } from '@/stores/socialStore';
-import { api } from '@/services/api';
 import { useAuthStore } from '@/stores/authStore';
+import { toggleLike as toggleLikeApi } from '@/services/social';
 
 interface LikeButtonProps {
   contentId: string;
@@ -35,6 +35,7 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
   }));
 
   const handlePress = async () => {
+    // Optimistic update
     toggleLike(contentId);
 
     scale.value = withSequence(
@@ -51,12 +52,9 @@ export function LikeButton({ contentId, initialCount }: LikeButtonProps) {
 
     if (isAuthenticated) {
       try {
-        if (!isLiked) {
-          await api.likeContent(contentId);
-        } else {
-          await api.unlikeContent(contentId);
-        }
+        await toggleLikeApi(contentId);
       } catch {
+        // Revert on error
         toggleLike(contentId);
       }
     }

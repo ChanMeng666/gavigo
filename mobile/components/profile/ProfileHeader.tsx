@@ -4,9 +4,10 @@ import type { UserProfile } from '@/types';
 
 interface ProfileHeaderProps {
   user: UserProfile | null;
+  onEditProfile?: () => void;
 }
 
-export function ProfileHeader({ user }: ProfileHeaderProps) {
+export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
   return (
     <View className="items-center px-4 pt-4 pb-6">
       {/* Subtle gradient bg behind avatar */}
@@ -66,7 +67,7 @@ export function ProfileHeader({ user }: ProfileHeaderProps) {
       <View className="mt-6 w-full">
         <Button
           label="Edit Profile"
-          onPress={() => {}}
+          onPress={onEditProfile || (() => {})}
           variant="secondary"
           size="md"
           fullWidth

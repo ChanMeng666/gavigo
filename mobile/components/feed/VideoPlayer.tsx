@@ -25,9 +25,10 @@ const videoFileMap: Record<string, string> = {
 interface VideoPlayerProps {
   contentId: string;
   isVisible: boolean;
+  videoUrl?: string;
 }
 
-export function VideoPlayer({ contentId, isVisible }: VideoPlayerProps) {
+export function VideoPlayer({ contentId, isVisible, videoUrl }: VideoPlayerProps) {
   const videoRef = useRef<Video>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -36,8 +37,8 @@ export function VideoPlayer({ contentId, isVisible }: VideoPlayerProps) {
   const heartScale = useSharedValue(0);
   const heartOpacity = useSharedValue(0);
 
-  const videoPath = videoFileMap[contentId] || '/videos/football-1.mp4';
-  const videoUri = `${getApiBase()}${videoPath}`;
+  // Use direct URL if provided, otherwise fall back to hardcoded map
+  const videoUri = videoUrl || `${getApiBase()}${videoFileMap[contentId] || '/videos/football-1.mp4'}`;
 
   useEffect(() => {
     if (isVisible && isPlaying) {

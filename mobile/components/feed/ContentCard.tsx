@@ -5,14 +5,21 @@ import { VideoPlayer } from './VideoPlayer';
 import { GameEmbed } from './GameEmbed';
 import { AIChatEmbed } from './AIChatEmbed';
 import { ContentOverlay } from './ContentOverlay';
+import { VideoOverlay } from './VideoOverlay';
 import { Badge, EmptyState } from '@/components/ui';
 import type { ContentItem, ContainerStatus } from '@/types';
+import type { Video } from '@/types/supabase';
+
+// Union type for feed items
+export type FeedItem =
+  | { kind: 'orchestrator'; data: ContentItem }
+  | { kind: 'video'; data: Video };
 
 interface ContentCardProps {
-  item: ContentItem;
-  containerStatus: ContainerStatus;
+  item: FeedItem;
+  containerStatus?: ContainerStatus;
   isVisible: boolean;
-  onActivate: (contentId: string) => void;
+  onActivate?: (contentId: string) => void;
 }
 
 const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -83,8 +90,26 @@ export function ContentCard({
   isVisible,
   onActivate,
 }: ContentCardProps) {
-  const isReady = containerStatus === 'HOT';
-  const isLoading = containerStatus === 'COLD' || containerStatus === 'WARM';
+  // Supabase video items are always ready (no container lifecycle)
+  if (item.kind === 'video') {
+    const video = item.data;
+    return (
+      <View className="flex-1 bg-bg-base">
+        <VideoPlayer
+          contentId={video.id}
+          isVisible={isVisible}
+          videoUrl={video.video_url}
+        />
+        <VideoOverlay video={video} />
+      </View>
+    );
+  }
+
+  // Orchestrator items use container lifecycle
+  const orchItem = item.data;
+  const status = containerStatus || orchItem.container_status;
+  const isReady = status === 'HOT';
+  const isLoading = status === 'COLD' || status === 'WARM';
   const [timedOut, setTimedOut] = useState(false);
 
   useEffect(() => {
@@ -94,39 +119,39 @@ export function ContentCard({
     }
     const timer = setTimeout(() => setTimedOut(true), 30000);
     return () => clearTimeout(timer);
-  }, [isLoading, containerStatus]);
+  }, [isLoading, status]);
 
   return (
     <View className="flex-1 bg-bg-base">
       {isLoading && (
         <LoadingState
-          item={item}
-          status={containerStatus}
+          item={orchItem}
+          status={status}
           timedOut={timedOut}
           onRetry={() => {
             setTimedOut(false);
-            onActivate(item.id);
+            onActivate?.(orchItem.id);
           }}
         />
       )}
 
-      {isReady && item.type === 'VIDEO' && (
-        <VideoPlayer contentId={item.id} isVisible={isVisible} />
+      {isReady && orchItem.type === 'VIDEO' && (
+        <VideoPlayer contentId={orchItem.id} isVisible={isVisible} />
       )}
 
-      {isReady && item.type === 'GAME' && (
+      {isReady && orchItem.type === 'GAME' && (
         <GameEmbed
-          deploymentName={item.deployment_name}
+          deploymentName={orchItem.deployment_name}
           isVisible={isVisible}
         />
       )}
 
-      {isReady && item.type === 'AI_SERVICE' && (
+      {isReady && orchItem.type === 'AI_SERVICE' && (
         <AIChatEmbed isVisible={isVisible} />
       )}
 
       {/* TikTok-style overlay - always visible */}
-      <ContentOverlay item={item} containerStatus={containerStatus} />
+      <ContentOverlay item={orchItem} containerStatus={status} />
     </View>
   );
 }

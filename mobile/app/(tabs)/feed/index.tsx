@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import {
   View,
   FlatList,
@@ -15,8 +15,10 @@ import Animated, {
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useFeedStore } from '@/stores/feedStore';
-import { ContentCard } from '@/components/feed/ContentCard';
+import { ContentCard, type FeedItem } from '@/components/feed/ContentCard';
 import { SkeletonLoader, EmptyState } from '@/components/ui';
+import { fetchFeed } from '@/services/feed';
+import { syncVideosFromPexels } from '@/services/videoSync';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -72,6 +74,7 @@ export default function FeedScreen() {
   const flatListRef = useRef<FlatList>(null);
   const lastScrollTime = useRef(Date.now());
   const [refreshing, setRefreshing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const itemHeight = SCREEN_HEIGHT - insets.bottom - 60;
 
   const {
@@ -79,6 +82,10 @@ export default function FeedScreen() {
     containerStates,
     currentIndex,
     connected,
+    videos,
+    videosPage,
+    videosLoading,
+    videosHasMore,
     setContent,
     setContainerStates,
     updateContainerState,
@@ -90,7 +97,42 @@ export default function FeedScreen() {
     setConnected,
     setCurrentIndex,
     injectContent,
+    setVideos,
+    appendVideos,
+    setVideosPage,
+    setVideosLoading,
+    setVideosHasMore,
   } = useFeedStore();
+
+  // Load videos from Supabase on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadInitialFeed() {
+      try {
+        let vids = await fetchFeed(1);
+
+        // If no videos in Supabase yet, trigger initial Pexels sync
+        if (vids.length === 0) {
+          await syncVideosFromPexels();
+          vids = await fetchFeed(1);
+        }
+
+        if (!cancelled) {
+          setVideos(vids);
+          setVideosPage(1);
+          setVideosHasMore(vids.length >= 15);
+        }
+      } catch (err) {
+        console.warn('Failed to load feed:', err);
+      } finally {
+        if (!cancelled) setInitialLoading(false);
+      }
+    }
+
+    loadInitialFeed();
+    return () => { cancelled = true; };
+  }, [setVideos, setVideosPage, setVideosHasMore]);
 
   const ws = useWebSocket({
     onConnectionEstablished: (payload) => {
@@ -129,8 +171,27 @@ export default function FeedScreen() {
     reportIntervalMs: 1000,
   });
 
+  // Merge Supabase videos + orchestrator items into unified feed
+  const feedItems: FeedItem[] = useMemo(() => {
+    const items: FeedItem[] = [];
+
+    // Supabase videos as primary feed
+    for (const v of videos) {
+      items.push({ kind: 'video', data: v });
+    }
+
+    // Intersperse orchestrator items (games, AI service) every 5 videos
+    let orchIdx = 0;
+    for (const c of content) {
+      orchIdx++;
+      const insertAt = Math.min(orchIdx * 5, items.length);
+      items.splice(insertAt, 0, { kind: 'orchestrator', data: c });
+    }
+
+    return items;
+  }, [videos, content]);
+
   // Use refs for values accessed inside onViewableItemsChanged
-  // so the callback itself never changes (FlatList requirement)
   const currentIndexRef = useRef(currentIndex);
   const startFocusRef = useRef(startFocus);
   const endFocusRef = useRef(endFocus);
@@ -141,31 +202,39 @@ export default function FeedScreen() {
   useEffect(() => { endFocusRef.current = endFocus; }, [endFocus]);
   useEffect(() => { wsRef.current = ws; }, [ws]);
 
-  // Stable callback that never changes - reads latest values from refs
+  // Stable callback that never changes
   const onViewableItemsChanged = useRef(
     ({ viewableItems }: { viewableItems: ViewToken[] }) => {
       if (viewableItems.length > 0) {
         const firstVisible = viewableItems[0];
         const index = firstVisible.index ?? 0;
-        const item = firstVisible.item;
+        const item = firstVisible.item as FeedItem;
 
         if (item && index !== currentIndexRef.current) {
           setCurrentIndex(index);
-          endFocusRef.current();
-          startFocusRef.current(item.id, item.theme);
 
-          const now = Date.now();
-          const timeDiff = now - lastScrollTime.current;
-          wsRef.current.sendScrollUpdate({
-            position: index,
-            velocity: timeDiff > 0 ? 100 / timeDiff : 0,
-            visible_content: viewableItems
-              .map((v) => v.item?.id)
-              .filter(Boolean),
-          });
-          lastScrollTime.current = now;
+          // Only send orchestrator events for orchestrator items
+          if (item.kind === 'orchestrator') {
+            const orchItem = item.data;
+            endFocusRef.current();
+            startFocusRef.current(orchItem.id, orchItem.theme);
 
-          wsRef.current.sendActivationRequest({ content_id: item.id });
+            const now = Date.now();
+            const timeDiff = now - lastScrollTime.current;
+            wsRef.current.sendScrollUpdate({
+              position: index,
+              velocity: timeDiff > 0 ? 100 / timeDiff : 0,
+              visible_content: viewableItems
+                .map((v) => {
+                  const fi = v.item as FeedItem;
+                  return fi.kind === 'orchestrator' ? fi.data.id : null;
+                })
+                .filter(Boolean) as string[],
+            });
+            lastScrollTime.current = now;
+
+            wsRef.current.sendActivationRequest({ content_id: orchItem.id });
+          }
         }
       }
     }
@@ -178,18 +247,59 @@ export default function FeedScreen() {
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1500);
+    try {
+      await syncVideosFromPexels();
+      const vids = await fetchFeed(1);
+      setVideos(vids);
+      setVideosPage(1);
+      setVideosHasMore(vids.length >= 15);
+    } catch {
+      // Keep existing
+    } finally {
+      setRefreshing(false);
+    }
+  }, [setVideos, setVideosPage, setVideosHasMore]);
+
+  const handleEndReached = useCallback(async () => {
+    if (videosLoading || !videosHasMore) return;
+    setVideosLoading(true);
+    try {
+      const nextPage = videosPage + 1;
+      const moreVids = await fetchFeed(nextPage);
+      if (moreVids.length > 0) {
+        appendVideos(moreVids);
+        setVideosPage(nextPage);
+      } else {
+        setVideosHasMore(false);
+      }
+    } catch {
+      // Ignore
+    } finally {
+      setVideosLoading(false);
+    }
+  }, [videosLoading, videosHasMore, videosPage, appendVideos, setVideosPage, setVideosHasMore, setVideosLoading]);
+
+  const getItemId = useCallback((item: FeedItem) => {
+    if (item.kind === 'video') return `vid-${item.data.id}`;
+    return `orch-${item.data.id}`;
   }, []);
 
   const renderItem = useCallback(
-    ({ item, index }: { item: (typeof content)[0]; index: number }) => (
+    ({ item, index }: { item: FeedItem; index: number }) => (
       <View style={{ height: itemHeight }}>
         <ContentCard
           item={item}
-          containerStatus={containerStates[item.id] || item.container_status}
+          containerStatus={
+            item.kind === 'orchestrator'
+              ? containerStates[item.data.id] || item.data.container_status
+              : undefined
+          }
           isVisible={index === currentIndex}
-          onActivate={(contentId) =>
-            ws.sendActivationRequest({ content_id: contentId })
+          onActivate={
+            item.kind === 'orchestrator'
+              ? (contentId) =>
+                  ws.sendActivationRequest({ content_id: contentId })
+              : undefined
           }
         />
       </View>
@@ -197,35 +307,35 @@ export default function FeedScreen() {
     [itemHeight, containerStates, currentIndex, ws]
   );
 
-  if (content.length === 0 && !connected) {
+  if (initialLoading && feedItems.length === 0) {
     return <FeedSkeleton />;
   }
 
-  if (content.length === 0 && connected) {
+  if (feedItems.length === 0) {
     return (
       <View className="flex-1 bg-bg-base">
         <EmptyState
           icon="film-outline"
           title="No Content"
-          subtitle="Content will appear here when available"
+          subtitle="Pull down to refresh and load videos"
         />
       </View>
     );
   }
 
   // Scroll progress
-  const thumbHeight = content.length > 0 ? 40 / content.length : 40;
-  const thumbOffset = content.length > 1
-    ? (currentIndex / (content.length - 1)) * (40 - thumbHeight)
+  const thumbHeight = feedItems.length > 0 ? 40 / feedItems.length : 40;
+  const thumbOffset = feedItems.length > 1
+    ? (currentIndex / (feedItems.length - 1)) * (40 - thumbHeight)
     : 0;
 
   return (
     <View className="flex-1 bg-bg-base">
       <FlatList
         ref={flatListRef}
-        data={content}
+        data={feedItems}
         renderItem={renderItem}
-        keyExtractor={(item) => item.id}
+        keyExtractor={getItemId}
         pagingEnabled
         snapToInterval={itemHeight}
         snapToAlignment="start"
@@ -241,6 +351,8 @@ export default function FeedScreen() {
         removeClippedSubviews
         maxToRenderPerBatch={3}
         windowSize={5}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

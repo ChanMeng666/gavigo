@@ -7,6 +7,7 @@ import type {
   AIDecision,
   ResourceAllocation,
 } from '@/types';
+import type { Video } from '@/types/supabase';
 
 interface FeedState {
   sessionId: string | null;
@@ -20,6 +21,12 @@ interface FeedState {
   activeContentId: string | null;
   currentIndex: number;
 
+  // Supabase video feed
+  videos: Video[];
+  videosPage: number;
+  videosLoading: boolean;
+  videosHasMore: boolean;
+
   setSessionId: (id: string | null) => void;
   setConnected: (connected: boolean) => void;
   setContent: (content: ContentItem[]) => void;
@@ -32,6 +39,11 @@ interface FeedState {
   setActiveContentId: (id: string | null) => void;
   setCurrentIndex: (index: number) => void;
   injectContent: (content: ContentItem, position: number) => void;
+  setVideos: (videos: Video[]) => void;
+  appendVideos: (videos: Video[]) => void;
+  setVideosPage: (page: number) => void;
+  setVideosLoading: (loading: boolean) => void;
+  setVideosHasMore: (hasMore: boolean) => void;
   reset: () => void;
 }
 
@@ -46,6 +58,10 @@ export const useFeedStore = create<FeedState>((set) => ({
   resources: null,
   activeContentId: null,
   currentIndex: 0,
+  videos: [],
+  videosPage: 1,
+  videosLoading: false,
+  videosHasMore: true,
 
   setSessionId: (id) => set({ sessionId: id }),
   setConnected: (connected) => set({ connected }),
@@ -81,6 +97,13 @@ export const useFeedStore = create<FeedState>((set) => ({
       return { content: newContent };
     }),
 
+  setVideos: (videos) => set({ videos }),
+  appendVideos: (videos) =>
+    set((state) => ({ videos: [...state.videos, ...videos] })),
+  setVideosPage: (page) => set({ videosPage: page }),
+  setVideosLoading: (loading) => set({ videosLoading: loading }),
+  setVideosHasMore: (hasMore) => set({ videosHasMore: hasMore }),
+
   reset: () =>
     set({
       content: [],
@@ -91,5 +114,8 @@ export const useFeedStore = create<FeedState>((set) => ({
       activeContentId: null,
       currentIndex: 0,
       currentMode: 'MIXED_STREAM_BROWSING',
+      videos: [],
+      videosPage: 1,
+      videosHasMore: true,
     }),
 }));

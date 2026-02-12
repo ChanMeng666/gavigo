@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,152 +7,135 @@ import {
   ScrollView,
   Dimensions,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import { useFeedStore } from '@/stores/feedStore';
-import { TextInput, Chip, Badge, EmptyState } from '@/components/ui';
-import type { ContentItem, ContentType } from '@/types';
+import { TextInput, Chip, EmptyState } from '@/components/ui';
+import {
+  searchVideos as searchSupabaseVideos,
+  fetchFeed,
+  fetchVideosByTheme,
+} from '@/services/feed';
+import type { Video } from '@/types/supabase';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
-const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-  VIDEO: 'play-circle',
-  GAME: 'game-controller',
-  AI_SERVICE: 'sparkles',
-};
-
-const typeGradientColors: Record<string, string> = {
-  VIDEO: '#7c3aed',
-  GAME: '#3b82f6',
-  AI_SERVICE: '#06b6d4',
-};
-
-interface FilterDef {
-  key: string;
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-  typeFilter?: ContentType;
-}
-
-const filters: FilterDef[] = [
-  { key: 'all', label: 'All', icon: 'grid-outline' },
-  { key: 'video', label: 'Videos', icon: 'play-circle-outline', typeFilter: 'VIDEO' },
-  { key: 'game', label: 'Games', icon: 'game-controller-outline', typeFilter: 'GAME' },
-  { key: 'ai', label: 'AI', icon: 'sparkles-outline', typeFilter: 'AI_SERVICE' },
+const THEMES = [
+  { key: 'all', label: 'All', icon: 'grid-outline' as const },
+  { key: 'nature', label: 'Nature', icon: 'leaf-outline' as const },
+  { key: 'sports', label: 'Sports', icon: 'football-outline' as const },
+  { key: 'technology', label: 'Tech', icon: 'hardware-chip-outline' as const },
+  { key: 'city', label: 'City', icon: 'business-outline' as const },
+  { key: 'food', label: 'Food', icon: 'restaurant-outline' as const },
+  { key: 'ocean', label: 'Ocean', icon: 'water-outline' as const },
+  { key: 'space', label: 'Space', icon: 'planet-outline' as const },
+  { key: 'dance', label: 'Dance', icon: 'musical-notes-outline' as const },
 ];
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const content = useFeedStore((s) => s.content);
-  const containerStates = useFeedStore((s) => s.containerStates);
-  const setCurrentIndex = useFeedStore((s) => s.setCurrentIndex);
+  const [videos, setVideos] = useState<Video[]>([]);
   const [search, setSearch] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string>('all');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const filteredContent = content.filter((item) => {
-    const matchesSearch =
-      !search ||
-      item.title.toLowerCase().includes(search.toLowerCase()) ||
-      item.theme.toLowerCase().includes(search.toLowerCase());
+  const loadVideos = useCallback(async () => {
+    try {
+      let data: Video[];
+      if (search.trim()) {
+        data = await searchSupabaseVideos(search.trim(), 1, 30);
+      } else if (activeFilter !== 'all') {
+        data = await fetchVideosByTheme(activeFilter, 1, 30);
+      } else {
+        data = await fetchFeed(1, 30);
+      }
+      setVideos(data);
+    } catch {
+      // Keep existing
+    } finally {
+      setLoading(false);
+    }
+  }, [search, activeFilter]);
 
-    const filterDef = filters.find((f) => f.key === activeFilter);
-    const matchesFilter =
-      activeFilter === 'all' || item.type === filterDef?.typeFilter;
+  useEffect(() => {
+    setLoading(true);
+    const timer = setTimeout(loadVideos, search ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [loadVideos, search]);
 
-    return matchesSearch && matchesFilter;
-  });
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadVideos();
+    setRefreshing(false);
+  }, [loadVideos]);
 
-  const getFilterCount = (key: string) => {
-    const filterDef = filters.find((f) => f.key === key);
-    if (key === 'all') return content.length;
-    return content.filter((item) => item.type === filterDef?.typeFilter).length;
+  const formatCount = (n: number) => {
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
+    return n.toString();
   };
 
-  const handleCardPress = useCallback(
-    (item: ContentItem) => {
-      const idx = content.findIndex((c) => c.id === item.id);
-      if (idx >= 0) {
-        setCurrentIndex(idx);
-        router.push('/(tabs)/feed');
-      }
-    },
-    [content, setCurrentIndex, router]
-  );
-
-  const handleRefresh = useCallback(() => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1000);
-  }, []);
-
-  const renderCard = ({ item }: { item: ContentItem }) => {
-    const status = containerStates[item.id] || item.container_status;
-    const gradientColor = typeGradientColors[item.type] || '#7c3aed';
-    const iconName = typeIcons[item.type] || 'cube';
-    const score = item.combined_score || 0;
-
-    return (
-      <TouchableOpacity
-        className="mb-3"
-        style={{ width: CARD_WIDTH }}
-        activeOpacity={0.8}
-        onPress={() => handleCardPress(item)}
-        accessibilityRole="button"
-        accessibilityLabel={`${item.title}, ${status}`}
-      >
-        <View className="bg-bg-surface rounded-card border border-border overflow-hidden">
-          {/* Thumbnail */}
-          <View
-            className="h-36 items-center justify-center"
-            style={{ backgroundColor: gradientColor + '15' }}
-          >
-            <Ionicons
-              name={iconName}
-              size={40}
-              color={gradientColor + '40'}
-            />
-            {/* Type badge top-right */}
-            <View className="absolute top-2 right-2 bg-black/50 rounded-bl-xl px-2 py-1 flex-row items-center gap-1">
-              <Ionicons name={iconName} size={10} color="white" />
-              <Text className="text-micro text-white">
-                {item.type === 'AI_SERVICE' ? 'AI' : item.type === 'VIDEO' ? 'Video' : 'Game'}
-              </Text>
-            </View>
-          </View>
-
-          {/* Score bar */}
-          {score > 0 && (
-            <View className="h-[3px] bg-accent-subtle">
-              <View
-                className="h-full bg-accent"
-                style={{ width: `${Math.min(score * 100, 100)}%` }}
-              />
-            </View>
-          )}
-
-          {/* Info */}
-          <View className="p-3">
-            <Text
-              className="text-caption font-semibold text-text-primary"
-              numberOfLines={1}
-            >
-              {item.title}
+  const renderCard = ({ item }: { item: Video }) => (
+    <TouchableOpacity
+      className="mb-3"
+      style={{ width: CARD_WIDTH }}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+    >
+      <View className="bg-bg-surface rounded-card border border-border overflow-hidden">
+        {/* Thumbnail */}
+        <View className="h-36 bg-bg-surface">
+          <Image
+            source={{ uri: item.thumbnail_url }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+          />
+          {/* Duration badge */}
+          <View className="absolute bottom-2 right-2 bg-black/70 rounded-md px-1.5 py-0.5">
+            <Text className="text-micro text-white">
+              {Math.floor(item.duration / 60)}:{(item.duration % 60).toString().padStart(2, '0')}
             </Text>
-            <View className="flex-row items-center justify-between mt-2">
-              <Text className="text-micro text-text-tertiary">
-                #{item.theme}
-              </Text>
-              <Badge status={status} />
-            </View>
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  };
+
+        {/* Info */}
+        <View className="p-3">
+          <Text
+            className="text-caption font-semibold text-text-primary"
+            numberOfLines={1}
+          >
+            {item.title}
+          </Text>
+          <Text
+            className="text-micro text-text-tertiary mt-0.5"
+            numberOfLines={1}
+          >
+            {item.photographer}
+          </Text>
+          <View className="flex-row items-center justify-between mt-2">
+            <View className="flex-row items-center gap-2">
+              <View className="flex-row items-center gap-0.5">
+                <Ionicons name="heart" size={12} color="#f87171" />
+                <Text className="text-micro text-text-tertiary">
+                  {formatCount(item.like_count)}
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-0.5">
+                <Ionicons name="chatbubble" size={12} color="#8e8ea0" />
+                <Text className="text-micro text-text-tertiary">
+                  {formatCount(item.comment_count)}
+                </Text>
+              </View>
+            </View>
+            <Text className="text-micro text-accent">#{item.theme}</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View className="flex-1 bg-bg-base" style={{ paddingTop: insets.top }}>
@@ -165,7 +148,7 @@ export default function ExploreScreen() {
           Explore
         </Text>
         <Text className="text-caption text-text-secondary mb-4">
-          Discover content
+          Discover videos
         </Text>
 
         {/* Search */}
@@ -173,7 +156,7 @@ export default function ExploreScreen() {
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search content..."
+            placeholder="Search videos..."
             variant="search"
             leftIcon="search"
             rightIcon={search ? 'close-circle' : undefined}
@@ -181,20 +164,19 @@ export default function ExploreScreen() {
           />
         </View>
 
-        {/* Filter chips */}
+        {/* Theme filter chips */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          className="gap-2"
           contentContainerStyle={{ gap: 8 }}
         >
-          {filters.map((filter) => (
+          {THEMES.map((theme) => (
             <Chip
-              key={filter.key}
-              label={`${filter.label} (${getFilterCount(filter.key)})`}
-              selected={activeFilter === filter.key}
-              onPress={() => setActiveFilter(filter.key)}
-              leftIcon={filter.icon}
+              key={theme.key}
+              label={theme.label}
+              selected={activeFilter === theme.key}
+              onPress={() => setActiveFilter(theme.key)}
+              leftIcon={theme.icon}
             />
           ))}
         </ScrollView>
@@ -202,7 +184,7 @@ export default function ExploreScreen() {
 
       {/* Grid */}
       <FlatList
-        data={filteredContent}
+        data={videos}
         renderItem={renderCard}
         keyExtractor={(item) => item.id}
         numColumns={2}
@@ -218,11 +200,13 @@ export default function ExploreScreen() {
           />
         }
         ListEmptyComponent={
-          <EmptyState
-            icon="search-outline"
-            title="No matches"
-            subtitle="Try a different search or filter"
-          />
+          loading ? null : (
+            <EmptyState
+              icon="search-outline"
+              title="No videos found"
+              subtitle="Try a different search or filter"
+            />
+          )
         }
       />
     </View>
