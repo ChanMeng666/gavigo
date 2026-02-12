@@ -1,3 +1,23 @@
+import { View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LikeButton } from '@/components/social/LikeButton';
+import { CommentButton } from '@/components/social/CommentButton';
+import { ShareButton } from '@/components/social/ShareButton';
+import { FollowButton } from '@/components/social/FollowButton';
+import { Avatar, Badge, Chip } from '@/components/ui';
+import type { ContentItem, ContainerStatus } from '@/types';
+
+interface ContentOverlayProps {
+  item: ContentItem;
+  containerStatus: ContainerStatus;
+}
+
+const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+  VIDEO: 'play-circle',
+  GAME: 'game-controller',
+  AI_SERVICE: 'sparkles',
+};
+
 export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
   // Generate pseudo-random engagement numbers from content ID
   const hashCode = item.id.split('').reduce((a, b) => {
