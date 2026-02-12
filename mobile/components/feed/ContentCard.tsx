@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { VideoPlayer } from './VideoPlayer';
 import { GameEmbed } from './GameEmbed';
@@ -112,6 +112,7 @@ export function ContentCard({
   const isReady = status === 'HOT';
   const isLoading = status === 'COLD' || status === 'WARM';
   const [timedOut, setTimedOut] = useState(false);
+  const [isImmersive, setIsImmersive] = useState(false);
 
   useEffect(() => {
     if (!isLoading) {
@@ -121,6 +122,13 @@ export function ContentCard({
     const timer = setTimeout(() => setTimedOut(true), 30000);
     return () => clearTimeout(timer);
   }, [isLoading, status]);
+
+  // Reset immersive mode when scrolling away
+  useEffect(() => {
+    if (!isVisible) setIsImmersive(false);
+  }, [isVisible]);
+
+  const isActiveGame = orchItem.type === 'GAME' && isReady;
 
   return (
     <View className="flex-1 bg-bg-base">
@@ -147,8 +155,83 @@ export function ContentCard({
         <AIChatEmbed isVisible={isVisible} />
       )}
 
-      {/* TikTok-style overlay - always visible */}
-      <ContentOverlay item={orchItem} containerStatus={status} />
+      {/* Browse mode: overlay + "Tap to play" prompt for active games */}
+      {!(isActiveGame && isImmersive) && (
+        <>
+          <ContentOverlay item={orchItem} containerStatus={status} />
+
+          {/* "Tap to play" prompt — centered over the game */}
+          {isActiveGame && (
+            <TouchableOpacity
+              onPress={() => setIsImmersive(true)}
+              activeOpacity={0.8}
+              style={{
+                position: 'absolute',
+                top: '35%',
+                alignSelf: 'center',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                backgroundColor: 'rgba(0,0,0,0.5)',
+                paddingHorizontal: 24,
+                paddingVertical: 14,
+                borderRadius: 28,
+                // @ts-ignore — web backdrop-filter
+                backdropFilter: 'blur(8px)',
+              }}
+            >
+              <View
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: '#7c3aed',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Ionicons name="game-controller" size={20} color="#fff" />
+              </View>
+              <View>
+                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '600' }}>
+                  Tap to play
+                </Text>
+                <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11 }}>
+                  Enter immersive mode
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </>
+      )}
+
+      {/* Immersive mode: only floating exit button */}
+      {isActiveGame && isImmersive && (
+        <TouchableOpacity
+          onPress={() => setIsImmersive(false)}
+          activeOpacity={0.8}
+          style={{
+            position: 'absolute',
+            top: 12,
+            left: 12,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: 'rgba(0,0,0,0.45)',
+            paddingHorizontal: 14,
+            paddingVertical: 8,
+            borderRadius: 20,
+            // @ts-ignore — web backdrop-filter
+            backdropFilter: 'blur(8px)',
+            zIndex: 10,
+          }}
+        >
+          <Ionicons name="close" size={16} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 13, fontWeight: '500' }}>
+            Exit
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
