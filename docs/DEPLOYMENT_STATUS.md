@@ -35,10 +35,7 @@
 - **Region**: `sgp1`
 - **Size**: `db-s-1vcpu-1gb`
 - **Status**: Online
-- **Connection URI**:
-  ```
-  rediss://default:***REDACTED***@gavigo-redis-do-user-32286521-0.j.db.ondigitalocean.com:25061
-  ```
+- **Connection URI**: *(stored in K8s Secret, not committed to repo)*
 
 ### 3. DigitalOcean Container Registry
 
@@ -99,7 +96,7 @@ Deployed resources:
 | Resource | Name/ID | Connection Info |
 |----------|---------|-----------------|
 | K8s Cluster | `gavigo-cluster` | `doctl kubernetes cluster kubeconfig save gavigo-cluster` |
-| Redis | `gavigo-redis` | `rediss://default:***REDACTED***@gavigo-redis-do-user-32286521-0.j.db.ondigitalocean.com:25061` |
+| Redis | `gavigo-redis` | *(stored in K8s Secret)* |
 | Registry | `gavigo-registry` | `registry.digitalocean.com/gavigo-registry` |
 | Frontend | External IP | `http://129.212.209.146` |
 

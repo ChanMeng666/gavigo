@@ -4,7 +4,7 @@ metadata:
   name: orchestrator-config
   namespace: gavigo
 data:
-  REDIS_URL: "rediss://default:***REDACTED***@gavigo-redis-do-user-32286521-0.j.db.ondigitalocean.com:25061"
+  REDIS_URL: "REPLACE_WITH_REDIS_URL"
   PORT: "8080"
   LOG_LEVEL: "info"
   # Cross-domain recommendation settings
