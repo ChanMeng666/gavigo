@@ -627,6 +627,16 @@ kubectl -n gavigo get endpoints
 - Verify `VITE_RN_WEB_URL` is set in frontend Dockerfile (should be `/mobile/`)
 - Check `MediaStream.tsx` — when `VITE_RN_WEB_URL` is empty, it falls back to CSS-only view
 
+### Mobile web blank screen with "supabaseKey is required"
+- **Root cause**: Dockerfile `ARG`/`ENV` declarations with no default override `.env` file values. When `docker build` is run without `--build-arg`, the ARG is set to empty string, and `ENV VAR=$ARG` sets the env var to empty, which takes precedence over `.env` file loading.
+- **Fix**: Do NOT use `ARG`/`ENV` in the mobile Dockerfile for `EXPO_PUBLIC_*` vars. Expo SDK 54 automatically loads `.env` files during `npx expo export`. The `.env` file is copied into the container via `COPY . .` and Expo reads it directly.
+- **Verification**: Build log should show `env: load .env` and `env: export EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY ...`
+
+### Mobile web favicon: Expo does not support SVG for web.favicon
+- `app.json` `web.favicon` must be a PNG file — Expo's `@expo/image-utils` rejects SVG with `Invalid mimeType` error during `expo export`
+- To use an SVG favicon on web, create `app/+html.tsx` with `<link rel="icon" type="image/svg+xml" href="..." />` and place the SVG in the `public/` directory (served as static file)
+- Keep `web.favicon` pointing to a PNG as fallback
+
 ## Documentation Links
 
 - [README.md](./README.md) - Project overview with diagrams
