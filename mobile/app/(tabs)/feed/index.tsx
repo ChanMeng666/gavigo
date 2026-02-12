@@ -173,22 +173,29 @@ export default function FeedScreen() {
   });
 
   // Merge Supabase videos + orchestrator items into unified feed
+  // Pattern: 2 videos → 1 game/AI → 2 videos → 1 game/AI → ...
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
+    const orchItems = content.filter((c) => c.type !== 'VIDEO');
 
-    // Supabase videos as primary feed
-    for (const v of videos) {
-      items.push({ kind: 'video', data: v });
-    }
-
-    // Intersperse orchestrator items (games, AI service) every 5 videos
-    // Skip VIDEO type — those have no online source; only keep GAME and AI_SERVICE
+    let vidIdx = 0;
     let orchIdx = 0;
-    for (const c of content) {
-      if (c.type === 'VIDEO') continue;
-      orchIdx++;
-      const insertAt = Math.min(orchIdx * 5, items.length);
-      items.splice(insertAt, 0, { kind: 'orchestrator', data: c });
+
+    while (vidIdx < videos.length || orchIdx < orchItems.length) {
+      // Add up to 2 videos
+      for (let i = 0; i < 2 && vidIdx < videos.length; i++, vidIdx++) {
+        items.push({ kind: 'video', data: videos[vidIdx] });
+      }
+      // Add 1 orchestrator item (game / AI service), cycling if needed
+      if (orchItems.length > 0) {
+        items.push({
+          kind: 'orchestrator',
+          data: orchItems[orchIdx % orchItems.length],
+        });
+        orchIdx++;
+        // Stop cycling once we've run out of videos
+        if (vidIdx >= videos.length) break;
+      }
     }
 
     return items;
