@@ -176,7 +176,7 @@ export default function FeedScreen() {
   // Pattern: 2 videos → 1 game/AI → 2 videos → 1 game/AI → ...
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
-    const orchItems = content.filter((c) => c.type !== 'VIDEO');
+    const orchItems = content.filter((c) => c.type === 'GAME');
 
     let vidIdx = 0;
     let orchIdx = 0;
