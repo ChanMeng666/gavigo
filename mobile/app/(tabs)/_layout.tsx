@@ -32,17 +32,13 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: '#7c3aed',
         tabBarInactiveTintColor: '#555568',
+        tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#0e0e18',
           borderTopColor: '#1e1e30',
-          height: tabBarHeight,
-          paddingBottom: Platform.OS === 'ios' ? 12 : 8,
+          height: Platform.OS === 'ios' ? 56 : 48,
+          paddingBottom: Platform.OS === 'ios' ? 8 : 4,
           paddingTop: 4,
-        },
-        tabBarLabelStyle: {
-          fontSize: 11,
-          lineHeight: 14,
-          fontWeight: '600',
         },
         tabBarHideOnKeyboard: true,
       }}

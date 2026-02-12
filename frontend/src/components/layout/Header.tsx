@@ -1,6 +1,9 @@
 import { cn } from "@/lib/utils"
 import { ViewToggle, type ViewMode } from "./ViewToggle"
 import { ConnectionStatus } from "./ConnectionStatus"
+import { Smartphone } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
 
 interface HeaderProps {
   viewMode: ViewMode
@@ -48,8 +51,30 @@ export function Header({
         className="hidden md:flex"
       />
 
-      {/* View Toggle - Right */}
-      <ViewToggle mode={viewMode} onChange={onViewModeChange} />
+      {/* View Toggle + Mobile Link - Right */}
+      <div className="flex items-center gap-2">
+        <ViewToggle mode={viewMode} onChange={onViewModeChange} />
+        <div className="w-px h-6 bg-border" />
+        <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                asChild
+              >
+                <a href="/mobile/" target="_blank" rel="noopener noreferrer" aria-label="Open Mobile App">
+                  <Smartphone className="h-4 w-4" />
+                </a>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="text-xs">
+              Open Mobile App
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </header>
   )
 }
