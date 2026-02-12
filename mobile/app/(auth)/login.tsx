@@ -69,23 +69,32 @@ export default function LoginScreen() {
     ],
   }));
 
+  const showAlert = (title: string, message: string) => {
+    if (typeof window !== 'undefined') {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleLogin = async () => {
+    console.log('[LOGIN] Button pressed', { email, password: password.length + ' chars' });
+
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      console.log('[LOGIN] Validation failed: empty fields');
+      showAlert('Error', 'Please fill in all fields');
       return;
     }
 
     setLoading(true);
     try {
-      await signInWithEmail(email.trim(), password);
+      console.log('[LOGIN] Calling signInWithEmail...');
+      const result = await signInWithEmail(email.trim(), password);
+      console.log('[LOGIN] signInWithEmail succeeded:', result);
     } catch (error: any) {
-      const message =
-        error?.code === 'auth/invalid-credential'
-          ? 'Invalid email or password'
-          : error?.code === 'auth/too-many-requests'
-            ? 'Too many attempts. Please try again later'
-            : 'Login failed. Please try again';
-      Alert.alert('Login Failed', message);
+      console.error('[LOGIN] signInWithEmail failed:', error);
+      const message = error?.message || 'Login failed. Please try again';
+      showAlert('Login Failed', message);
     } finally {
       setLoading(false);
     }

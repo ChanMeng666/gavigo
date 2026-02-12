@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Ensure video elements fill their container on web */
+video {
+  object-fit: cover;
+}

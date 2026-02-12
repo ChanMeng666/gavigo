@@ -4,6 +4,7 @@ import {
   FlatList,
   Dimensions,
   RefreshControl,
+  ActivityIndicator,
   type ViewToken,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -181,8 +182,10 @@ export default function FeedScreen() {
     }
 
     // Intersperse orchestrator items (games, AI service) every 5 videos
+    // Skip VIDEO type — those have no online source; only keep GAME and AI_SERVICE
     let orchIdx = 0;
     for (const c of content) {
+      if (c.type === 'VIDEO') continue;
       orchIdx++;
       const insertAt = Math.min(orchIdx * 5, items.length);
       items.splice(insertAt, 0, { kind: 'orchestrator', data: c });
@@ -353,6 +356,13 @@ export default function FeedScreen() {
         windowSize={5}
         onEndReached={handleEndReached}
         onEndReachedThreshold={0.5}
+        ListFooterComponent={
+          videosLoading ? (
+            <View style={{ height: 60, alignItems: 'center', justifyContent: 'center' }}>
+              <ActivityIndicator color="#7c3aed" size="small" />
+            </View>
+          ) : null
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { Video, ResizeMode, AVPlaybackStatus } from 'expo-av';
 import { Ionicons } from '@expo/vector-icons';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -12,23 +12,15 @@ import Animated, {
   withSpring,
   runOnJS,
 } from 'react-native-reanimated';
-import { getApiBase } from '@/services/api';
-
-const videoFileMap: Record<string, string> = {
-  'video-football-1': '/videos/football-1.mp4',
-  'video-football-2': '/videos/football-2.mp4',
-  'video-football-3': '/videos/football-3.mp4',
-  'video-scifi-1': '/videos/scifi-1.mp4',
-  'video-scifi-2': '/videos/scifi-2.mp4',
-};
 
 interface VideoPlayerProps {
   contentId: string;
   isVisible: boolean;
   videoUrl?: string;
+  thumbnailUrl?: string;
 }
 
-export function VideoPlayer({ contentId, isVisible, videoUrl }: VideoPlayerProps) {
+export function VideoPlayer({ contentId, isVisible, videoUrl, thumbnailUrl }: VideoPlayerProps) {
   const videoRef = useRef<Video>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isBuffering, setIsBuffering] = useState(false);
@@ -36,9 +28,6 @@ export function VideoPlayer({ contentId, isVisible, videoUrl }: VideoPlayerProps
   const pauseIndicatorOpacity = useSharedValue(0);
   const heartScale = useSharedValue(0);
   const heartOpacity = useSharedValue(0);
-
-  // Use direct URL if provided, otherwise fall back to hardcoded map
-  const videoUri = videoUrl || `${getApiBase()}${videoFileMap[contentId] || '/videos/football-1.mp4'}`;
 
   useEffect(() => {
     if (isVisible && isPlaying) {
@@ -117,18 +106,53 @@ export function VideoPlayer({ contentId, isVisible, videoUrl }: VideoPlayerProps
 
   const progressKnobLeft = `${progress}%`;
 
+  // No video URL — show placeholder
+  if (!videoUrl) {
+    return (
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#0e0e18',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Ionicons name="videocam-off-outline" size={48} color="#555568" />
+        <Text style={{ color: '#555568', marginTop: 8, fontSize: 14 }}>
+          Video unavailable
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <GestureDetector gesture={gesture}>
-      <View className="absolute inset-0 bg-bg-base">
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: '#0e0e18',
+          overflow: 'hidden',
+        }}
+      >
         <Video
           ref={videoRef}
-          source={{ uri: videoUri }}
+          source={{ uri: videoUrl }}
+          posterSource={thumbnailUrl ? { uri: thumbnailUrl } : undefined}
+          usePoster={!!thumbnailUrl}
           resizeMode={ResizeMode.COVER}
           isLooping
           isMuted={false}
           shouldPlay={isVisible && isPlaying}
           onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-          style={{ width: '100%', height: '100%' }}
+          style={{ width: '100%', height: '100%', objectFit: 'cover' } as any}
         />
 
         {/* Buffering overlay */}

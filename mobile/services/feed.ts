@@ -59,6 +59,17 @@ export async function fetchVideosByTheme(
   return data ?? [];
 }
 
+export async function fetchVideoById(id: string): Promise<Video | null> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) return null;
+  return data;
+}
+
 export async function searchVideos(
   query: string,
   page = 1,

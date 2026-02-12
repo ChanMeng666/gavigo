@@ -99,112 +99,15 @@ function ContentLoadingState({
 }
 
 // ============================================
-// INLINE VIDEO PLAYER
+// VIDEO PLACEHOLDER (local videos removed)
 // ============================================
-const videoFileMap: Record<string, string> = {
-  "video-football-1": "/videos/football-1.mp4",
-  "video-football-2": "/videos/football-2.mp4",
-  "video-football-3": "/videos/football-3.mp4",
-  "video-scifi-1": "/videos/scifi-1.mp4",
-  "video-scifi-2": "/videos/scifi-2.mp4",
-}
-
-function InlineVideoPlayer({
-  contentId,
-  isVisible,
-}: {
-  contentId: string
-  isVisible: boolean
-}) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [progress, setProgress] = useState(0)
-
-  const videoSrc = videoFileMap[contentId] || "/videos/football-1.mp4"
-
-  // Auto-play/pause based on visibility
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    if (isVisible && isPlaying) {
-      video.play().catch(() => {})
-    } else {
-      video.pause()
-    }
-  }, [isVisible, isPlaying])
-
-  // Track progress
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const handleTimeUpdate = () => {
-      if (video.duration) {
-        setProgress((video.currentTime / video.duration) * 100)
-      }
-    }
-
-    const handleEnded = () => {
-      video.currentTime = 0
-      video.play().catch(() => {})
-    }
-
-    video.addEventListener("timeupdate", handleTimeUpdate)
-    video.addEventListener("ended", handleEnded)
-
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate)
-      video.removeEventListener("ended", handleEnded)
-    }
-  }, [])
-
-  const togglePlay = () => {
-    const video = videoRef.current
-    if (!video) return
-
-    if (isPlaying) {
-      video.pause()
-    } else {
-      video.play().catch(() => {})
-    }
-    setIsPlaying(!isPlaying)
-  }
-
+function VideoPlaceholder() {
   return (
-    <div className="absolute inset-0 bg-black" onClick={togglePlay}>
-      <video
-        ref={videoRef}
-        src={videoSrc}
-        className="w-full h-full object-cover"
-        playsInline
-        muted
-        loop
-      />
-
-      {/* Play/Pause indicator (shows briefly on tap) */}
-      <AnimatePresence>
-        {!isPlaying && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.5 }}
-            className="absolute inset-0 flex items-center justify-center bg-black/30"
-          >
-            <div className="h-16 w-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-              <PlayIcon className="h-8 w-8 text-white ml-1" />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Progress bar at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-        <motion.div
-          className="h-full bg-white"
-          style={{ width: `${progress}%` }}
-        />
+    <div className="absolute inset-0 bg-black flex flex-col items-center justify-center">
+      <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
+        <PlayIcon className="h-8 w-8 text-white/40" />
       </div>
+      <p className="text-white/40 text-sm">Video streams via mobile app</p>
     </div>
   )
 }
@@ -607,9 +510,7 @@ function ContentSlide({
             animate={{ opacity: 1 }}
             className="absolute inset-0"
           >
-            {item.type === "VIDEO" && (
-              <InlineVideoPlayer contentId={item.id} isVisible={isVisible} />
-            )}
+            {item.type === "VIDEO" && <VideoPlaceholder />}
             {item.type === "GAME" && (
               <InlineGamePlayer
                 deploymentName={item.deployment_name}

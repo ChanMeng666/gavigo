@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, Share, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -13,6 +14,7 @@ interface ShareButtonProps {
 
 export function ShareButton({ contentId, title }: ShareButtonProps) {
   const scale = useSharedValue(1);
+  const [copied, setCopied] = useState(false);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -24,12 +26,43 @@ export function ShareButton({ contentId, title }: ShareButtonProps) {
       scale.value = withSpring(1, { damping: 6 });
     }, 100);
 
+    if (Platform.OS === 'web') {
+      // Build a proper HTTPS URL for web sharing
+      const origin =
+        typeof window !== 'undefined' ? window.location.origin : '';
+      const shareUrl = `${origin}/mobile/video/${contentId}`;
+      const shareText = `Check out "${title}" on GAVIGO IRE! ${shareUrl}`;
+
+      // Try Web Share API first
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          await navigator.share({ title, text: shareText, url: shareUrl });
+          return;
+        } catch {
+          // User cancelled or API not supported — fall through to clipboard
+        }
+      }
+
+      // Fallback: copy to clipboard
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2000);
+        } catch {
+          // Clipboard failed silently
+        }
+      }
+      return;
+    }
+
+    // Native share
     try {
       await Share.share({
         message:
           Platform.OS === 'ios'
             ? title
-            : `Check out "${title}" on GAVIGO IRE! gavigo://content/${contentId}`,
+            : `Check out "${title}" on GAVIGO IRE!`,
         url: `gavigo://content/${contentId}`,
         title: title,
       });
@@ -48,7 +81,9 @@ export function ShareButton({ contentId, title }: ShareButtonProps) {
           accessibilityLabel="Share"
         />
       </Animated.View>
-      <Text className="text-micro text-text-primary">Share</Text>
+      <Text className="text-micro text-text-primary">
+        {copied ? 'Copied!' : 'Share'}
+      </Text>
     </View>
   );
 }

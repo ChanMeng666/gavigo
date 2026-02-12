@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Chip, EmptyState } from '@/components/ui';
 import {
@@ -36,6 +37,7 @@ const THEMES = [
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [videos, setVideos] = useState<Video[]>([]);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
@@ -83,7 +85,8 @@ export default function ExploreScreen() {
       style={{ width: CARD_WIDTH }}
       activeOpacity={0.8}
       accessibilityRole="button"
-      accessibilityLabel={item.title}
+      accessibilityLabel={`Play ${item.title}`}
+      onPress={() => router.push(`/video/${item.id}`)}
     >
       <View className="bg-bg-surface rounded-card border border-border overflow-hidden">
         {/* Thumbnail */}
@@ -93,6 +96,12 @@ export default function ExploreScreen() {
             style={{ width: '100%', height: '100%' }}
             resizeMode="cover"
           />
+          {/* Play icon overlay */}
+          <View className="absolute inset-0 items-center justify-center">
+            <View className="w-10 h-10 rounded-full bg-black/50 items-center justify-center">
+              <Ionicons name="play" size={20} color="white" />
+            </View>
+          </View>
           {/* Duration badge */}
           <View className="absolute bottom-2 right-2 bg-black/70 rounded-md px-1.5 py-0.5">
             <Text className="text-micro text-white">

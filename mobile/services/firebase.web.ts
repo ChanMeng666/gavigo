@@ -4,10 +4,15 @@ import { useAuthStore } from '@/stores/authStore';
 import { supabase } from './supabase';
 
 export async function signInWithEmail(email: string, password: string) {
+  console.log('[AUTH] signInWithEmail called', { email });
+  console.log('[AUTH] Supabase URL:', process.env.EXPO_PUBLIC_SUPABASE_URL);
+
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
+
+  console.log('[AUTH] signIn response:', { user: data?.user?.id, session: !!data?.session, error });
 
   if (error) throw new Error(error.message);
 
@@ -53,20 +58,71 @@ export async function signUpWithEmail(
   password: string,
   username: string
 ) {
+  console.log('[AUTH] signUpWithEmail called', { email, username });
+  console.log('[AUTH] Supabase URL:', process.env.EXPO_PUBLIC_SUPABASE_URL);
+
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
       data: { username },
+      emailRedirectTo: undefined,
     },
   });
+
+  console.log('[AUTH] signUp response:', { user: data?.user?.id, session: !!data?.session, error });
 
   if (error) throw new Error(error.message);
 
   const user = data.user;
   const session = data.session;
 
+  // If email confirmation is required, session will be null
+  if (user && !session) {
+    console.log('[AUTH] Email confirmation may be required. Attempting sign-in directly...');
+    // Try signing in immediately (works if email confirmation is disabled or auto-confirmed)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    console.log('[AUTH] Auto sign-in result:', { user: signInData?.user?.id, session: !!signInData?.session, error: signInError });
+
+    if (signInData?.session) {
+      useAuthStore.getState().setFirebaseAuth(signInData.user!.id, signInData.session.access_token);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', signInData.user!.id)
+        .single();
+
+      console.log('[AUTH] Profile fetched:', profile);
+
+      if (profile) {
+        useAuthStore.getState().setUser({
+          id: profile.id,
+          firebase_uid: signInData.user!.id,
+          username: profile.username,
+          avatar_url: profile.avatar_url,
+          bio: profile.bio || '',
+          followers_count: profile.followers_count,
+          following_count: profile.following_count,
+          likes_count: profile.likes_count,
+          created_at: profile.created_at,
+        });
+      }
+
+      return {
+        user: { uid: signInData.user!.id, displayName: username, email: signInData.user!.email },
+      };
+    }
+
+    // If sign-in also fails, email confirmation is truly required
+    throw new Error('Please check your email to confirm your account, then sign in.');
+  }
+
   if (user && session) {
+    console.log('[AUTH] Got session immediately, setting auth state');
     useAuthStore.getState().setFirebaseAuth(user.id, session.access_token);
 
     // Profile auto-created via DB trigger; fetch it
@@ -75,6 +131,8 @@ export async function signUpWithEmail(
       .select('*')
       .eq('id', user.id)
       .single();
+
+    console.log('[AUTH] Profile fetched:', profile);
 
     if (profile) {
       useAuthStore.getState().setUser({

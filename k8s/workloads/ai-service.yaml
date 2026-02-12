@@ -8,7 +8,7 @@ metadata:
     type: ai-service
     theme: tech
 spec:
-  replicas: 0  # Starts COLD
+  replicas: 1  # Keep warm for chat functionality
   selector:
     matchLabels:
       app: ai-service

@@ -94,11 +94,12 @@ export function ContentCard({
   if (item.kind === 'video') {
     const video = item.data;
     return (
-      <View className="flex-1 bg-bg-base">
+      <View style={{ flex: 1, backgroundColor: '#0e0e18', overflow: 'hidden' }}>
         <VideoPlayer
           contentId={video.id}
           isVisible={isVisible}
           videoUrl={video.video_url}
+          thumbnailUrl={video.thumbnail_url}
         />
         <VideoOverlay video={video} />
       </View>
@@ -133,10 +134,6 @@ export function ContentCard({
             onActivate?.(orchItem.id);
           }}
         />
-      )}
-
-      {isReady && orchItem.type === 'VIDEO' && (
-        <VideoPlayer contentId={orchItem.id} isVisible={isVisible} />
       )}
 
       {isReady && orchItem.type === 'GAME' && (

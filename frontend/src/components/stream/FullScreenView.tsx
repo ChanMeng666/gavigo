@@ -8,9 +8,6 @@ import {
   contentTypeConfig,
   CloseIcon,
   PlayIcon,
-  PauseIcon,
-  SkipForwardIcon,
-  SkipBackIcon,
 } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import type { ContentItem, ContainerStatus } from "@/types"
@@ -279,145 +276,18 @@ function AIServiceChat({ title }: { title: string }) {
   )
 }
 
-// Video content ID to file mapping
-const videoFileMap: Record<string, string> = {
-  "video-football-1": "/videos/football-1.mp4",
-  "video-football-2": "/videos/football-2.mp4",
-  "video-football-3": "/videos/football-3.mp4",
-  "video-scifi-1": "/videos/scifi-1.mp4",
-  "video-scifi-2": "/videos/scifi-2.mp4",
-}
-
-// Real video player component
-function VideoPlayer({ contentId, title, theme }: { contentId: string; title: string; theme: string }) {
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [isPlaying, setIsPlaying] = useState(true)
-  const [progress, setProgress] = useState(0)
-  const [duration, setDuration] = useState(0)
-
-  const videoSrc = videoFileMap[contentId] || "/videos/football-1.mp4"
-
-  useEffect(() => {
-    const video = videoRef.current
-    if (!video) return
-
-    const handleTimeUpdate = () => {
-      if (video.duration) {
-        setProgress((video.currentTime / video.duration) * 100)
-      }
-    }
-
-    const handleLoadedMetadata = () => {
-      setDuration(video.duration)
-      if (isPlaying) {
-        video.play().catch(() => {})
-      }
-    }
-
-    const handleEnded = () => {
-      video.currentTime = 0
-      video.play().catch(() => {})
-    }
-
-    video.addEventListener("timeupdate", handleTimeUpdate)
-    video.addEventListener("loadedmetadata", handleLoadedMetadata)
-    video.addEventListener("ended", handleEnded)
-
-    return () => {
-      video.removeEventListener("timeupdate", handleTimeUpdate)
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata)
-      video.removeEventListener("ended", handleEnded)
-    }
-  }, [isPlaying])
-
-  const togglePlay = () => {
-    const video = videoRef.current
-    if (!video) return
-
-    if (isPlaying) {
-      video.pause()
-    } else {
-      video.play().catch(() => {})
-    }
-    setIsPlaying(!isPlaying)
-  }
-
-  const skip = (seconds: number) => {
-    const video = videoRef.current
-    if (!video) return
-    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + seconds))
-  }
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
-
+// Video placeholder (local videos removed — videos stream via mobile app)
+function VideoPlayer({ title, theme }: { contentId: string; title: string; theme: string }) {
   return (
     <div className="text-center">
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4">
-        <video
-          ref={videoRef}
-          src={videoSrc}
-          className="w-full h-full object-contain"
-          playsInline
-          muted
-          loop
-        />
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-          <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer"
-            onClick={(e) => {
-              const video = videoRef.current
-              if (!video) return
-              const rect = e.currentTarget.getBoundingClientRect()
-              const percent = (e.clientX - rect.left) / rect.width
-              video.currentTime = percent * video.duration
-            }}
-          >
-            <motion.div
-              className="h-full bg-white rounded-full"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-xs text-white/70 mt-1">
-            <span>{formatTime((progress / 100) * duration)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
+      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4 flex items-center justify-center">
+        <div className="flex flex-col items-center">
+          <PlayIcon className="h-12 w-12 text-white/30 mb-2" />
+          <p className="text-white/40 text-sm">Video streams via mobile app</p>
         </div>
       </div>
       <h2 className="text-2xl font-display font-bold text-white mb-2">{title}</h2>
-      <p className="text-white/70 mb-4 text-sm">Now streaming {theme} content</p>
-      <div className="flex items-center justify-center gap-3">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => skip(-10)}
-          className="bg-white/10 hover:bg-white/20 text-white"
-        >
-          <SkipBackIcon className="h-5 w-5" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="lg"
-          onClick={togglePlay}
-          className="bg-white/20 hover:bg-white/30 text-white h-14 w-14 rounded-full"
-        >
-          {isPlaying ? (
-            <PauseIcon className="h-6 w-6" />
-          ) : (
-            <PlayIcon className="h-6 w-6" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => skip(10)}
-          className="bg-white/10 hover:bg-white/20 text-white"
-        >
-          <SkipForwardIcon className="h-5 w-5" />
-        </Button>
-      </div>
+      <p className="text-white/70 mb-4 text-sm">#{theme} content</p>
     </div>
   )
 }

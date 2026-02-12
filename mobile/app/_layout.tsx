@@ -48,6 +48,14 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen
+          name="video/[id]"
+          options={{
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </AuthGuard>
   );

@@ -35,33 +35,44 @@ export default function RegisterScreen() {
     return { level: 2, color: '#fbbf24', width: '66%' };
   }, [password]);
 
+  const showAlert = (title: string, message: string) => {
+    if (typeof window !== 'undefined') {
+      window.alert(`${title}\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   const handleRegister = async () => {
+    console.log('[REGISTER] Button pressed', { username, email, password: password.length + ' chars', confirmPassword: confirmPassword.length + ' chars' });
+
     if (!username.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Error', 'Please fill in all fields');
+      console.log('[REGISTER] Validation failed: empty fields');
+      showAlert('Error', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      console.log('[REGISTER] Validation failed: passwords do not match');
+      showAlert('Error', 'Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      console.log('[REGISTER] Validation failed: password too short');
+      showAlert('Error', 'Password must be at least 6 characters');
       return;
     }
 
     setLoading(true);
     try {
-      await signUpWithEmail(email.trim(), password, username.trim());
+      console.log('[REGISTER] Calling signUpWithEmail...');
+      const result = await signUpWithEmail(email.trim(), password, username.trim());
+      console.log('[REGISTER] signUpWithEmail succeeded:', result);
     } catch (error: any) {
-      const message =
-        error?.code === 'auth/email-already-in-use'
-          ? 'This email is already registered'
-          : error?.code === 'auth/weak-password'
-            ? 'Password is too weak'
-            : 'Registration failed. Please try again';
-      Alert.alert('Registration Failed', message);
+      console.error('[REGISTER] signUpWithEmail failed:', error);
+      const message = error?.message || 'Registration failed. Please try again';
+      showAlert('Registration Failed', message);
     } finally {
       setLoading(false);
     }

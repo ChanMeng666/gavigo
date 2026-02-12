@@ -30,12 +30,16 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
   return (
     <>
       {/* Bottom gradient scrim for text readability */}
-      <View className="absolute bottom-0 left-0 right-0" pointerEvents="none">
-        <View style={{ height: 30, backgroundColor: 'rgba(0,0,0,0.05)' }} />
-        <View style={{ height: 60, backgroundColor: 'rgba(0,0,0,0.2)' }} />
-        <View style={{ height: 100, backgroundColor: 'rgba(0,0,0,0.4)' }} />
-        <View style={{ height: 160, backgroundColor: 'rgba(0,0,0,0.7)' }} />
-      </View>
+      <View
+        className="absolute bottom-0 left-0 right-0"
+        pointerEvents="none"
+        style={{
+          height: 350,
+          // @ts-ignore — backgroundImage is valid on web via RN Web
+          backgroundImage:
+            'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.03) 20%, rgba(0,0,0,0.15) 40%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.75) 85%, rgba(0,0,0,0.9) 100%)',
+        }}
+      />
 
       {/* Bottom info overlay */}
       <View
