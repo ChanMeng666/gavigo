@@ -26,7 +26,7 @@
       "package": "com.gavigo.ire"
     },
     "web": {
-      "favicon": "./assets/gavigo-logo.svg",
+      "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
     "experiments": {
