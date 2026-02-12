@@ -44,14 +44,24 @@ export function ShareButton({ contentId, title }: ShareButtonProps) {
       }
 
       // Fallback: copy to clipboard
-      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-        try {
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(shareUrl);
-          setCopied(true);
-          setTimeout(() => setCopied(false), 2000);
-        } catch {
-          // Clipboard failed silently
+        } else {
+          // HTTP fallback: use legacy execCommand('copy')
+          const textarea = document.createElement('textarea');
+          textarea.value = shareUrl;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textarea);
         }
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        // Clipboard failed
       }
       return;
     }

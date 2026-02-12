@@ -178,15 +178,34 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
           className="flex-row gap-2 p-3 border-t border-border"
           style={{ paddingBottom: Math.max(insets.bottom, 8) }}
         >
-          <View className="flex-1 flex-row items-center bg-white/8 rounded-pill px-4">
+          <View
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: 'rgba(255,255,255,0.12)',
+              borderWidth: 1,
+              borderColor: 'rgba(255,255,255,0.18)',
+              borderRadius: 20,
+              paddingHorizontal: 16,
+            }}
+          >
             <TextInput
               value={input}
               onChangeText={setInput}
               placeholder="Add a comment..."
-              placeholderTextColor="#555568"
+              placeholderTextColor="#8e8ea0"
               onSubmitEditing={handleSend}
               returnKeyType="send"
-              className="flex-1 text-caption text-text-primary py-2.5"
+              style={{
+                flex: 1,
+                color: '#f0f0f5',
+                fontSize: 13,
+                lineHeight: 18,
+                paddingVertical: 10,
+                // @ts-ignore — web outline removal
+                outlineStyle: 'none',
+              }}
             />
           </View>
           <IconButton
