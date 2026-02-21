@@ -20,8 +20,8 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype with 
 
 | Resource | Status | Details |
 |----------|--------|---------|
-| K8s Cluster | Running | gavigo-cluster (2 nodes, sgp1) |
-| Redis | Online | Managed Valkey with TLS |
+| K8s Cluster | Running | gavigo-cluster (1 node, sgp1) |
+| Redis | Online | In-cluster redis:7-alpine (no TLS) |
 | Frontend | Running | LoadBalancer IP: 129.212.209.146 |
 | Orchestrator | Running | ClusterIP service |
 | Mobile Web | Running | ClusterIP service, proxied at `/mobile/` |
@@ -46,7 +46,7 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype with 
 | Mobile WebView | react-native-webview | 13.x |
 | Mobile Animations | react-native-reanimated | v4 |
 | Mobile Bottom Sheet | @gorhom/bottom-sheet | v5 |
-| State/Cache | Redis (Valkey) | 7.x |
+| State/Cache | Redis (in-cluster) | 7.x |
 | Container | Docker | Latest |
 | Orchestration | Kubernetes | DOKS (DigitalOcean) |
 | WebSocket | gorilla/websocket | 1.5+ |
@@ -196,6 +196,8 @@ gavigo/
 │   ├── mobile-web/         # Mobile web app deployment
 │   │   ├── deployment.yaml # 1 replica, 32-64Mi RAM
 │   │   └── service.yaml    # ClusterIP on port 80
+│   ├── redis/              # In-cluster Redis
+│   │   └── deployment.yaml # redis:7-alpine + ClusterIP service
 │   └── workloads/
 │       └── ai-service.yaml # AI service deployment
 │
@@ -280,6 +282,7 @@ kubectl -n gavigo get pods,svc,deployments
 
 # Deploy/Update
 kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/redis/
 kubectl apply -f k8s/orchestrator/
 kubectl apply -f k8s/frontend/
 kubectl apply -f k8s/mobile-web/
@@ -540,7 +543,7 @@ The social API uses an in-memory `SocialStore` in Go:
 ### Redis Usage
 - **State Store**: Container states, scores, decisions
 - **Pub/Sub**: Real-time event distribution
-- **TLS**: Required for DigitalOcean Managed Redis
+- **In-cluster**: `redis:7-alpine` via `redis://redis:6379` (no TLS)
 
 ### Kubernetes RBAC
 The orchestrator service account has permissions to:
@@ -549,6 +552,14 @@ The orchestrator service account has permissions to:
 - Scale deployments (update Deployments/scale)
 
 ## Recent Changes
+
+### 2026-02-21
+- Cost optimization: removed obsolete game-football/game-scifi K8s deployments and nginx proxy blocks
+- Switched from DigitalOcean Managed Redis ($10/mo) to in-cluster redis:7-alpine
+- Added `k8s/redis/deployment.yaml` for in-cluster Redis deployment + service
+- Moved REDIS_URL from K8s Secret to ConfigMap (`redis://redis:6379`, no TLS)
+- Cluster scaled from 2 nodes to 1 node
+- Removed `k8s/frontend/ingress.yaml` (no ingress controller installed)
 
 ### 2026-02-10
 - Added React Native + Expo mobile app (`mobile/`) with 4 tabs: Feed, Explore, AI Chat, Profile
@@ -590,7 +601,8 @@ kubectl -n gavigo logs <pod-name>
 ```
 
 ### Redis connection issues
-- Verify REDIS_URL in configmap uses `rediss://` (TLS)
+- Verify REDIS_URL in configmap is `redis://redis:6379` (in-cluster, no TLS)
+- Check redis pod is running: `kubectl -n gavigo get pods -l app=redis`
 - Check orchestrator logs for connection errors
 
 ### Image pull errors

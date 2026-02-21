@@ -6,6 +6,8 @@ metadata:
 data:
   PORT: "8080"
   LOG_LEVEL: "info"
+  # In-cluster Redis (no TLS needed)
+  REDIS_URL: "redis://redis:6379"
   # Cross-domain recommendation settings
   ENGAGEMENT_THRESHOLD_MS: "10000"
   RECOMMENDATION_THRESHOLD: "0.6"

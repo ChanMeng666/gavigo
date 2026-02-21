@@ -24,12 +24,6 @@ spec:
           envFrom:
             - configMapRef:
                 name: orchestrator-config
-          env:
-            - name: REDIS_URL
-              valueFrom:
-                secretKeyRef:
-                  name: orchestrator-secrets
-                  key: REDIS_URL
           resources:
             requests:
               memory: "64Mi"
