@@ -32,6 +32,11 @@ k8s/secrets/
 k8s/workloads/openai-secret.yaml
 *.kubeconfig
 
+# TLS certificates and keys
+*.pem
+*.key
+*.crt
+
 # Claude Code local config
 .claude/
 

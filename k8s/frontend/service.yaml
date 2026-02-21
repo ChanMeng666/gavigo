@@ -5,10 +5,23 @@ metadata:
   namespace: gavigo
   labels:
     app: frontend
+  annotations:
+    # Use REGIONAL (HTTP) LB type for TLS termination support
+    service.beta.kubernetes.io/do-loadbalancer-type: "REGIONAL"
+    # HTTPS on port 443, HTTP on port 80
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
+    service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "b9c7acc4-19a9-4460-92b3-2a9785a08f97"
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "false"
 spec:
   type: LoadBalancer
   ports:
-    - port: 80
+    - name: http
+      port: 80
+      targetPort: 80
+      protocol: TCP
+    - name: https
+      port: 443
       targetPort: 80
       protocol: TCP
   selector:

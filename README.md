@@ -12,7 +12,7 @@
 
 **AI-Driven Container Orchestration Visualization with Mobile App**
 
-[Live Demo](http://129.212.209.146) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
+[Live Demo](https://gavigo.chanmeng.org/) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
 
 [![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg)](https://www.digitalocean.com/?refcode=9ad5295b63f3&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
 
@@ -43,7 +43,7 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | http://129.212.209.146  /  https://gavigo.chanmeng.org/ | Running |
+| Production | https://gavigo.chanmeng.org/ | Running |
 
 **Infrastructure**: DigitalOcean Kubernetes (DOKS) in Singapore (sgp1)
 
@@ -114,7 +114,7 @@ graph TB
     end
 
     subgraph "Data Layer"
-        REDIS[(Redis/Valkey<br/>State Store)]
+        REDIS[(Redis 7<br/>In-Cluster)]
         MEMSOCIAL[(In-Memory<br/>Social Store)]
     end
 
@@ -125,7 +125,8 @@ graph TB
 
     subgraph "Infrastructure"
         K8S[Kubernetes API]
-        LB[LoadBalancer]
+        LB[LoadBalancer<br/>HTTPS + TLS Termination]
+        CF_EDGE[Cloudflare Edge<br/>CDN + SSL]
     end
 
     MA --> FEED
@@ -134,7 +135,8 @@ graph TB
     FE --> PHONE
     FE --> DASH
 
-    LB --> NGINX
+    CF_EDGE -->|HTTPS| LB
+    LB -->|HTTP| NGINX
     NGINX -->|/| FE
     NGINX -->|^~ /mobile/| MA
     NGINX -->|/api/| API
@@ -154,7 +156,7 @@ graph TB
 ### Request Routing (nginx)
 
 ```
-Internet → LoadBalancer :80 → Frontend nginx
+Internet → Cloudflare (HTTPS) → DO LoadBalancer :443 (TLS termination) → Frontend nginx :80
     ├── /               → React Dashboard (SPA)
     ├── ^~ /mobile/     → Mobile Web App (Expo web build, proxied to mobile-web service)
     ├── /api/           → Orchestrator (Go REST API)
@@ -303,14 +305,15 @@ graph TB
                 FE_POD[Frontend Pod<br/>nginx:alpine]
                 ORCH_POD[Orchestrator Pod<br/>Go binary]
                 MW_POD[Mobile-Web Pod<br/>nginx:alpine]
+                REDIS_POD[(Redis 7<br/>In-Cluster)]
             end
 
-            FE_SVC[Frontend Service<br/>LoadBalancer :80]
+            FE_SVC[Frontend Service<br/>LoadBalancer :80/:443]
             ORCH_SVC[Orchestrator Service<br/>ClusterIP :8080]
             MW_SVC[Mobile-Web Service<br/>ClusterIP :80]
         end
 
-        REDIS_DB[(Managed Redis<br/>Valkey + TLS)]
+        CF[Cloudflare<br/>CDN + SSL]
         REGISTRY[Container Registry<br/>gavigo-registry]
     end
 
@@ -320,13 +323,14 @@ graph TB
         FIREBASE[Firebase Auth]
     end
 
-    INTERNET((Internet)) --> FE_SVC
+    INTERNET((Internet)) -->|HTTPS| CF
+    CF -->|HTTPS| FE_SVC
     FE_SVC --> FE_POD
     FE_POD -->|^~ /mobile/| MW_SVC
     MW_SVC --> MW_POD
     FE_POD -->|/api/, /ws| ORCH_SVC
     ORCH_SVC --> ORCH_POD
-    ORCH_POD --> REDIS_DB
+    ORCH_POD --> REDIS_POD
     FE_POD -.->|iframe| KONG
     ORCH_POD -.->|API| OPENAI
     MW_POD -.->|Auth| FIREBASE
@@ -427,9 +431,10 @@ When users engage with content for 5+ seconds, the system recommends related con
 | Technology | Provider | Purpose |
 |------------|----------|---------|
 | Kubernetes | DigitalOcean DOKS | Container orchestration |
-| Redis | DigitalOcean Managed (Valkey) | State store + TLS |
+| Redis | In-cluster redis:7-alpine | State store (no TLS) |
 | Container Registry | DigitalOcean | Image storage (4 images) |
-| LoadBalancer | DigitalOcean | External access |
+| Load Balancer | DigitalOcean REGIONAL | HTTPS termination (Cloudflare Origin CA) |
+| CDN / SSL | Cloudflare | Edge caching, SSL/TLS Full (strict) |
 | Firebase | Google | Mobile authentication |
 
 ---
@@ -684,9 +689,10 @@ sequenceDiagram
 
 | Resource | Name | Specification |
 |----------|------|---------------|
-| K8s Cluster | gavigo-cluster | 2 nodes, s-2vcpu-4gb |
-| Redis | gavigo-redis | Valkey, TLS enabled |
+| K8s Cluster | gavigo-cluster | 1 node, sgp1 |
+| Redis | In-cluster | redis:7-alpine (no TLS) |
 | Registry | gavigo-registry | Basic tier (5 repos) |
+| Load Balancer | REGIONAL (HTTP) | HTTPS via Cloudflare Origin CA |
 | Region | sgp1 | Singapore |
 
 ### Container Images
@@ -702,11 +708,12 @@ sequenceDiagram
 
 | Service | Cost |
 |---------|------|
-| Kubernetes (2 nodes) | ~$24/month |
-| Managed Redis (Valkey) | ~$15/month |
+| Kubernetes (1 node) | ~$12/month |
+| Redis (in-cluster) | $0 (runs in cluster) |
 | Container Registry (Basic) | ~$5/month |
-| Load Balancer (auto-created) | ~$12/month |
-| **Total** | **~$56/month** |
+| Load Balancer (REGIONAL) | ~$12/month |
+| Cloudflare (Free plan) | $0 |
+| **Total** | **~$29/month** |
 
 ---
 
@@ -734,9 +741,10 @@ kubectl -n gavigo rollout restart deployment/mobile-web
 
 ### Check Redis Connection
 ```bash
-kubectl -n gavigo exec -it deployment/orchestrator -- sh
-# Inside container:
-# Check REDIS_URL environment variable
+# Verify redis pod is running
+kubectl -n gavigo get pods -l app=redis
+# Check REDIS_URL in orchestrator config
+kubectl -n gavigo get configmap orchestrator-config -o yaml | grep REDIS
 ```
 
 ### Mobile Web Black Screen
@@ -751,13 +759,15 @@ kubectl -n gavigo exec -it deployment/orchestrator -- sh
 - [CLAUDE.md](./CLAUDE.md) - Development guidelines for Claude Code
 - [docs/DEPLOYMENT_STATUS.md](./docs/DEPLOYMENT_STATUS.md) - Current deployment status
 - [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough and technical explanations
+- [docs/HTTPS_SETUP_GUIDE.md](./docs/HTTPS_SETUP_GUIDE.md) - HTTPS setup with Cloudflare Origin CA + DO Load Balancer
+- [docs/EXPO_WEB_PITFALLS.md](./docs/EXPO_WEB_PITFALLS.md) - Expo web platform pitfalls and debugging
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 
 ---
 
 ## License
 
-This project is proprietary software. All rights reserved.
+This project is licensed under the [MIT License](./LICENSE).
 
 ## Contributing
 
