@@ -174,6 +174,20 @@ export function useWebSocket(options: UseWebSocketOptions) {
     [send]
   );
 
+  const sendScreenView = useCallback(
+    (screenName: string) => {
+      send('screen_view', { screen_name: screenName });
+    },
+    [send]
+  );
+
+  const sendUserAction = useCallback(
+    (payload: { action: string; screen: string; value?: string }) => {
+      send('user_action', payload);
+    },
+    [send]
+  );
+
   return {
     connected,
     sessionId,
@@ -183,5 +197,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     sendActivationRequest,
     sendDeactivation,
     sendDemoControl,
+    sendScreenView,
+    sendUserAction,
   };
 }

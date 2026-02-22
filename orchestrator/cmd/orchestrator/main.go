@@ -57,7 +57,7 @@ func main() {
 
 	// Initialize social store and handlers
 	socialStore := models.NewSocialStore()
-	socialHandlers := api.NewSocialHandlers(socialStore)
+	socialHandlers := api.NewSocialHandlers(socialStore, hub)
 
 	// Initialize message handler
 	msgHandler := websocket.NewMessageHandler(hub)
@@ -159,8 +159,23 @@ func main() {
 		hub.BroadcastScoreUpdate(contentID, scores)
 	}
 
+	// Engagement tracking state for throttled broadcasting
+	type engagementState struct {
+		focusCount      int
+		themeFocusTimes map[string]int
+		scrollPosition  int
+		scrollVelocity  float64
+	}
+	engagementStates := make(map[string]*engagementState) // sessionID -> state
+
 	// Wire up message handlers
 	msgHandler.OnScrollUpdate = func(client *websocket.Client, position int, velocity float64, visibleContent []string) {
+		// Track scroll state for engagement broadcasts
+		if state, ok := engagementStates[client.SessionID]; ok {
+			state.scrollPosition = position
+			state.scrollVelocity = velocity
+		}
+
 		// Convert content to pointers for rules engine
 		allContent := handlers.GetContent()
 		contentPtrs := make([]*models.ContentItem, len(allContent))
@@ -188,6 +203,29 @@ func main() {
 		// Spine: record INTENT if combined score > 0.3 and no INTENT yet
 		if scores.CombinedScore > 0.3 && !spine.HasIntent(contentID) {
 			spine.RecordPhase(contentID, client.SessionID, models.PhaseIntent, "focus_engagement", models.WeightIdle, false)
+		}
+
+		// Track engagement and broadcast every 3rd focus event (throttle: ~3s)
+		state, ok := engagementStates[client.SessionID]
+		if !ok {
+			state = &engagementState{themeFocusTimes: make(map[string]int)}
+			engagementStates[client.SessionID] = state
+		}
+		state.focusCount++
+		state.themeFocusTimes[theme] += durationMS
+
+		if state.focusCount%3 == 0 {
+			hub.BroadcastEngagement(&models.EngagementSummary{
+				SessionID:          client.SessionID,
+				ActiveContentID:    contentID,
+				ActiveContentTitle: content.Title,
+				FocusDurationMs:    durationMS,
+				Theme:              theme,
+				ScrollPosition:     state.scrollPosition,
+				ScrollVelocity:     state.scrollVelocity,
+				ThemeFocusTimes:    state.themeFocusTimes,
+				Timestamp:          time.Now(),
+			})
 		}
 
 		// Create a simple session for rules processing
@@ -301,6 +339,28 @@ func main() {
 		}
 
 		log.Printf("Demo control: action=%s, target=%s, value=%.2f", action, targetContentID, value)
+	}
+
+	msgHandler.OnScreenView = func(client *websocket.Client, screenName string) {
+		hub.BroadcastUserActivity(&models.UserActivityEvent{
+			SessionID:  client.SessionID,
+			EventType:  "screen_view",
+			ScreenName: screenName,
+			Timestamp:  time.Now(),
+		})
+		log.Printf("Screen view: session=%s, screen=%s", client.SessionID, screenName)
+	}
+
+	msgHandler.OnUserAction = func(client *websocket.Client, action string, screen string, value string) {
+		hub.BroadcastUserActivity(&models.UserActivityEvent{
+			SessionID:  client.SessionID,
+			EventType:  action,
+			ScreenName: screen,
+			Action:     action,
+			Value:      value,
+			Timestamp:  time.Now(),
+		})
+		log.Printf("User action: session=%s, action=%s, screen=%s, value=%s", client.SessionID, action, screen, value)
 	}
 
 	handlers.OnTrendSpike = func(contentID string, viralScore float64) {

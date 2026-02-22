@@ -237,3 +237,27 @@ func (h *Hub) BroadcastResourceUpdate(allocation *models.ResourceAllocation) {
 		Payload: allocation,
 	})
 }
+
+// BroadcastSocialEvent sends a social event to all clients
+func (h *Hub) BroadcastSocialEvent(event *models.SocialEventPayload) {
+	h.Broadcast(Message{
+		Type:    "social_event",
+		Payload: event,
+	})
+}
+
+// BroadcastEngagement sends an engagement summary to all clients
+func (h *Hub) BroadcastEngagement(summary *models.EngagementSummary) {
+	h.Broadcast(Message{
+		Type:    "engagement_update",
+		Payload: summary,
+	})
+}
+
+// BroadcastUserActivity sends a user activity event to all clients
+func (h *Hub) BroadcastUserActivity(event *models.UserActivityEvent) {
+	h.Broadcast(Message{
+		Type:    "user_activity",
+		Payload: event,
+	})
+}

@@ -1,6 +1,15 @@
-import { Stack } from 'expo-router';
+import { useEffect } from 'react';
+import { Stack, usePathname } from 'expo-router';
+import { sendScreenView } from '@/services/wsEvents';
 
 export default function AuthLayout() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    const screen = segments[segments.length - 1] || 'login';
+    sendScreenView(screen);
+  }, [pathname]);
   return (
     <Stack
       screenOptions={{

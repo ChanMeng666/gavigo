@@ -15,6 +15,9 @@ import type {
   FocusEventPayload,
   ActivationRequestPayload,
   DemoControlPayload,
+  SocialEvent,
+  EngagementSummary,
+  UserActivityEvent,
 } from '../types';
 
 interface UseWebSocketOptions {
@@ -28,6 +31,9 @@ interface UseWebSocketOptions {
   onResourceUpdate?: (payload: ResourceAllocation) => void;
   onActivationReady?: (payload: ActivationReadyPayload) => void;
   onActivationSpine?: (payload: ActivationSpineEvent) => void;
+  onSocialEvent?: (payload: SocialEvent) => void;
+  onEngagementUpdate?: (payload: EngagementSummary) => void;
+  onUserActivity?: (payload: UserActivityEvent) => void;
   onError?: (payload: ErrorPayload) => void;
 }
 
@@ -43,6 +49,9 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onResourceUpdate,
     onActivationReady,
     onActivationSpine,
+    onSocialEvent,
+    onEngagementUpdate,
+    onUserActivity,
     onError,
   } = options;
 
@@ -129,6 +138,18 @@ export function useWebSocket(options: UseWebSocketOptions) {
         onActivationSpine?.(message.payload as ActivationSpineEvent);
         break;
 
+      case 'social_event':
+        onSocialEvent?.(message.payload as SocialEvent);
+        break;
+
+      case 'engagement_update':
+        onEngagementUpdate?.(message.payload as EngagementSummary);
+        break;
+
+      case 'user_activity':
+        onUserActivity?.(message.payload as UserActivityEvent);
+        break;
+
       case 'error':
         onError?.(message.payload as ErrorPayload);
         break;
@@ -146,6 +167,9 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onResourceUpdate,
     onActivationReady,
     onActivationSpine,
+    onSocialEvent,
+    onEngagementUpdate,
+    onUserActivity,
     onError,
   ]);
 

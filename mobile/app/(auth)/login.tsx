@@ -18,6 +18,7 @@ import Animated, {
 import { Link } from 'expo-router';
 import { signInWithEmail } from '@/services/firebase';
 import { Button, TextInput, Chip } from '@/components/ui';
+import { sendUserAction } from '@/services/wsEvents';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
@@ -91,8 +92,10 @@ export default function LoginScreen() {
       console.log('[LOGIN] Calling signInWithEmail...');
       const result = await signInWithEmail(email.trim(), password);
       console.log('[LOGIN] signInWithEmail succeeded:', result);
+      sendUserAction({ action: 'auth_login', screen: 'login', value: 'success' });
     } catch (error: any) {
       console.error('[LOGIN] signInWithEmail failed:', error);
+      sendUserAction({ action: 'auth_login', screen: 'login', value: 'failed' });
       const message = error?.message || 'Login failed. Please try again';
       showAlert('Login Failed', message);
     } finally {

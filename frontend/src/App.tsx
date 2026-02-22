@@ -24,6 +24,9 @@ import type {
   FocusEventPayload,
   ScrollUpdatePayload,
   ActivationRequestPayload,
+  SocialEvent,
+  EngagementSummary,
+  UserActivityEvent,
 } from "./types"
 
 function App() {
@@ -36,6 +39,9 @@ function App() {
   const [scores, setScores] = useState<Record<string, InputScores>>({})
   const [resourceHistory, setResourceHistory] = useState<ResourceAllocation[]>([])
   const [activationSpine, setActivationSpine] = useState<ActivationSpineEvent[]>([])
+  const [socialEvents, setSocialEvents] = useState<SocialEvent[]>([])
+  const [engagement, setEngagement] = useState<EngagementSummary | null>(null)
+  const [userActivities, setUserActivities] = useState<UserActivityEvent[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("split")
 
   // Responsive
@@ -132,6 +138,18 @@ function App() {
     setActivationSpine((prev) => [event, ...prev].slice(0, 200))
   }, [])
 
+  const handleSocialEvent = useCallback((event: SocialEvent) => {
+    setSocialEvents((prev) => [event, ...prev].slice(0, 100))
+  }, [])
+
+  const handleEngagementUpdate = useCallback((summary: EngagementSummary) => {
+    setEngagement(summary)
+  }, [])
+
+  const handleUserActivity = useCallback((event: UserActivityEvent) => {
+    setUserActivities((prev) => [event, ...prev].slice(0, 200))
+  }, [])
+
   const {
     connected,
     sessionId,
@@ -150,6 +168,9 @@ function App() {
     onResourceUpdate: handleResourceUpdate,
     onActivationReady: handleActivationReady,
     onActivationSpine: handleActivationSpine,
+    onSocialEvent: handleSocialEvent,
+    onEngagementUpdate: handleEngagementUpdate,
+    onUserActivity: handleUserActivity,
   })
 
   // Fetch initial data
@@ -208,6 +229,9 @@ function App() {
       setScores({})
       setResourceHistory([])
       setActivationSpine([])
+      setSocialEvents([])
+      setEngagement(null)
+      setUserActivities([])
       setCurrentMode("MIXED_STREAM_BROWSING")
       setActiveContentId(null)
       // Refetch content
@@ -297,6 +321,9 @@ function App() {
                 scores={scores}
                 resourceHistory={resourceHistory}
                 activationSpine={activationSpine}
+                socialEvents={socialEvents}
+                engagement={engagement}
+                userActivities={userActivities}
                 onDemoControl={handleDemoControl}
                 onResetDemo={handleResetDemo}
               />

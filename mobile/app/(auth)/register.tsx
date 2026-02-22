@@ -11,6 +11,7 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { signUpWithEmail } from '@/services/firebase';
 import { Button, TextInput, IconButton } from '@/components/ui';
+import { sendUserAction } from '@/services/wsEvents';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function RegisterScreen() {
@@ -69,8 +70,10 @@ export default function RegisterScreen() {
       console.log('[REGISTER] Calling signUpWithEmail...');
       const result = await signUpWithEmail(email.trim(), password, username.trim());
       console.log('[REGISTER] signUpWithEmail succeeded:', result);
+      sendUserAction({ action: 'auth_register', screen: 'register', value: 'success' });
     } catch (error: any) {
       console.error('[REGISTER] signUpWithEmail failed:', error);
+      sendUserAction({ action: 'auth_register', screen: 'register', value: 'failed' });
       const message = error?.message || 'Registration failed. Please try again';
       showAlert('Registration Failed', message);
     } finally {

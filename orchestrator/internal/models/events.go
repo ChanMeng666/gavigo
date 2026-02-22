@@ -128,6 +128,41 @@ type ErrorEvent struct {
 	} `json:"payload"`
 }
 
+// Social event broadcast payload
+type SocialEventPayload struct {
+	EventType  string    `json:"event_type"`  // "like", "unlike", "comment", "follow", "unfollow"
+	UserID     string    `json:"user_id"`
+	Username   string    `json:"username"`
+	ContentID  string    `json:"content_id,omitempty"`
+	TargetUser string    `json:"target_user,omitempty"`
+	Text       string    `json:"text,omitempty"`
+	Count      int       `json:"count,omitempty"`
+	Timestamp  time.Time `json:"timestamp"`
+}
+
+// Engagement summary broadcast payload
+type EngagementSummary struct {
+	SessionID          string         `json:"session_id"`
+	ActiveContentID    string         `json:"active_content_id"`
+	ActiveContentTitle string         `json:"active_content_title"`
+	FocusDurationMs    int            `json:"focus_duration_ms"`
+	Theme              string         `json:"theme"`
+	ScrollPosition     int            `json:"scroll_position"`
+	ScrollVelocity     float64        `json:"scroll_velocity"`
+	ThemeFocusTimes    map[string]int `json:"theme_focus_times"`
+	Timestamp          time.Time      `json:"timestamp"`
+}
+
+// User activity event (screen views, actions)
+type UserActivityEvent struct {
+	SessionID  string    `json:"session_id"`
+	EventType  string    `json:"event_type"` // "screen_view", "search", "filter", "chat_message", "auth", "profile_edit"
+	ScreenName string    `json:"screen_name,omitempty"`
+	Action     string    `json:"action,omitempty"`
+	Value      string    `json:"value,omitempty"`
+	Timestamp  time.Time `json:"timestamp"`
+}
+
 // Generic event for parsing type first
 type GenericEvent struct {
 	Type    string      `json:"type"`

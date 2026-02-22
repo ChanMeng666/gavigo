@@ -5,18 +5,21 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gavigo/orchestrator/internal/models"
+	"github.com/gavigo/orchestrator/internal/websocket"
 )
 
 // SocialHandlers provides HTTP handlers for social features
 type SocialHandlers struct {
 	store *models.SocialStore
+	hub   *websocket.Hub
 }
 
 // NewSocialHandlers creates new social API handlers
-func NewSocialHandlers(store *models.SocialStore) *SocialHandlers {
-	return &SocialHandlers{store: store}
+func NewSocialHandlers(store *models.SocialStore, hub *websocket.Hub) *SocialHandlers {
+	return &SocialHandlers{store: store, hub: hub}
 }
 
 // RegisterRoutes registers social HTTP routes
@@ -126,9 +129,23 @@ func (h *SocialHandlers) handleLike(w http.ResponseWriter, r *http.Request, cont
 		return
 	}
 
+	user := h.store.GetUser(uid)
+	username := "user"
+	if user != nil {
+		username = user.Username
+	}
+
 	switch r.Method {
 	case http.MethodPost:
 		count := h.store.SetLike(uid, contentID)
+		h.hub.BroadcastSocialEvent(&models.SocialEventPayload{
+			EventType: "like",
+			UserID:    uid,
+			Username:  username,
+			ContentID: contentID,
+			Count:     count,
+			Timestamp: time.Now(),
+		})
 		writeJSON(w, map[string]interface{}{
 			"liked": true,
 			"count": count,
@@ -136,6 +153,14 @@ func (h *SocialHandlers) handleLike(w http.ResponseWriter, r *http.Request, cont
 
 	case http.MethodDelete:
 		count := h.store.RemoveLike(uid, contentID)
+		h.hub.BroadcastSocialEvent(&models.SocialEventPayload{
+			EventType: "unlike",
+			UserID:    uid,
+			Username:  username,
+			ContentID: contentID,
+			Count:     count,
+			Timestamp: time.Now(),
+		})
 		writeJSON(w, map[string]interface{}{
 			"liked": false,
 			"count": count,
@@ -183,6 +208,21 @@ func (h *SocialHandlers) handleComments(w http.ResponseWriter, r *http.Request, 
 
 		comment := h.store.AddComment(uid, contentID, req.Text, username, avatarURL)
 		log.Printf("Comment added: user=%s, content=%s", uid, contentID)
+
+		// Broadcast comment event (truncate text to 100 chars)
+		commentText := req.Text
+		if len(commentText) > 100 {
+			commentText = commentText[:100] + "..."
+		}
+		h.hub.BroadcastSocialEvent(&models.SocialEventPayload{
+			EventType: "comment",
+			UserID:    uid,
+			Username:  username,
+			ContentID: contentID,
+			Text:      commentText,
+			Timestamp: time.Now(),
+		})
+
 		writeJSON(w, comment)
 
 	default:
@@ -220,12 +260,31 @@ func (h *SocialHandlers) handleUserAction(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	follower := h.store.GetUser(uid)
+	followerName := "user"
+	if follower != nil {
+		followerName = follower.Username
+	}
+
+	targetUser := h.store.GetUser(targetUserID)
+	targetName := "user"
+	if targetUser != nil {
+		targetName = targetUser.Username
+	}
+
 	switch r.Method {
 	case http.MethodPost:
 		isFollowing := h.store.IsFollowing(uid, targetUserID)
 		if !isFollowing {
 			h.store.ToggleFollow(uid, targetUserID)
 		}
+		h.hub.BroadcastSocialEvent(&models.SocialEventPayload{
+			EventType:  "follow",
+			UserID:     uid,
+			Username:   followerName,
+			TargetUser: targetName,
+			Timestamp:  time.Now(),
+		})
 		writeJSON(w, map[string]interface{}{
 			"following": true,
 		})
@@ -235,6 +294,13 @@ func (h *SocialHandlers) handleUserAction(w http.ResponseWriter, r *http.Request
 		if isFollowing {
 			h.store.ToggleFollow(uid, targetUserID)
 		}
+		h.hub.BroadcastSocialEvent(&models.SocialEventPayload{
+			EventType:  "unfollow",
+			UserID:     uid,
+			Username:   followerName,
+			TargetUser: targetName,
+			Timestamp:  time.Now(),
+		})
 		writeJSON(w, map[string]interface{}{
 			"following": false,
 		})

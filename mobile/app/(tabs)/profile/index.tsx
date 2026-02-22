@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { signOut } from '@/services/firebase';
+import { sendUserAction } from '@/services/wsEvents';
 import { supabase } from '@/services/supabase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { SettingsSection } from '@/components/profile/SettingsSection';
@@ -72,8 +73,8 @@ export default function ProfileScreen() {
 
       <View className="px-4">
         <SettingsSection title="Account">
-          <SettingsItem icon="notifications-outline" label="Notifications" />
-          <SettingsItem icon="shield-outline" label="Privacy & Security" />
+          <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'notifications' })} />
+          <SettingsItem icon="shield-outline" label="Privacy & Security" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'privacy' })} />
         </SettingsSection>
 
         <SettingsSection title="Preferences">
@@ -81,17 +82,19 @@ export default function ProfileScreen() {
             icon="moon-outline"
             label="Appearance"
             value="On"
+            onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'appearance' })}
           />
-          <SettingsItem icon="language-outline" label="Language" />
+          <SettingsItem icon="language-outline" label="Language" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'language' })} />
         </SettingsSection>
 
         <SettingsSection title="About">
           <SettingsItem
             icon="information-circle-outline"
             label="About GAVIGO"
+            onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'about' })}
           />
-          <SettingsItem icon="help-circle-outline" label="Help & Support" />
-          <SettingsItem icon="document-text-outline" label="Terms of Service" />
+          <SettingsItem icon="help-circle-outline" label="Help & Support" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'help' })} />
+          <SettingsItem icon="document-text-outline" label="Terms of Service" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'terms' })} />
         </SettingsSection>
 
         <View className="mt-8 mb-8">

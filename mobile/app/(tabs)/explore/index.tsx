@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Chip, EmptyState } from '@/components/ui';
+import { sendUserAction } from '@/services/wsEvents';
 import {
   searchVideos as searchSupabaseVideos,
   fetchFeed,
@@ -64,7 +65,12 @@ export default function ExploreScreen() {
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(loadVideos, search ? 300 : 0);
+    const timer = setTimeout(() => {
+      loadVideos();
+      if (search.trim()) {
+        sendUserAction({ action: 'search', screen: 'explore', value: search.trim() });
+      }
+    }, search ? 300 : 0);
     return () => clearTimeout(timer);
   }, [loadVideos, search]);
 
@@ -184,7 +190,12 @@ export default function ExploreScreen() {
               key={theme.key}
               label={theme.label}
               selected={activeFilter === theme.key}
-              onPress={() => setActiveFilter(theme.key)}
+              onPress={() => {
+                setActiveFilter(theme.key);
+                if (theme.key !== 'all') {
+                  sendUserAction({ action: 'filter', screen: 'explore', value: theme.key });
+                }
+              }}
               leftIcon={theme.icon}
             />
           ))}

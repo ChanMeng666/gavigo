@@ -21,6 +21,7 @@ import Animated, {
 import { getApiBase } from '@/services/api';
 import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { sendUserAction } from '@/services/wsEvents';
 import { IconButton, EmptyState, Chip } from '@/components/ui';
 import { TextInput as RNTextInput } from 'react-native';
 
@@ -168,6 +169,9 @@ export default function ChatScreen() {
       setInput('');
       setMessages((prev) => [...prev, userMsg]);
       setIsLoading(true);
+
+      // Track chat message (length only, not content — privacy)
+      sendUserAction({ action: 'chat_message', screen: 'chat', value: String(userMessage.length) });
 
       // Persist user message
       persistMessage('user', userMessage);

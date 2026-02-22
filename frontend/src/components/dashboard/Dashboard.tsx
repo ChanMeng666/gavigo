@@ -6,6 +6,10 @@ import { ServiceStatus } from "./ServiceStatus"
 import { WorkloadStatus } from "./WorkloadStatus"
 import { ResourceChart } from "./ResourceChart"
 import { DemoControls } from "./DemoControls"
+import { SocialActivityFeed } from "./SocialActivityFeed"
+import { UserEngagement } from "./UserEngagement"
+import { UserJourney } from "./UserJourney"
+import { ScreenDistribution } from "./ScreenDistribution"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type {
   ContentItem,
@@ -16,6 +20,9 @@ import type {
   ResourceAllocation,
   ActivationSpineEvent,
   DemoControlPayload,
+  SocialEvent,
+  EngagementSummary,
+  UserActivityEvent,
 } from "@/types"
 
 interface DashboardProps {
@@ -29,6 +36,9 @@ interface DashboardProps {
   scores: Record<string, InputScores>
   resourceHistory: ResourceAllocation[]
   activationSpine: ActivationSpineEvent[]
+  socialEvents: SocialEvent[]
+  engagement: EngagementSummary | null
+  userActivities: UserActivityEvent[]
   onDemoControl: (payload: DemoControlPayload) => void
   onResetDemo: () => void
 }
@@ -42,6 +52,9 @@ export function Dashboard({
   scores,
   resourceHistory,
   activationSpine,
+  socialEvents,
+  engagement,
+  userActivities,
   onDemoControl,
   onResetDemo,
 }: DashboardProps) {
@@ -60,29 +73,43 @@ export function Dashboard({
             contentTitles={contentTitles}
           />
 
-          {/* BOTTOM: 3-column detail grid */}
+          {/* User Journey Timeline (full width) */}
+          <UserJourney
+            userActivities={userActivities}
+            socialEvents={socialEvents}
+          />
+
+          {/* 3-column detail grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-6">
-            {/* Left Column - Mode, Service Status, Workload Status */}
+            {/* Left Column - Mode, Service Status, Engagement, Workload */}
             <div className="md:col-span-1 xl:col-span-3 space-y-4">
               <ModeIndicator
                 currentMode={currentMode}
                 activeContentId={activeContentId}
               />
               <ServiceStatus />
+              <UserEngagement engagement={engagement} />
               <WorkloadStatus content={content} containerStates={containerStates} />
             </div>
 
-            {/* Center Column - Decision Log */}
-            <div className="md:col-span-1 xl:col-span-5">
-              <div className="h-[calc(100vh-180px)] min-h-[400px]">
+            {/* Center Column - AI Decisions + Social Feed */}
+            <div className="md:col-span-1 xl:col-span-5 space-y-4">
+              <div className="h-[calc(50vh-100px)] min-h-[250px]">
                 <AIDecisionLog decisions={decisions} maxItems={30} />
+              </div>
+              <div className="h-[calc(50vh-100px)] min-h-[250px]">
+                <SocialActivityFeed
+                  events={socialEvents}
+                  contentTitles={contentTitles}
+                />
               </div>
             </div>
 
-            {/* Right Column - Scores, Resources, Demo Controls */}
+            {/* Right Column - Scores, Resources, Screen Distribution, Demo Controls */}
             <div className="md:col-span-2 xl:col-span-4 space-y-4">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
+              <ScreenDistribution userActivities={userActivities} />
               <DemoControls
                 content={content}
                 onDemoControl={onDemoControl}

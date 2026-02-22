@@ -7,3 +7,7 @@ export { ScoreDisplay } from './ScoreDisplay';
 export { ModeIndicator } from './ModeIndicator';
 export { ResourceChart } from './ResourceChart';
 export { DemoControls } from './DemoControls';
+export { SocialActivityFeed } from './SocialActivityFeed';
+export { UserEngagement } from './UserEngagement';
+export { UserJourney } from './UserJourney';
+export { ScreenDistribution } from './ScreenDistribution';

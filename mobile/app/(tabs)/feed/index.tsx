@@ -16,6 +16,7 @@ import Animated, {
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useFeedStore } from '@/stores/feedStore';
+import { setGlobalSend } from '@/services/wsEvents';
 import { ContentCard, type FeedItem } from '@/components/feed/ContentCard';
 import { SkeletonLoader, EmptyState } from '@/components/ui';
 import { fetchFeed } from '@/services/feed';
@@ -166,6 +167,12 @@ export default function FeedScreen() {
       setResources(resources);
     },
   });
+
+  // Expose WebSocket send globally for screen tracking
+  useEffect(() => {
+    setGlobalSend(ws.send);
+    return () => setGlobalSend(null);
+  }, [ws.send]);
 
   const { startFocus, endFocus } = useEngagement({
     onFocusEvent: ws.sendFocusEvent,

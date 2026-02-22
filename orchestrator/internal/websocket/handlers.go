@@ -15,6 +15,8 @@ type MessageHandler struct {
 	OnActivationRequest func(client *Client, contentID string)
 	OnDeactivation      func(client *Client, contentID string)
 	OnDemoControl       func(client *Client, action string, targetContentID string, value float64)
+	OnScreenView        func(client *Client, screenName string)
+	OnUserAction        func(client *Client, action string, screen string, value string)
 }
 
 // NewMessageHandler creates a new message handler
@@ -95,6 +97,32 @@ func (h *MessageHandler) handleMessage(client *Client, messageType string, paylo
 		}
 		if h.OnDemoControl != nil {
 			h.OnDemoControl(client, p.Action, p.TargetContentID, p.Value)
+		}
+
+	case "screen_view":
+		var p struct {
+			ScreenName string `json:"screen_name"`
+		}
+		if err := json.Unmarshal(payload, &p); err != nil {
+			log.Printf("Error parsing screen_view: %v", err)
+			return
+		}
+		if h.OnScreenView != nil {
+			h.OnScreenView(client, p.ScreenName)
+		}
+
+	case "user_action":
+		var p struct {
+			Action string `json:"action"`
+			Screen string `json:"screen"`
+			Value  string `json:"value,omitempty"`
+		}
+		if err := json.Unmarshal(payload, &p); err != nil {
+			log.Printf("Error parsing user_action: %v", err)
+			return
+		}
+		if h.OnUserAction != nil {
+			h.OnUserAction(client, p.Action, p.Screen, p.Value)
 		}
 
 	default:

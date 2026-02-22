@@ -158,6 +158,41 @@ export interface ErrorPayload {
   details?: string;
 }
 
+// Social event from WebSocket
+export interface SocialEvent {
+  event_type: 'like' | 'unlike' | 'comment' | 'follow' | 'unfollow';
+  user_id: string;
+  username: string;
+  content_id?: string;
+  target_user?: string;
+  text?: string;
+  count?: number;
+  timestamp: string;
+}
+
+// Engagement summary from WebSocket
+export interface EngagementSummary {
+  session_id: string;
+  active_content_id: string;
+  active_content_title: string;
+  focus_duration_ms: number;
+  theme: string;
+  scroll_position: number;
+  scroll_velocity: number;
+  theme_focus_times: Record<string, number>;
+  timestamp: string;
+}
+
+// User activity event from WebSocket
+export interface UserActivityEvent {
+  session_id: string;
+  event_type: string;
+  screen_name?: string;
+  action?: string;
+  value?: string;
+  timestamp: string;
+}
+
 // Generic WebSocket message
 export interface WebSocketMessage<T = unknown> {
   type: string;
@@ -175,6 +210,9 @@ export type WSEventType =
   | 'resource_update'
   | 'activation_ready'
   | 'activation_spine'
+  | 'social_event'
+  | 'engagement_update'
+  | 'user_activity'
   | 'error';
 
 // Application State

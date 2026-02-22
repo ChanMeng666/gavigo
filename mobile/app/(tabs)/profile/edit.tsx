@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuthStore } from '@/stores/authStore';
 import { supabase } from '@/services/supabase';
+import { sendUserAction } from '@/services/wsEvents';
 import { Avatar, Button } from '@/components/ui';
 import { TextInput as RNTextInput } from 'react-native';
 
@@ -94,6 +95,13 @@ export default function EditProfileScreen() {
         .eq('id', firebaseUid);
 
       if (error) throw error;
+
+      // Track which fields changed
+      const changedFields: string[] = [];
+      if (username.trim() !== (user?.username || '')) changedFields.push('username');
+      if (bio.trim() !== (user?.bio || '')) changedFields.push('bio');
+      if (avatarUri !== user?.avatar_url) changedFields.push('avatar');
+      sendUserAction({ action: 'profile_edit', screen: 'profile', value: changedFields.join(',') || 'none' });
 
       // Update local store
       if (user) {
