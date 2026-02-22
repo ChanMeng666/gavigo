@@ -13,6 +13,7 @@ import type {
   AIDecision,
   InputScores,
   ResourceAllocation,
+  ActivationSpineEvent,
   ConnectionEstablishedPayload,
   ContainerStateChangePayload,
   ScoreUpdatePayload,
@@ -34,6 +35,7 @@ function App() {
   const [decisions, setDecisions] = useState<AIDecision[]>([])
   const [scores, setScores] = useState<Record<string, InputScores>>({})
   const [resourceHistory, setResourceHistory] = useState<ResourceAllocation[]>([])
+  const [activationSpine, setActivationSpine] = useState<ActivationSpineEvent[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("split")
 
   // Responsive
@@ -126,6 +128,10 @@ function App() {
     setActiveContentId(payload.content_id)
   }, [])
 
+  const handleActivationSpine = useCallback((event: ActivationSpineEvent) => {
+    setActivationSpine((prev) => [event, ...prev].slice(0, 200))
+  }, [])
+
   const {
     connected,
     sessionId,
@@ -143,6 +149,7 @@ function App() {
     onStreamInject: handleStreamInject,
     onResourceUpdate: handleResourceUpdate,
     onActivationReady: handleActivationReady,
+    onActivationSpine: handleActivationSpine,
   })
 
   // Fetch initial data
@@ -200,6 +207,7 @@ function App() {
       setDecisions([])
       setScores({})
       setResourceHistory([])
+      setActivationSpine([])
       setCurrentMode("MIXED_STREAM_BROWSING")
       setActiveContentId(null)
       // Refetch content
@@ -288,6 +296,7 @@ function App() {
                 decisions={decisions}
                 scores={scores}
                 resourceHistory={resourceHistory}
+                activationSpine={activationSpine}
                 onDemoControl={handleDemoControl}
                 onResetDemo={handleResetDemo}
               />

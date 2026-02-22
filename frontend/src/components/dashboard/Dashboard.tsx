@@ -1,7 +1,9 @@
-import { ContainerStatus } from "./ContainerStatus"
+import { ActivationTimeline } from "./ActivationTimeline"
 import { AIDecisionLog } from "./AIDecisionLog"
 import { ScoreDisplay } from "./ScoreDisplay"
 import { ModeIndicator } from "./ModeIndicator"
+import { ServiceStatus } from "./ServiceStatus"
+import { WorkloadStatus } from "./WorkloadStatus"
 import { ResourceChart } from "./ResourceChart"
 import { DemoControls } from "./DemoControls"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -12,6 +14,7 @@ import type {
   AIDecision,
   InputScores,
   ResourceAllocation,
+  ActivationSpineEvent,
   DemoControlPayload,
 } from "@/types"
 
@@ -25,6 +28,7 @@ interface DashboardProps {
   decisions: AIDecision[]
   scores: Record<string, InputScores>
   resourceHistory: ResourceAllocation[]
+  activationSpine: ActivationSpineEvent[]
   onDemoControl: (payload: DemoControlPayload) => void
   onResetDemo: () => void
 }
@@ -37,6 +41,7 @@ export function Dashboard({
   decisions,
   scores,
   resourceHistory,
+  activationSpine,
   onDemoControl,
   onResetDemo,
 }: DashboardProps) {
@@ -47,22 +52,24 @@ export function Dashboard({
 
   return (
     <div className="h-full flex flex-col bg-base">
-      {/* Main Content */}
       <ScrollArea className="flex-1">
-        <div className="p-4 lg:p-6">
+        <div className="p-4 lg:p-6 space-y-4 lg:space-y-6">
+          {/* TOP: Activation Spine Timeline (full width hero) */}
+          <ActivationTimeline
+            events={activationSpine}
+            contentTitles={contentTitles}
+          />
+
+          {/* BOTTOM: 3-column detail grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-6">
-            {/* Left Column - Mode and Controls */}
+            {/* Left Column - Mode, Service Status, Workload Status */}
             <div className="md:col-span-1 xl:col-span-3 space-y-4">
               <ModeIndicator
                 currentMode={currentMode}
                 activeContentId={activeContentId}
               />
-              <DemoControls
-                content={content}
-                onDemoControl={onDemoControl}
-                onResetDemo={onResetDemo}
-              />
-              <ContainerStatus content={content} containerStates={containerStates} />
+              <ServiceStatus />
+              <WorkloadStatus content={content} containerStates={containerStates} />
             </div>
 
             {/* Center Column - Decision Log */}
@@ -72,10 +79,15 @@ export function Dashboard({
               </div>
             </div>
 
-            {/* Right Column - Scores and Resources */}
+            {/* Right Column - Scores, Resources, Demo Controls */}
             <div className="md:col-span-2 xl:col-span-4 space-y-4">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
+              <DemoControls
+                content={content}
+                onDemoControl={onDemoControl}
+                onResetDemo={onResetDemo}
+              />
             </div>
           </div>
         </div>

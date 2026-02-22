@@ -53,7 +53,10 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import type { ContainerStatus, ContentType, OperationalMode, ActionType, TriggerType } from "@/types"
+import type { ContainerStatus, OperationalMode, ActionType, TriggerType } from "@/types"
+
+// Content type (kept for backward compat with TikTokContentView)
+type ContentTypeWithVideo = 'GAME' | 'AI_SERVICE' | 'VIDEO';
 
 // Re-export with semantic names
 // Status Icons
@@ -145,7 +148,7 @@ export const statusIcons: Record<ContainerStatus, LucideIcon> = {
 }
 
 // Content type icon mapping
-export const contentTypeIcons: Record<ContentType, LucideIcon> = {
+export const contentTypeIcons: Record<ContentTypeWithVideo, LucideIcon> = {
   GAME: Gamepad2,
   AI_SERVICE: Bot,
   VIDEO: Video,
@@ -217,7 +220,7 @@ export const modeConfig: Record<OperationalMode, { label: string; description: s
 }
 
 // Content type config
-export const contentTypeConfig: Record<ContentType, { label: string; gradient: string }> = {
+export const contentTypeConfig: Record<ContentTypeWithVideo, { label: string; gradient: string }> = {
   GAME: {
     label: "Game",
     gradient: "from-hot/80 to-warm/60",

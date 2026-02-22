@@ -130,19 +130,23 @@ func (e *RulesEngine) checkCrossDomainRecommendation(
 	allContent []*models.ContentItem,
 	scores map[string]*models.InputScores,
 ) {
-	// Find related content with different type but same theme
+	// Find related content using CrossDomainRelations map
+	relatedID, hasRelation := models.CrossDomainRelations[focusedContent.ID]
+	if !hasRelation {
+		return
+	}
+
+	// Skip if already injected
+	if session.HasInjected(relatedID) {
+		return
+	}
+
 	for _, content := range allContent {
-		if content.ID == focusedContent.ID {
+		if content.ID != relatedID {
 			continue
 		}
 
-		// Skip if already injected
-		if session.HasInjected(content.ID) {
-			continue
-		}
-
-		// Cross-domain: same theme, different type
-		if content.Theme == focusedContent.Theme && content.Type != focusedContent.Type {
+		{
 			contentScores := scores[content.ID]
 			if contentScores == nil {
 				contentScores = &models.InputScores{}
@@ -209,8 +213,7 @@ func (e *RulesEngine) checkModeChange(session *models.UserSession, content *mode
 		newMode = models.ModeAIServiceFocus
 		reason = "Extended engagement with AI service"
 	default:
-		newMode = models.ModeMixedStreamBrowsing
-		reason = "Mixed content browsing"
+		return
 	}
 
 	if session.CurrentMode != newMode {

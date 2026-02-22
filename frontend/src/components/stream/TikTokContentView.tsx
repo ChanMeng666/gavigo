@@ -7,7 +7,6 @@ import {
   HeartIcon,
   ShareIcon,
   CommentIcon,
-  PlayIcon,
   Loader2,
   statusConfig,
 } from "@/components/icons"
@@ -94,20 +93,6 @@ function ContentLoadingState({
           {statusConfig[status].label}
         </span>
       </div>
-    </div>
-  )
-}
-
-// ============================================
-// VIDEO PLACEHOLDER (local videos removed)
-// ============================================
-function VideoPlaceholder() {
-  return (
-    <div className="absolute inset-0 bg-black flex flex-col items-center justify-center">
-      <div className="h-16 w-16 rounded-full bg-white/10 flex items-center justify-center mb-3">
-        <PlayIcon className="h-8 w-8 text-white/40" />
-      </div>
-      <p className="text-white/40 text-sm">Video streams via mobile app</p>
     </div>
   )
 }
@@ -510,7 +495,6 @@ function ContentSlide({
             animate={{ opacity: 1 }}
             className="absolute inset-0"
           >
-            {item.type === "VIDEO" && <VideoPlaceholder />}
             {item.type === "GAME" && (
               <InlineGamePlayer
                 deploymentName={item.deployment_name}

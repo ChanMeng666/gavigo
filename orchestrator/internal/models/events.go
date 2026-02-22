@@ -133,3 +133,41 @@ type GenericEvent struct {
 	Type    string      `json:"type"`
 	Payload interface{} `json:"payload"`
 }
+
+// Activation Spine Types
+
+type ActivationPhase string
+
+const (
+	PhaseIntent          ActivationPhase = "INTENT"
+	PhasePreWarm         ActivationPhase = "PRE_WARM"
+	PhasePreviewReady    ActivationPhase = "PREVIEW_READY"
+	PhaseActivating      ActivationPhase = "ACTIVATING"
+	PhaseHot             ActivationPhase = "HOT"
+	PhaseDeactivating    ActivationPhase = "DEACTIVATING"
+	PhaseCooling         ActivationPhase = "COOLING"
+	PhaseRestoreStart    ActivationPhase = "RESTORE_START"
+	PhaseRestoreComplete ActivationPhase = "RESTORE_COMPLETE"
+)
+
+type ResourceWeight string
+
+const (
+	WeightIdle    ResourceWeight = "IDLE_MINIMAL"
+	WeightPreview ResourceWeight = "PREVIEW_LOW"
+	WeightFull    ResourceWeight = "FULL_HIGH"
+)
+
+type ActivationSpineEvent struct {
+	EventID          string          `json:"event_id"`
+	ContentID        string          `json:"content_id"`
+	SessionID        string          `json:"session_id"`
+	Phase            ActivationPhase `json:"phase"`
+	Timestamp        time.Time       `json:"timestamp"`
+	ElapsedFromStart int64           `json:"elapsed_from_start_ms"`
+	ResourceWeight   ResourceWeight  `json:"resource_weight"`
+	EstimatedLoadMs  int64           `json:"estimated_load_ms,omitempty"`
+	TriggerSource    string          `json:"trigger_source"`
+	IsSimulated      bool            `json:"is_simulated"`
+	Metadata         map[string]any  `json:"metadata,omitempty"`
+}

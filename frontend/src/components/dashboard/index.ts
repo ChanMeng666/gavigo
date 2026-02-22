@@ -1,5 +1,7 @@
 export { Dashboard } from './Dashboard';
-export { ContainerStatus } from './ContainerStatus';
+export { WorkloadStatus } from './WorkloadStatus';
+export { ServiceStatus } from './ServiceStatus';
+export { ActivationTimeline } from './ActivationTimeline';
 export { AIDecisionLog } from './AIDecisionLog';
 export { ScoreDisplay } from './ScoreDisplay';
 export { ModeIndicator } from './ModeIndicator';

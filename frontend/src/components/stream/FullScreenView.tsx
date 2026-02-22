@@ -7,7 +7,7 @@ import {
   contentTypeIcons,
   contentTypeConfig,
   CloseIcon,
-  PlayIcon,
+
 } from "@/components/icons"
 import { cn } from "@/lib/utils"
 import type { ContentItem, ContainerStatus } from "@/types"
@@ -95,9 +95,7 @@ export function FullScreenView({
             {content.type === "AI_SERVICE" && (
               <AIServiceChat title={content.title} />
             )}
-            {content.type === "VIDEO" && (
-              <VideoPlayer contentId={content.id} title={content.title} theme={content.theme} />
-            )}
+            {/* Videos removed - only games and AI service are orchestrated */}
           </div>
         </motion.div>
       </div>
@@ -276,19 +274,4 @@ function AIServiceChat({ title }: { title: string }) {
   )
 }
 
-// Video placeholder (local videos removed — videos stream via mobile app)
-function VideoPlayer({ title, theme }: { contentId: string; title: string; theme: string }) {
-  return (
-    <div className="text-center">
-      <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <PlayIcon className="h-12 w-12 text-white/30 mb-2" />
-          <p className="text-white/40 text-sm">Video streams via mobile app</p>
-        </div>
-      </div>
-      <h2 className="text-2xl font-display font-bold text-white mb-2">{title}</h2>
-      <p className="text-white/70 mb-4 text-sm">#{theme} content</p>
-    </div>
-  )
-}
 

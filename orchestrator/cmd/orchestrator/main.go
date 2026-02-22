@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Define workload deployment names
-	workloadDeployments := []string{"game-football", "game-scifi", "ai-service"}
+	workloadDeployments := []string{"game-clicker-heroes", "game-mrmine", "game-poker-quest", "game-grindcraft", "game-fray-fight", "ai-service"}
 
 	// Initialize scorer
 	scorer := engine.NewScorer(nil)
@@ -63,6 +63,11 @@ func main() {
 	msgHandler := websocket.NewMessageHandler(hub)
 	msgHandler.Setup()
 
+	// Initialize activation spine
+	spine := engine.NewActivationSpine(func(event *models.ActivationSpineEvent) {
+		hub.BroadcastActivationSpine(event)
+	})
+
 	// Wire up callbacks
 	rulesEngine.OnDecision = func(decision *models.AIDecision) {
 		handlers.AddDecision(decision)
@@ -70,8 +75,33 @@ func main() {
 	}
 
 	rulesEngine.OnScaleAction = func(contentID string, targetState models.ContainerStatus) {
+		// Read old state before updating
+		oldState := models.StatusCold
+		if content := handlers.GetContentByID(contentID); content != nil {
+			oldState = content.ContainerStatus
+		}
+
 		handlers.UpdateContainerState(contentID, targetState)
-		hub.BroadcastContainerStateChange(contentID, targetState)
+		hub.BroadcastContainerStateChange(contentID, oldState, targetState)
+
+		// Spine: record phase based on target state
+		if targetState == models.StatusWarm {
+			spine.RecordPhase(contentID, "", models.PhasePreWarm, "scale_action", models.WeightPreview, false)
+
+			// Schedule simulated PREVIEW_READY after startup delay
+			content := handlers.GetContentByID(contentID)
+			contentType := models.ContentTypeGame
+			if content != nil {
+				contentType = content.Type
+			}
+			go func() {
+				delay := engine.SimulatedStartupDelay(contentType)
+				time.Sleep(delay)
+				spine.RecordPhase(contentID, "", models.PhasePreviewReady, "container_ready_simulated", models.WeightPreview, true)
+			}()
+		} else if targetState == models.StatusHot {
+			spine.RecordPhase(contentID, "", models.PhaseHot, "scale_action", models.WeightFull, false)
+		}
 	}
 
 	rulesEngine.OnModeChange = func(oldMode, newMode models.OperationalMode, reason string) {
@@ -98,7 +128,6 @@ func main() {
 
 		if mode == models.ModeGameFocus || mode == models.ModeAIServiceFocus {
 			// Throttle background workloads when entering focused mode
-			// Find the deployment name for the active content
 			content := handlers.GetContentByID(activeContentID)
 			deploymentName := ""
 			if content != nil {
@@ -156,6 +185,11 @@ func main() {
 			return
 		}
 
+		// Spine: record INTENT if combined score > 0.3 and no INTENT yet
+		if scores.CombinedScore > 0.3 && !spine.HasIntent(contentID) {
+			spine.RecordPhase(contentID, client.SessionID, models.PhaseIntent, "focus_engagement", models.WeightIdle, false)
+		}
+
 		// Create a simple session for rules processing
 		session := models.NewSession(client.SessionID)
 
@@ -182,9 +216,29 @@ func main() {
 			return
 		}
 
+		// Spine: check if this is a restore or fresh activation
+		if spine.IsPreviousHot(contentID) {
+			spine.RecordPhase(contentID, client.SessionID, models.PhaseRestoreStart, "session_reactivation", models.WeightFull, false)
+		} else {
+			spine.RecordPhase(contentID, client.SessionID, models.PhaseActivating, "user_activation", models.WeightFull, false)
+		}
+
+		// Read old state before updating
+		oldState := content.ContainerStatus
+
 		// Scale to HOT
 		handlers.UpdateContainerState(contentID, models.StatusHot)
-		hub.BroadcastContainerStateChange(contentID, models.StatusHot)
+		hub.BroadcastContainerStateChange(contentID, oldState, models.StatusHot)
+
+		// Spine: record completion phase
+		if spine.IsPreviousHot(contentID) {
+			go func() {
+				time.Sleep(engine.SimulatedRestoreDelay())
+				spine.RecordPhase(contentID, client.SessionID, models.PhaseRestoreComplete, "restore_complete", models.WeightFull, true)
+			}()
+		} else {
+			spine.RecordPhase(contentID, client.SessionID, models.PhaseHot, "activation_complete", models.WeightFull, false)
+		}
 
 		// Send activation ready
 		client.Send(websocket.Message{
@@ -200,9 +254,20 @@ func main() {
 	}
 
 	msgHandler.OnDeactivation = func(client *websocket.Client, contentID string) {
+		// Read old state before updating
+		oldState := models.StatusHot
+		if content := handlers.GetContentByID(contentID); content != nil {
+			oldState = content.ContainerStatus
+		}
+
 		// Scale back to WARM
 		handlers.UpdateContainerState(contentID, models.StatusWarm)
-		hub.BroadcastContainerStateChange(contentID, models.StatusWarm)
+		hub.BroadcastContainerStateChange(contentID, oldState, models.StatusWarm)
+
+		// Spine: record deactivation and cooling
+		spine.RecordPhase(contentID, client.SessionID, models.PhaseDeactivating, "user_left", models.WeightPreview, false)
+		spine.RecordPhase(contentID, client.SessionID, models.PhaseCooling, "scaling_back", models.WeightIdle, false)
+		spine.MarkPreviousHot(contentID)
 
 		log.Printf("Content deactivated: %s", contentID)
 	}
@@ -218,12 +283,21 @@ func main() {
 			}
 		case "reset_demo":
 			handlers.OnReset()
+			spine.Reset()
 		case "force_warm":
+			oldState := models.StatusCold
+			if c := handlers.GetContentByID(targetContentID); c != nil {
+				oldState = c.ContainerStatus
+			}
 			handlers.UpdateContainerState(targetContentID, models.StatusWarm)
-			hub.BroadcastContainerStateChange(targetContentID, models.StatusWarm)
+			hub.BroadcastContainerStateChange(targetContentID, oldState, models.StatusWarm)
 		case "force_cold":
+			oldState := models.StatusCold
+			if c := handlers.GetContentByID(targetContentID); c != nil {
+				oldState = c.ContainerStatus
+			}
 			handlers.UpdateContainerState(targetContentID, models.StatusCold)
-			hub.BroadcastContainerStateChange(targetContentID, models.StatusCold)
+			hub.BroadcastContainerStateChange(targetContentID, oldState, models.StatusCold)
 		}
 
 		log.Printf("Demo control: action=%s, target=%s, value=%.2f", action, targetContentID, value)
@@ -239,6 +313,7 @@ func main() {
 
 	handlers.OnReset = func() {
 		scorer.Reset()
+		spine.Reset()
 		log.Println("Full reset triggered via API")
 	}
 

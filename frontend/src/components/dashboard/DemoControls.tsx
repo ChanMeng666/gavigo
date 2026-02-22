@@ -23,6 +23,8 @@ interface DemoControlsProps {
 }
 
 export function DemoControls({ content, onDemoControl, onResetDemo }: DemoControlsProps) {
+  // Filter to game content only (orchestrated workloads)
+  const gameContent = content.filter((item) => item.type === "GAME")
   const [selectedContent, setSelectedContent] = useState<string>("")
   const [viralScore, setViralScore] = useState<number>(0.9)
   const [isExpanded, setIsExpanded] = useState(false)
@@ -81,9 +83,9 @@ export function DemoControls({ content, onDemoControl, onResetDemo }: DemoContro
                   <SelectValue placeholder="Select content..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {content.map((item) => (
+                  {gameContent.map((item) => (
                     <SelectItem key={item.id} value={item.id}>
-                      {item.title} ({item.type})
+                      {item.title}
                     </SelectItem>
                   ))}
                 </SelectContent>

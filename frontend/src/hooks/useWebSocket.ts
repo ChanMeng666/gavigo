@@ -9,6 +9,7 @@ import type {
   StreamInjectPayload,
   ResourceAllocation,
   ActivationReadyPayload,
+  ActivationSpineEvent,
   ErrorPayload,
   ScrollUpdatePayload,
   FocusEventPayload,
@@ -26,6 +27,7 @@ interface UseWebSocketOptions {
   onStreamInject?: (payload: StreamInjectPayload) => void;
   onResourceUpdate?: (payload: ResourceAllocation) => void;
   onActivationReady?: (payload: ActivationReadyPayload) => void;
+  onActivationSpine?: (payload: ActivationSpineEvent) => void;
   onError?: (payload: ErrorPayload) => void;
 }
 
@@ -40,6 +42,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onStreamInject,
     onResourceUpdate,
     onActivationReady,
+    onActivationSpine,
     onError,
   } = options;
 
@@ -122,6 +125,10 @@ export function useWebSocket(options: UseWebSocketOptions) {
         onActivationReady?.(message.payload as ActivationReadyPayload);
         break;
 
+      case 'activation_spine':
+        onActivationSpine?.(message.payload as ActivationSpineEvent);
+        break;
+
       case 'error':
         onError?.(message.payload as ErrorPayload);
         break;
@@ -138,6 +145,7 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onStreamInject,
     onResourceUpdate,
     onActivationReady,
+    onActivationSpine,
     onError,
   ]);
 

@@ -5,7 +5,6 @@ type ContentType string
 const (
 	ContentTypeGame      ContentType = "GAME"
 	ContentTypeAIService ContentType = "AI_SERVICE"
-	ContentTypeVideo     ContentType = "VIDEO"
 )
 
 type ContainerStatus string
@@ -30,67 +29,19 @@ type ContentItem struct {
 	CombinedScore   float64         `json:"combined_score"`
 }
 
-// CrossDomainRelation maps video themes to related game content
+// CrossDomainRelations maps content IDs to related content IDs
 var CrossDomainRelations = map[string]string{
-	"football": "game-clicker-heroes",
-	"scifi":    "game-mrmine",
-	"tech":     "ai-service-tech",
+	"game-clicker-heroes": "ai-service-tech",
+	"game-mrmine":         "game-grindcraft",
+	"game-poker-quest":    "ai-service-tech",
+	"game-grindcraft":     "game-mrmine",
+	"game-fray-fight":     "game-clicker-heroes",
+	"ai-service-tech":     "game-poker-quest",
 }
 
 // DefaultContent returns the initial content items for the demo
 func DefaultContent() []ContentItem {
 	return []ContentItem{
-		// Videos
-		{
-			ID:              "video-football-1",
-			Type:            ContentTypeVideo,
-			Theme:           "football",
-			Title:           "Football Highlights",
-			Description:     "Amazing football moments",
-			ThumbnailURL:    "/assets/video-football-1.png",
-			ContainerStatus: StatusCold,
-			DeploymentName:  "video-server",
-		},
-		{
-			ID:              "video-football-2",
-			Type:            ContentTypeVideo,
-			Theme:           "football",
-			Title:           "Top Goals 2024",
-			Description:     "Best goals of the season",
-			ThumbnailURL:    "/assets/video-football-2.png",
-			ContainerStatus: StatusCold,
-			DeploymentName:  "video-server",
-		},
-		{
-			ID:              "video-scifi-1",
-			Type:            ContentTypeVideo,
-			Theme:           "scifi",
-			Title:           "Space Documentary",
-			Description:     "Exploring the cosmos",
-			ThumbnailURL:    "/assets/video-scifi-1.png",
-			ContainerStatus: StatusCold,
-			DeploymentName:  "video-server",
-		},
-		{
-			ID:              "video-scifi-2",
-			Type:            ContentTypeVideo,
-			Theme:           "scifi",
-			Title:           "Deep Space Journey",
-			Description:     "Venturing into the unknown",
-			ThumbnailURL:    "/assets/video-scifi-2.png",
-			ContainerStatus: StatusCold,
-			DeploymentName:  "video-server",
-		},
-		{
-			ID:              "video-football-3",
-			Type:            ContentTypeVideo,
-			Theme:           "football",
-			Title:           "Championship Finals",
-			Description:     "The ultimate showdown",
-			ThumbnailURL:    "/assets/video-football-3.png",
-			ContainerStatus: StatusCold,
-			DeploymentName:  "video-server",
-		},
 		// Games (external iframe)
 		{
 			ID:              "game-clicker-heroes",

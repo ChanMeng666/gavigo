@@ -170,16 +170,24 @@ func (h *Hub) BroadcastDecision(decision *models.AIDecision) {
 }
 
 // BroadcastContainerStateChange sends a container state change to all clients
-func (h *Hub) BroadcastContainerStateChange(contentID string, newState models.ContainerStatus) {
+func (h *Hub) BroadcastContainerStateChange(contentID string, oldState, newState models.ContainerStatus) {
 	h.Broadcast(Message{
 		Type: "container_state_change",
 		Payload: map[string]interface{}{
 			"content_id":      contentID,
-			"old_state":       "", // TODO: track old state
+			"old_state":       oldState,
 			"new_state":       newState,
 			"deployment_name": "",
 			"timestamp":       time.Now().Format(time.RFC3339),
 		},
+	})
+}
+
+// BroadcastActivationSpine sends an activation spine event to all clients
+func (h *Hub) BroadcastActivationSpine(event *models.ActivationSpineEvent) {
+	h.Broadcast(Message{
+		Type:    "activation_spine",
+		Payload: event,
 	})
 }
 

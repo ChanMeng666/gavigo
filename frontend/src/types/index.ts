@@ -1,9 +1,37 @@
 // Content Types
-export type ContentType = 'GAME' | 'AI_SERVICE' | 'VIDEO';
+export type ContentType = 'GAME' | 'AI_SERVICE';
 export type ContainerStatus = 'COLD' | 'WARM' | 'HOT';
 export type OperationalMode = 'MIXED_STREAM_BROWSING' | 'GAME_FOCUS_MODE' | 'AI_SERVICE_MODE';
 export type TriggerType = 'CROSS_DOMAIN' | 'SWARM_BOOST' | 'PROACTIVE_WARM' | 'MODE_CHANGE' | 'RESOURCE_THROTTLE' | 'INITIAL_WARM' | 'LOOKAHEAD_WARM';
 export type ActionType = 'INJECT_CONTENT' | 'SCALE_WARM' | 'SCALE_HOT' | 'THROTTLE_BACKGROUND' | 'CHANGE_MODE';
+
+// Activation Spine Types
+export type ActivationPhase =
+  | 'INTENT'
+  | 'PRE_WARM'
+  | 'PREVIEW_READY'
+  | 'ACTIVATING'
+  | 'HOT'
+  | 'DEACTIVATING'
+  | 'COOLING'
+  | 'RESTORE_START'
+  | 'RESTORE_COMPLETE';
+
+export type ResourceWeight = 'IDLE_MINIMAL' | 'PREVIEW_LOW' | 'FULL_HIGH';
+
+export interface ActivationSpineEvent {
+  event_id: string;
+  content_id: string;
+  session_id: string;
+  phase: ActivationPhase;
+  timestamp: string;
+  elapsed_from_start_ms: number;
+  resource_weight: ResourceWeight;
+  estimated_load_ms?: number;
+  trigger_source: string;
+  is_simulated: boolean;
+  metadata?: Record<string, unknown>;
+}
 
 export interface ContentItem {
   id: string;
@@ -146,6 +174,7 @@ export type WSEventType =
   | 'stream_inject'
   | 'resource_update'
   | 'activation_ready'
+  | 'activation_spine'
   | 'error';
 
 // Application State
@@ -159,4 +188,5 @@ export interface AppState {
   decisions: AIDecision[];
   resources: ResourceAllocation | null;
   activeContentId: string | null;
+  activationSpine: ActivationSpineEvent[];
 }
