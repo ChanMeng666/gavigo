@@ -19,7 +19,7 @@ function getBaseUrl(): string {
   if (typeof __DEV__ !== 'undefined' && __DEV__) {
     return 'http://localhost:8080/api/v1';
   }
-  return 'http://129.212.209.146/api/v1';
+  return 'https://ire.gavigo.com/api/v1';
 }
 
 const API_BASE = getBaseUrl();

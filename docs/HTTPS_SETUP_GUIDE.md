@@ -1,80 +1,80 @@
-# HTTPS Setup Guide: Cloudflare Origin CA + DigitalOcean Load Balancer
+# HTTPS Setup Guide: Let's Encrypt + DigitalOcean Load Balancer
 
-> How to configure end-to-end HTTPS for a DOKS (DigitalOcean Kubernetes) cluster behind Cloudflare using a free Origin CA certificate with TLS termination at the Load Balancer.
+> How to configure HTTPS for a DOKS (DigitalOcean Kubernetes) cluster using a Let's Encrypt certificate with TLS termination at the Load Balancer. DNS is managed by GoDaddy.
 
 ## Architecture Overview
 
 ```
-Browser ──HTTPS──> Cloudflare (Edge) ──HTTPS──> DO Load Balancer ──HTTP──> nginx (K8s Pod)
-                   (Edge TLS)                   (TLS Termination)         (Port 80)
+Browser ──HTTPS──> DO Load Balancer ──HTTP──> nginx (K8s Pod)
+                   (TLS Termination)         (Port 80)
 ```
 
-- **Browser → Cloudflare**: Cloudflare's edge certificate (automatic, free)
-- **Cloudflare → Origin LB**: Cloudflare Origin CA certificate (free, 15-year validity)
+- **Browser → LB**: Let's Encrypt certificate (free, 90-day validity, manual renewal)
 - **LB → Pod**: Plain HTTP on port 80 (internal cluster traffic)
+- **DNS**: GoDaddy A record `ire.gavigo.com` → DO LB IP
 
 ## Prerequisites
 
-- A domain managed by Cloudflare (e.g., `chanmeng.org`)
+- A domain with DNS access (e.g., `gavigo.com` on GoDaddy)
 - A running DOKS cluster with a `LoadBalancer` Service
 - `doctl` CLI authenticated with your DigitalOcean account
 - `kubectl` configured for your cluster
+- `certbot` installed (via pip, brew, or Docker)
 
-## Step 1: Generate a Cloudflare Origin CA Certificate
+## Step 1: Create DNS Record on GoDaddy
 
-1. Log in to the [Cloudflare Dashboard](https://dash.cloudflare.com)
-2. Select your domain → **SSL/TLS** → **Origin Server**
-3. Click **Create Certificate**
-4. Configure:
-   - **Key type**: RSA (2048)
-   - **Hostnames**: `*.yourdomain.com` and `yourdomain.com` (pre-populated)
-   - **Validity**: 15 years (default)
-5. Click **Create**
-6. **Save both PEM blocks** to local files before closing (the private key is shown only once):
-   - `origin-cert.pem` — the Origin Certificate
-   - `origin-key.pem` — the Private Key
-
-## Step 2: Download the Cloudflare Origin CA Root Certificate
-
-The DigitalOcean certificate upload requires the full certificate chain. Download the Cloudflare Origin CA root:
+1. Log in to [GoDaddy DNS Management](https://dcc.godaddy.com/) for `gavigo.com`
+2. Add an **A record**:
+   - **Name**: `ire`
+   - **Value**: `146.190.194.246` (DO LB IP)
+   - **TTL**: 600 (10 minutes)
+3. Verify DNS propagation:
 
 ```bash
-# RSA root (for RSA key type)
-curl -o origin-ca-root.pem https://developers.cloudflare.com/ssl/static/origin_ca_rsa_root.pem
-
-# ECC root (if you chose ECC key type instead)
-# curl -o origin-ca-root.pem https://developers.cloudflare.com/ssl/static/origin_ca_ecc_root.pem
+nslookup ire.gavigo.com
+# Expected: Address: 146.190.194.246
 ```
 
-## Step 3: Upload the Certificate to DigitalOcean
+## Step 2: Obtain Let's Encrypt Certificate via Certbot
 
-Use `doctl` with **three separate files** — leaf certificate, CA chain, and private key:
+Use the DNS-01 challenge (requires adding a TXT record on GoDaddy, but doesn't need the server to be reachable):
+
+```bash
+certbot certonly --manual --preferred-challenges dns -d ire.gavigo.com
+```
+
+When prompted:
+1. Certbot will ask you to create a **TXT record** on GoDaddy:
+   - **Name**: `_acme-challenge.ire`
+   - **Value**: *(provided by certbot)*
+   - **TTL**: 600
+2. Add the TXT record in GoDaddy DNS management
+3. Wait ~2 minutes for DNS propagation
+4. Press Enter in certbot to continue
+
+Output files (typically in `/etc/letsencrypt/live/ire.gavigo.com/`):
+- `cert.pem` — leaf certificate
+- `chain.pem` — CA chain (Let's Encrypt intermediate)
+- `fullchain.pem` — cert + chain combined
+- `privkey.pem` — private key
+
+## Step 3: Upload Certificate to DigitalOcean
 
 ```bash
 doctl compute certificate create \
-  --name gavigo-origin-cert \
   --type custom \
-  --leaf-certificate-path origin-cert.pem \
-  --certificate-chain-path origin-ca-root.pem \
-  --private-key-path origin-key.pem
+  --name ire-gavigo-cert \
+  --leaf-certificate-path /etc/letsencrypt/live/ire.gavigo.com/cert.pem \
+  --certificate-chain-path /etc/letsencrypt/live/ire.gavigo.com/chain.pem \
+  --private-key-path /etc/letsencrypt/live/ire.gavigo.com/privkey.pem
 ```
 
-Verify the upload:
+Get the certificate ID:
 
 ```bash
 doctl compute certificate list --format ID,Name,State
 # Expected: State = verified
-```
-
-> **Common error**: `Certificate is incomplete` — this happens if you use `--certificate-chain-path` for the leaf cert instead of `--leaf-certificate-path`, or if you omit the CA root chain. The `doctl` command requires all three flags for custom certificates.
-
-### Save the Certificate ID
-
-Note the certificate ID from the output — you'll need it for the K8s Service annotation:
-
-```bash
-doctl compute certificate list --format ID,Name
-# Example: b9c7acc4-19a9-4460-92b3-2a9785a08f97    gavigo-origin-cert
+# Save the ID for the next step
 ```
 
 ## Step 4: Configure the K8s LoadBalancer Service
@@ -107,7 +107,8 @@ metadata:
     service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
     service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
     service.beta.kubernetes.io/do-loadbalancer-certificate-id: "<YOUR_CERTIFICATE_ID>"
-    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "false"
+    # Enable HTTP→HTTPS redirect (LB handles this directly)
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "true"
 spec:
   type: LoadBalancer
   ports:
@@ -131,17 +132,23 @@ spec:
 | `do-loadbalancer-protocol` | `http` | Backend protocol (LB → nginx is plain HTTP) |
 | `do-loadbalancer-tls-ports` | `443` | Which ports use HTTPS with TLS termination |
 | `do-loadbalancer-certificate-id` | `<cert-id>` | The DO certificate ID for TLS |
-| `do-loadbalancer-redirect-http-to-https` | `false` | Let Cloudflare handle HTTP→HTTPS redirect |
+| `do-loadbalancer-redirect-http-to-https` | `true` | Redirect HTTP to HTTPS at the LB level |
 
-> **Why `redirect-http-to-https: false`?** Cloudflare already handles this redirect at the edge. If the LB also redirects, health checks on port 80 may fail. Keep port 80 open at the LB level.
-
-> **`certificate-id` vs `certificate-name`**: Both work. `certificate-id` is more widely supported. `certificate-name` (available in DOKS 1.26+) is better for Let's Encrypt certs that rotate (ID changes on renewal, name stays the same). For Origin CA certs (15-year validity), either works.
+> **`certificate-id` vs `certificate-name`**: Both work. `certificate-name` (available in DOKS 1.26+) is better for Let's Encrypt certs that rotate (ID changes on renewal, name stays the same).
 
 ## Step 5: Apply the Service
 
-### If Changing LB Type on an Existing Service
+### If Updating an Existing REGIONAL LB (Same LB Type)
 
-**The LB type cannot be changed in-place.** You must delete and recreate the Service, which destroys the old LB and creates a new one with a **new external IP**.
+Simply apply — the certificate and redirect settings update in-place:
+
+```bash
+kubectl apply -f k8s/frontend/service.yaml
+```
+
+### If Changing LB Type (e.g., from REGIONAL_NETWORK)
+
+**The LB type cannot be changed in-place.** You must delete and recreate the Service, which creates a new LB with a **new external IP**.
 
 ```bash
 # 1. Delete the existing service (destroys the old LB)
@@ -149,28 +156,19 @@ kubectl -n gavigo delete svc frontend
 
 # 2. Wait for the old LB to be fully removed
 doctl compute load-balancer list --format ID,Name,Status,IP
-# Wait until the list is empty
 
 # 3. Recreate the service
 kubectl apply -f k8s/frontend/service.yaml
 
 # 4. Wait for the new LB to provision (~1-3 minutes)
 kubectl -n gavigo get svc frontend -w
-# Wait until EXTERNAL-IP changes from <pending> to an IP address
-```
 
-### If Creating a New Service (No Existing LB)
-
-Simply apply directly:
-
-```bash
-kubectl apply -f k8s/frontend/service.yaml
+# 5. Update DNS A record on GoDaddy with the new IP
 ```
 
 ### Verify the LB Configuration
 
 ```bash
-# Check the LB type and forwarding rules
 doctl compute load-balancer list --output json | python3 -c "
 import sys, json
 for lb in json.load(sys.stdin):
@@ -185,71 +183,21 @@ Expected output:
 ```
 Type: REGIONAL
   http:80 -> http:80 cert:
-  https:443 -> http:80 cert:b9c7acc4-...
+  https:443 -> http:80 cert:<your-cert-id>
 ```
 
-If you see `Type: REGIONAL_NETWORK` with `tcp` protocols and no certificate, the annotations are not being applied — see Troubleshooting below.
-
-## Step 6: Update Cloudflare DNS
-
-If the LB IP changed (e.g., after recreating the Service), update the DNS record:
-
-1. Go to Cloudflare Dashboard → your domain → **DNS** → **Records**
-2. Edit the A record for your subdomain (e.g., `gavigo`)
-3. Update the **IPv4 address** to the new LB IP
-4. Ensure **Proxy status** is set to **Proxied** (orange cloud)
-5. Click **Save**
-
-Alternatively via the Cloudflare API:
-
-```bash
-# Get the zone ID and record ID
-ZONE_ID="your-zone-id"
-RECORD_ID="your-record-id"
-NEW_IP="146.190.194.246"
-
-curl -X PATCH "https://api.cloudflare.com/client/v4/zones/$ZONE_ID/dns_records/$RECORD_ID" \
-  -H "Authorization: Bearer YOUR_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  --data "{\"content\":\"$NEW_IP\"}"
-```
-
-## Step 7: Set Cloudflare SSL Mode
-
-1. Go to Cloudflare Dashboard → your domain → **SSL/TLS** → **Overview**
-2. Click **Configure**
-3. Select **Custom SSL/TLS**
-4. Choose **Full (strict)**
-5. Click **Save**
-
-### SSL Mode Comparison
-
-| Mode | Cloudflare → Origin | Origin Cert Required | Validates Cert |
-|------|---------------------|---------------------|----------------|
-| Off | HTTP | No | No |
-| Flexible | HTTP | No | No |
-| Full | HTTPS | Yes (any) | No |
-| **Full (strict)** | **HTTPS** | **Yes (trusted)** | **Yes** |
-
-**Use Full (strict)** with Origin CA certificates — Cloudflare trusts its own Origin CA, so validation passes. This is the most secure option.
-
-## Step 8: Verify
+## Step 6: Verify
 
 ### Test HTTPS End-to-End
 
 ```bash
-# Via Cloudflare (end-to-end)
-curl -I https://gavigo.chanmeng.org/
+# HTTPS should work
+curl -I https://ire.gavigo.com/
 # Expected: HTTP/1.1 200 OK
 
-# HTTP should redirect to HTTPS (Cloudflare edge redirect)
-curl -I http://gavigo.chanmeng.org/
+# HTTP should redirect to HTTPS (LB redirect)
+curl -I http://ire.gavigo.com/
 # Expected: HTTP/1.1 301 Moved Permanently, Location: https://...
-
-# Direct to origin LB IP (bypassing Cloudflare)
-curl -kvI https://146.190.194.246/
-# Expected: TLS handshake succeeds (cert will show as untrusted since Origin CA
-# is only trusted by Cloudflare, not by browsers directly)
 ```
 
 ### Verify WebSocket
@@ -258,29 +206,62 @@ Open the browser dev tools (F12) → Network tab → filter by WS. The `/ws` con
 
 ### Verify Mobile iframe
 
-Navigate to `https://gavigo.chanmeng.org/mobile/` — should load the Expo web app.
+Navigate to `https://ire.gavigo.com/mobile/` — should load the Expo web app.
+
+## Certificate Renewal (Every ~80 Days)
+
+Let's Encrypt certificates expire every 90 days. Renew ~10 days before expiry.
+
+### Renewal Steps
+
+```bash
+# 1. Run certbot again
+certbot certonly --manual --preferred-challenges dns -d ire.gavigo.com
+
+# 2. Update/create TXT record on GoDaddy as prompted
+#    Name: _acme-challenge.ire
+#    Value: <new value from certbot>
+
+# 3. Upload new cert to DigitalOcean
+doctl compute certificate create \
+  --type custom \
+  --name ire-gavigo-cert-YYYYMMDD \
+  --leaf-certificate-path /etc/letsencrypt/live/ire.gavigo.com/cert.pem \
+  --certificate-chain-path /etc/letsencrypt/live/ire.gavigo.com/chain.pem \
+  --private-key-path /etc/letsencrypt/live/ire.gavigo.com/privkey.pem
+
+# 4. Get new cert ID
+doctl compute certificate list --format ID,Name,State
+
+# 5. Update service.yaml with new cert ID and apply
+kubectl apply -f k8s/frontend/service.yaml
+```
+
+### Alternative: Transfer DNS to DigitalOcean
+
+If manual renewal becomes tedious, transfer `gavigo.com` DNS to DigitalOcean nameservers. This enables DO's automatic Let's Encrypt integration (auto-provision + auto-renew, zero maintenance).
 
 ## Troubleshooting
 
-### Error 525: SSL Handshake Failed
+### SSL Handshake Failed / ERR_SSL_PROTOCOL_ERROR
 
-**Cause**: Cloudflare is trying HTTPS to the origin, but the LB isn't terminating TLS.
+**Cause**: The LB isn't terminating TLS (wrong LB type or missing cert).
 
 **Check**:
 ```bash
 doctl compute load-balancer list --output json | grep -E '"type"|entry_protocol|certificate_id'
 ```
 
-If you see `REGIONAL_NETWORK` or `tcp` protocols, the LB doesn't support TLS termination. You need to recreate it with `do-loadbalancer-type: REGIONAL`.
+If you see `REGIONAL_NETWORK` or `tcp` protocols, the LB doesn't support TLS termination. Recreate with `do-loadbalancer-type: REGIONAL`.
 
-### Error 522: Connection Timed Out
+### Connection Timed Out
 
-**Cause**: Cloudflare can't reach the origin on port 443.
+**Cause**: DNS not pointing to LB, or LB not healthy.
 
 **Check**:
 - Is the LB active? `doctl compute load-balancer list --format Status`
 - Is port 443 in the Service spec? `kubectl -n gavigo get svc frontend`
-- Is the DNS A record pointing to the correct (current) LB IP?
+- Does DNS resolve correctly? `nslookup ire.gavigo.com`
 
 ### LB Annotations Not Taking Effect
 
@@ -300,37 +281,30 @@ If you see `REGIONAL_NETWORK` or `tcp` protocols, the LB doesn't support TLS ter
 doctl compute certificate create \
   --name my-cert \
   --type custom \
-  --leaf-certificate-path origin-cert.pem \        # Your cert
-  --certificate-chain-path origin-ca-root.pem \    # Cloudflare CA root
-  --private-key-path origin-key.pem                # Your private key
+  --leaf-certificate-path cert.pem \
+  --certificate-chain-path chain.pem \
+  --private-key-path privkey.pem
 ```
-
-### HTTP Health Checks Failing After HTTPS Setup
-
-**Cause**: If `redirect-http-to-https` is `true`, the LB health check on port 80 gets a 301 redirect instead of 200.
-
-**Fix**: Set `do-loadbalancer-redirect-http-to-https: "false"` and let Cloudflare handle the redirect.
 
 ## Security Notes
 
-- **Never commit certificate private keys** to version control. The `origin-key.pem` should be deleted after uploading to DigitalOcean.
-- Add `*.pem` to `.gitignore` if not already present.
-- The Origin CA certificate is only trusted by Cloudflare — browsers connecting directly to the origin IP will see a certificate warning. This is expected and actually provides an extra layer of security (direct access is discouraged).
-- The `certificate-id` in `service.yaml` is safe to commit — it's a reference to a DO resource, not the certificate itself.
+- **Never commit certificate private keys** to version control
+- Add `*.pem` to `.gitignore` if not already present
+- The `certificate-id` in `service.yaml` is safe to commit — it's a reference to a DO resource, not the certificate itself
+- Let's Encrypt certificates are publicly trusted — browsers will show a valid HTTPS lock icon
 
 ## Cost Impact
 
 | Component | Cost |
 |-----------|------|
-| Cloudflare Origin CA Certificate | Free |
-| Cloudflare SSL/TLS (Full strict) | Free (included in Free plan) |
-| DigitalOcean REGIONAL Load Balancer | Same as REGIONAL_NETWORK ($12/mo) |
+| Let's Encrypt Certificate | Free |
+| GoDaddy DNS | Free (included with domain) |
+| DigitalOcean REGIONAL Load Balancer | $12/mo (same as before) |
 | **Total additional cost** | **$0** |
 
 ## References
 
-- [Cloudflare Origin CA Setup](https://developers.cloudflare.com/ssl/origin-configuration/origin-ca/)
-- [Cloudflare SSL Modes](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/)
+- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
+- [Certbot DNS Challenge](https://certbot.eff.org/docs/using.html#manual)
 - [DigitalOcean K8s LB Annotations](https://github.com/digitalocean/digitalocean-cloud-controller-manager/blob/master/docs/controllers/services/annotations.md)
 - [DigitalOcean K8s LB Configuration](https://docs.digitalocean.com/products/kubernetes/how-to/configure-load-balancers/)
-- [Cloudflare Origin CA Root Certificates](https://developers.cloudflare.com/ssl/static/origin_ca_rsa_root.pem)

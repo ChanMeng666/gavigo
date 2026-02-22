@@ -11,8 +11,9 @@ metadata:
     # HTTPS on port 443, HTTP on port 80
     service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
     service.beta.kubernetes.io/do-loadbalancer-tls-ports: "443"
-    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "b9c7acc4-19a9-4460-92b3-2a9785a08f97"
-    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "false"
+    service.beta.kubernetes.io/do-loadbalancer-certificate-id: "8f5d1c55-9c54-415e-a3f5-742ef516b76f"
+    # Enable HTTP→HTTPS redirect (no Cloudflare to handle this now)
+    service.beta.kubernetes.io/do-loadbalancer-redirect-http-to-https: "true"
 spec:
   type: LoadBalancer
   ports:

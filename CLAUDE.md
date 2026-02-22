@@ -13,7 +13,7 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype with 
 - A **Go backend orchestrator** managing WebSocket communication, AI rules engine, and Kubernetes scaling
 - The mobile app runs on **iOS, Android, and Web** — the web build is embedded as an iframe in the dashboard's phone mockup
 
-**Live URL**: https://gavigo.chanmeng.org/
+**Live URL**: https://ire.gavigo.com/
 **Direct IP**: http://146.190.194.246
 
 ## Current Deployment Status
@@ -22,7 +22,7 @@ GAVIGO IRE is an AI-driven container orchestration visualization prototype with 
 |----------|--------|---------|
 | K8s Cluster | Running | gavigo-cluster (1 node, sgp1) |
 | Redis | Online | In-cluster redis:7-alpine (no TLS) |
-| Frontend | Running | LoadBalancer IP: 146.190.194.246 (HTTPS via Cloudflare Origin CA) |
+| Frontend | Running | LoadBalancer IP: 146.190.194.246 (HTTPS via Let's Encrypt) |
 | Orchestrator | Running | ClusterIP service |
 | Mobile Web | Running | ClusterIP service, proxied at `/mobile/` |
 | External Games | Active | Kongregate iframe integration |
@@ -554,10 +554,13 @@ The orchestrator service account has permissions to:
 ## Recent Changes
 
 ### 2026-02-22
-- Configured HTTPS with Cloudflare Origin CA certificate + DigitalOcean Load Balancer TLS termination
+- Migrated domain from `gavigo.chanmeng.org` (Cloudflare) to `ire.gavigo.com` (GoDaddy DNS + Let's Encrypt)
+- Replaced Cloudflare Origin CA with Let's Encrypt certificate (DNS-01 challenge, manual renewal every ~80 days)
+- Enabled HTTP→HTTPS redirect on DO Load Balancer (was handled by Cloudflare)
+- Updated all codebase references to new domain
+- Configured HTTPS with Cloudflare Origin CA certificate + DigitalOcean Load Balancer TLS termination (legacy)
 - Recreated LB as `REGIONAL` type (was `REGIONAL_NETWORK` which doesn't support TLS termination)
 - New LB IP: `146.190.194.246` (was `129.212.209.146`)
-- Cloudflare SSL mode set to `Full (strict)`
 - Updated `k8s/frontend/service.yaml` with DO LB annotations for HTTPS on port 443
 - Added `docs/HTTPS_SETUP_GUIDE.md` — comprehensive HTTPS setup tutorial
 
@@ -664,7 +667,8 @@ kubectl -n gavigo get endpoints
 - [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 - [docs/EXPO_WEB_PITFALLS.md](./docs/EXPO_WEB_PITFALLS.md) - Expo web platform pitfalls and debugging guide
-- [docs/HTTPS_SETUP_GUIDE.md](./docs/HTTPS_SETUP_GUIDE.md) - HTTPS setup with Cloudflare Origin CA + DO Load Balancer
+- [docs/HTTPS_SETUP_GUIDE.md](./docs/HTTPS_SETUP_GUIDE.md) - HTTPS setup guide (Let's Encrypt + DO Load Balancer)
+- [docs/DOMAIN_MIGRATION_AND_CERT_RENEWAL.md](./docs/DOMAIN_MIGRATION_AND_CERT_RENEWAL.md) - Domain migration record + cert renewal guide (for Claude Code automation)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

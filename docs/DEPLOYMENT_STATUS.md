@@ -10,9 +10,9 @@
 
 ## Access the Application
 
-**Frontend URL**: http://129.212.209.146
-**Alt URL**: https://gavigo.chanmeng.org/
-**Mobile Web (direct)**: http://129.212.209.146/mobile/
+**Frontend URL**: http://146.190.194.246
+**Alt URL**: https://ire.gavigo.com/
+**Mobile Web (direct)**: http://146.190.194.246/mobile/
 
 ---
 
@@ -61,7 +61,7 @@ Deployed resources:
   - `frontend` (1/1 Running)
   - `mobile-web` (1/1 Running)
 - **Services**:
-  - `frontend` (LoadBalancer, External IP: 129.212.209.146)
+  - `frontend` (LoadBalancer, External IP: 146.190.194.246)
   - `orchestrator` (ClusterIP :8080)
   - `mobile-web` (ClusterIP :80)
 
@@ -98,7 +98,7 @@ Deployed resources:
 | K8s Cluster | `gavigo-cluster` | `doctl kubernetes cluster kubeconfig save gavigo-cluster` |
 | Redis | `gavigo-redis` | *(stored in K8s Secret)* |
 | Registry | `gavigo-registry` | `registry.digitalocean.com/gavigo-registry` |
-| Frontend | External IP | `http://129.212.209.146` |
+| Frontend | External IP | `http://146.190.194.246` |
 
 ---
 
@@ -175,7 +175,7 @@ kubectl -n gavigo rollout restart deployment/mobile-web
 | Kubernetes Cluster | 2 nodes, sgp1 | ~$24/month |
 | Managed Redis | Valkey 8, TLS | ~$15/month |
 | Container Registry | Basic (5 repos) | ~$5/month |
-| Load Balancer | Auto-created (129.212.209.146) | ~$12/month |
+| Load Balancer | Auto-created (146.190.194.246) | ~$12/month |
 | **Total** | | **~$56/month** |
 
 ---

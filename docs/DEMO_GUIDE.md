@@ -2,7 +2,7 @@
 
 > A comprehensive guide to testing and understanding all features of the GAVIGO IRE prototype.
 
-**Live Demo**: https://gavigo.chanmeng.org/
+**Live Demo**: https://ire.gavigo.com/
 
 ---
 
@@ -51,7 +51,7 @@ GAVIGO IRE (Instant Reality Exchange) demonstrates AI-driven container orchestra
 
 ### Access the Demo
 
-1. Open your browser and navigate to: **https://gavigo.chanmeng.org/**
+1. Open your browser and navigate to: **https://ire.gavigo.com/**
 2. The page will automatically connect via WebSocket
 3. Look for the green "Connected" indicator in the header
 

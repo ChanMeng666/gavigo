@@ -12,7 +12,7 @@
 
 **AI-Driven Container Orchestration Visualization with Mobile App**
 
-[Live Demo](https://gavigo.chanmeng.org/) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
+[Live Demo](https://ire.gavigo.com/) | [Demo Guide](./docs/DEMO_GUIDE.md) | [Architecture](#architecture)
 
 [![DigitalOcean Referral Badge](https://web-platforms.sfo2.cdn.digitaloceanspaces.com/WWW/Badge%201.svg)](https://www.digitalocean.com/?refcode=9ad5295b63f3&utm_campaign=Referral_Invite&utm_medium=Referral_Program&utm_source=badge)
 
@@ -43,7 +43,7 @@ GAVIGO IRE (Instant Reality Exchange) is a visualization prototype demonstrating
 
 | Environment | URL | Status |
 |-------------|-----|--------|
-| Production | https://gavigo.chanmeng.org/ | Running |
+| Production | https://ire.gavigo.com/ | Running |
 
 **Infrastructure**: DigitalOcean Kubernetes (DOKS) in Singapore (sgp1)
 
@@ -126,7 +126,7 @@ graph TB
     subgraph "Infrastructure"
         K8S[Kubernetes API]
         LB[LoadBalancer<br/>HTTPS + TLS Termination]
-        CF_EDGE[Cloudflare Edge<br/>CDN + SSL]
+        DNS[GoDaddy DNS<br/>ire.gavigo.com]
     end
 
     MA --> FEED
@@ -135,7 +135,7 @@ graph TB
     FE --> PHONE
     FE --> DASH
 
-    CF_EDGE -->|HTTPS| LB
+    DNS -->|HTTPS| LB
     LB -->|HTTP| NGINX
     NGINX -->|/| FE
     NGINX -->|^~ /mobile/| MA
@@ -156,7 +156,7 @@ graph TB
 ### Request Routing (nginx)
 
 ```
-Internet → Cloudflare (HTTPS) → DO LoadBalancer :443 (TLS termination) → Frontend nginx :80
+Internet → DO LoadBalancer :443 (TLS termination, Let's Encrypt) → Frontend nginx :80
     ├── /               → React Dashboard (SPA)
     ├── ^~ /mobile/     → Mobile Web App (Expo web build, proxied to mobile-web service)
     ├── /api/           → Orchestrator (Go REST API)
@@ -313,7 +313,7 @@ graph TB
             MW_SVC[Mobile-Web Service<br/>ClusterIP :80]
         end
 
-        CF[Cloudflare<br/>CDN + SSL]
+        CERT[Let's Encrypt<br/>TLS Certificate]
         REGISTRY[Container Registry<br/>gavigo-registry]
     end
 
@@ -323,8 +323,7 @@ graph TB
         FIREBASE[Firebase Auth]
     end
 
-    INTERNET((Internet)) -->|HTTPS| CF
-    CF -->|HTTPS| FE_SVC
+    INTERNET((Internet)) -->|HTTPS| FE_SVC
     FE_SVC --> FE_POD
     FE_POD -->|^~ /mobile/| MW_SVC
     MW_SVC --> MW_POD
@@ -433,8 +432,7 @@ When users engage with content for 5+ seconds, the system recommends related con
 | Kubernetes | DigitalOcean DOKS | Container orchestration |
 | Redis | In-cluster redis:7-alpine | State store (no TLS) |
 | Container Registry | DigitalOcean | Image storage (4 images) |
-| Load Balancer | DigitalOcean REGIONAL | HTTPS termination (Cloudflare Origin CA) |
-| CDN / SSL | Cloudflare | Edge caching, SSL/TLS Full (strict) |
+| Load Balancer | DigitalOcean REGIONAL | HTTPS termination (Let's Encrypt) |
 | Firebase | Google | Mobile authentication |
 
 ---
@@ -692,7 +690,7 @@ sequenceDiagram
 | K8s Cluster | gavigo-cluster | 1 node, sgp1 |
 | Redis | In-cluster | redis:7-alpine (no TLS) |
 | Registry | gavigo-registry | Basic tier (5 repos) |
-| Load Balancer | REGIONAL (HTTP) | HTTPS via Cloudflare Origin CA |
+| Load Balancer | REGIONAL (HTTP) | HTTPS via Let's Encrypt |
 | Region | sgp1 | Singapore |
 
 ### Container Images
@@ -712,7 +710,7 @@ sequenceDiagram
 | Redis (in-cluster) | $0 (runs in cluster) |
 | Container Registry (Basic) | ~$5/month |
 | Load Balancer (REGIONAL) | ~$12/month |
-| Cloudflare (Free plan) | $0 |
+| Let's Encrypt TLS | $0 |
 | **Total** | **~$29/month** |
 
 ---
@@ -759,7 +757,7 @@ kubectl -n gavigo get configmap orchestrator-config -o yaml | grep REDIS
 - [CLAUDE.md](./CLAUDE.md) - Development guidelines for Claude Code
 - [docs/DEPLOYMENT_STATUS.md](./docs/DEPLOYMENT_STATUS.md) - Current deployment status
 - [docs/DEMO_GUIDE.md](./docs/DEMO_GUIDE.md) - Demo walkthrough and technical explanations
-- [docs/HTTPS_SETUP_GUIDE.md](./docs/HTTPS_SETUP_GUIDE.md) - HTTPS setup with Cloudflare Origin CA + DO Load Balancer
+- [docs/HTTPS_SETUP_GUIDE.md](./docs/HTTPS_SETUP_GUIDE.md) - HTTPS setup guide (Let's Encrypt + DO Load Balancer)
 - [docs/EXPO_WEB_PITFALLS.md](./docs/EXPO_WEB_PITFALLS.md) - Expo web platform pitfalls and debugging
 - [specs/001-ire-prototype/](./specs/001-ire-prototype/) - Feature specification
 
