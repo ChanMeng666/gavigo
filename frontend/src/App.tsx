@@ -194,14 +194,16 @@ function App() {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [contentData, decisionsData, resourceData] = await Promise.all([
+        const [contentData, decisionsData, resourceData, telemetryData] = await Promise.all([
           api.getContent(),
           api.getDecisions(50),
           api.getResources(),
+          api.getTelemetry(),
         ])
         setContent(contentData)
         setDecisions(decisionsData)
         setResourceHistory([resourceData])
+        setTelemetrySnapshots(telemetryData)
 
         // Initialize container states
         const states: Record<string, ContainerStatus> = {}
