@@ -17,10 +17,16 @@ type Handlers struct {
 	decisions       []*models.AIDecision
 	scorer          *engine.Scorer
 	currentMode     models.OperationalMode
+	proofManager    *engine.ProofSignalManager
 
 	// Dependencies
 	OnTrendSpike func(contentID string, viralScore float64)
 	OnReset      func()
+}
+
+// SetProofManager sets the proof signal manager reference
+func (h *Handlers) SetProofManager(pm *engine.ProofSignalManager) {
+	h.proofManager = pm
 }
 
 // NewHandlers creates new API handlers
@@ -95,6 +101,8 @@ func (h *Handlers) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/api/v1/resources", h.handleResources)
 	mux.HandleFunc("/api/v1/demo/reset", h.handleDemoReset)
 	mux.HandleFunc("/api/v1/demo/trend-spike", h.handleTrendSpike)
+	mux.HandleFunc("/api/v1/telemetry", h.handleTelemetry)
+	mux.HandleFunc("/api/v1/proof-signals", h.handleProofSignals)
 }
 
 func (h *Handlers) handleHealth(w http.ResponseWriter, r *http.Request) {
@@ -289,6 +297,41 @@ func (h *Handlers) handleTrendSpike(w http.ResponseWriter, r *http.Request) {
 		"content_id":      req.ContentID,
 		"new_viral_score": req.ViralScore,
 	})
+}
+
+func (h *Handlers) handleTelemetry(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if h.proofManager == nil {
+		h.writeJSON(w, map[string]interface{}{})
+		return
+	}
+
+	h.writeJSON(w, h.proofManager.GetAllSnapshots())
+}
+
+func (h *Handlers) handleProofSignals(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	limit := 100
+	if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil && l > 0 {
+			limit = l
+		}
+	}
+
+	if h.proofManager == nil {
+		h.writeJSON(w, []*models.ProofSignalEvent{})
+		return
+	}
+
+	h.writeJSON(w, h.proofManager.GetRecentSignals(limit))
 }
 
 func (h *Handlers) writeJSON(w http.ResponseWriter, data interface{}) {

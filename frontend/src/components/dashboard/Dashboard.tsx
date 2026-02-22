@@ -10,6 +10,7 @@ import { SocialActivityFeed } from "./SocialActivityFeed"
 import { UserEngagement } from "./UserEngagement"
 import { UserJourney } from "./UserJourney"
 import { ScreenDistribution } from "./ScreenDistribution"
+import { TelemetryPanel } from "./TelemetryPanel"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type {
   ContentItem,
@@ -23,6 +24,8 @@ import type {
   SocialEvent,
   EngagementSummary,
   UserActivityEvent,
+  ProofSignalEvent,
+  TelemetrySnapshot,
 } from "@/types"
 
 interface DashboardProps {
@@ -39,6 +42,8 @@ interface DashboardProps {
   socialEvents: SocialEvent[]
   engagement: EngagementSummary | null
   userActivities: UserActivityEvent[]
+  proofSignals: ProofSignalEvent[]
+  telemetrySnapshots: Record<string, TelemetrySnapshot>
   onDemoControl: (payload: DemoControlPayload) => void
   onResetDemo: () => void
 }
@@ -55,6 +60,8 @@ export function Dashboard({
   socialEvents,
   engagement,
   userActivities,
+  proofSignals,
+  telemetrySnapshots,
   onDemoControl,
   onResetDemo,
 }: DashboardProps) {
@@ -70,6 +77,13 @@ export function Dashboard({
           {/* TOP: Activation Spine Timeline (full width hero) */}
           <ActivationTimeline
             events={activationSpine}
+            contentTitles={contentTitles}
+          />
+
+          {/* Telemetry Panel (full width) */}
+          <TelemetryPanel
+            telemetrySnapshots={telemetrySnapshots}
+            proofSignals={proofSignals}
             contentTitles={contentTitles}
           />
 
@@ -89,7 +103,7 @@ export function Dashboard({
               />
               <ServiceStatus />
               <UserEngagement engagement={engagement} />
-              <WorkloadStatus content={content} containerStates={containerStates} />
+              <WorkloadStatus content={content} containerStates={containerStates} telemetrySnapshots={telemetrySnapshots} />
             </div>
 
             {/* Center Column - AI Decisions + Social Feed */}

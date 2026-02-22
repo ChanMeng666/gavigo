@@ -68,10 +68,19 @@ func main() {
 		hub.BroadcastActivationSpine(event)
 	})
 
+	// Initialize proof signal manager
+	proofManager := engine.NewProofSignalManager(cfg, func(event *models.ProofSignalEvent) {
+		hub.BroadcastProofSignal(event)
+	}, func(snapshot *models.TelemetrySnapshot) {
+		hub.BroadcastTelemetryUpdate(snapshot)
+	})
+	handlers.SetProofManager(proofManager)
+
 	// Wire up callbacks
 	rulesEngine.OnDecision = func(decision *models.AIDecision) {
 		handlers.AddDecision(decision)
 		hub.BroadcastDecision(decision)
+		proofManager.OnDecisionMade(decision)
 	}
 
 	rulesEngine.OnScaleAction = func(contentID string, targetState models.ContainerStatus) {
@@ -83,6 +92,7 @@ func main() {
 
 		handlers.UpdateContainerState(contentID, targetState)
 		hub.BroadcastContainerStateChange(contentID, oldState, targetState)
+		proofManager.OnContainerStateChange(contentID, oldState, targetState)
 
 		// Spine: record phase based on target state
 		if targetState == models.StatusWarm {
@@ -98,6 +108,7 @@ func main() {
 				delay := engine.SimulatedStartupDelay(contentType)
 				time.Sleep(delay)
 				spine.RecordPhase(contentID, "", models.PhasePreviewReady, "container_ready_simulated", models.WeightPreview, true)
+				proofManager.OnPreviewReady(contentID)
 			}()
 		} else if targetState == models.StatusHot {
 			spine.RecordPhase(contentID, "", models.PhaseHot, "scale_action", models.WeightFull, false)
@@ -203,6 +214,7 @@ func main() {
 		// Spine: record INTENT if combined score > 0.3 and no INTENT yet
 		if scores.CombinedScore > 0.3 && !spine.HasIntent(contentID) {
 			spine.RecordPhase(contentID, client.SessionID, models.PhaseIntent, "focus_engagement", models.WeightIdle, false)
+			proofManager.OnIntentDetected(contentID)
 		}
 
 		// Track engagement and broadcast every 3rd focus event (throttle: ~3s)
@@ -254,9 +266,14 @@ func main() {
 			return
 		}
 
+		// Record activation request in proof manager (classifies path)
+		proofManager.OnActivationRequest(contentID, content.ContainerStatus)
+
 		// Spine: check if this is a restore or fresh activation
-		if spine.IsPreviousHot(contentID) {
+		isRestore := spine.IsPreviousHot(contentID)
+		if isRestore {
 			spine.RecordPhase(contentID, client.SessionID, models.PhaseRestoreStart, "session_reactivation", models.WeightFull, false)
+			proofManager.OnRestoreStart(contentID)
 		} else {
 			spine.RecordPhase(contentID, client.SessionID, models.PhaseActivating, "user_activation", models.WeightFull, false)
 		}
@@ -267,12 +284,14 @@ func main() {
 		// Scale to HOT
 		handlers.UpdateContainerState(contentID, models.StatusHot)
 		hub.BroadcastContainerStateChange(contentID, oldState, models.StatusHot)
+		proofManager.OnContainerStateChange(contentID, oldState, models.StatusHot)
 
 		// Spine: record completion phase
-		if spine.IsPreviousHot(contentID) {
+		if isRestore {
 			go func() {
 				time.Sleep(engine.SimulatedRestoreDelay())
 				spine.RecordPhase(contentID, client.SessionID, models.PhaseRestoreComplete, "restore_complete", models.WeightFull, true)
+				proofManager.OnRestoreComplete(contentID)
 			}()
 		} else {
 			spine.RecordPhase(contentID, client.SessionID, models.PhaseHot, "activation_complete", models.WeightFull, false)
@@ -287,6 +306,11 @@ func main() {
 				"status":       models.StatusHot,
 			},
 		})
+
+		// Mark execution ready for non-restore paths
+		if !isRestore {
+			proofManager.OnExecutionReady(contentID)
+		}
 
 		log.Printf("Content activated: %s", contentID)
 	}
@@ -306,6 +330,7 @@ func main() {
 		spine.RecordPhase(contentID, client.SessionID, models.PhaseDeactivating, "user_left", models.WeightPreview, false)
 		spine.RecordPhase(contentID, client.SessionID, models.PhaseCooling, "scaling_back", models.WeightIdle, false)
 		spine.MarkPreviousHot(contentID)
+		proofManager.OnDeactivation(contentID)
 
 		log.Printf("Content deactivated: %s", contentID)
 	}
@@ -322,6 +347,7 @@ func main() {
 		case "reset_demo":
 			handlers.OnReset()
 			spine.Reset()
+			proofManager.Reset()
 		case "force_warm":
 			oldState := models.StatusCold
 			if c := handlers.GetContentByID(targetContentID); c != nil {
@@ -329,6 +355,7 @@ func main() {
 			}
 			handlers.UpdateContainerState(targetContentID, models.StatusWarm)
 			hub.BroadcastContainerStateChange(targetContentID, oldState, models.StatusWarm)
+			proofManager.InvalidateAttempt(targetContentID)
 		case "force_cold":
 			oldState := models.StatusCold
 			if c := handlers.GetContentByID(targetContentID); c != nil {
@@ -336,6 +363,7 @@ func main() {
 			}
 			handlers.UpdateContainerState(targetContentID, models.StatusCold)
 			hub.BroadcastContainerStateChange(targetContentID, oldState, models.StatusCold)
+			proofManager.InvalidateAttempt(targetContentID)
 		}
 
 		log.Printf("Demo control: action=%s, target=%s, value=%.2f", action, targetContentID, value)
@@ -374,6 +402,7 @@ func main() {
 	handlers.OnReset = func() {
 		scorer.Reset()
 		spine.Reset()
+		proofManager.Reset()
 		log.Println("Full reset triggered via API")
 	}
 

@@ -193,6 +193,57 @@ export interface UserActivityEvent {
   timestamp: string;
 }
 
+// Proof Signal Types
+export type ProofEventType =
+  | 'intent_detected'
+  | 'orchestration_decision_made'
+  | 'prewarm_start'
+  | 'warm_ready'
+  | 'activation_request_received'
+  | 'hot_state_entered'
+  | 'execution_ready'
+  | 'restore_start'
+  | 'restore_complete';
+
+export type ActivationPathType = 'COLD_PATH' | 'PREWARM_PATH' | 'RESTORE_PATH';
+
+export interface ProofSignalEvent {
+  event_id: string;
+  content_id: string;
+  attempt_id: string;
+  event_type: ProofEventType;
+  ts_server_ms: number;
+  source_event_type: string;
+  trigger_type?: string;
+  state_from?: string;
+  state_to?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface TelemetrySnapshot {
+  content_id: string;
+  attempt_id: string;
+  current_state: ContainerStatus;
+  activation_path_type: ActivationPathType;
+  cache_hit_indicator: boolean;
+  trigger_type?: string;
+  last_reasoning_short?: string;
+  intent_ts: number;
+  decision_ts: number;
+  prewarm_start_ts: number;
+  warm_ready_ts: number;
+  activation_request_ts: number;
+  hot_entered_ts: number;
+  execution_ready_ts: number;
+  restore_start_ts: number;
+  restore_complete_ts: number;
+  orchestration_decision_time_ms: number;
+  prewarm_duration_ms: number;
+  activation_latency_ms: number;
+  execution_ready_latency_ms: number;
+  restore_latency_ms: number;
+}
+
 // Generic WebSocket message
 export interface WebSocketMessage<T = unknown> {
   type: string;
@@ -213,6 +264,8 @@ export type WSEventType =
   | 'social_event'
   | 'engagement_update'
   | 'user_activity'
+  | 'proof_signal'
+  | 'telemetry_update'
   | 'error';
 
 // Application State
@@ -227,4 +280,6 @@ export interface AppState {
   resources: ResourceAllocation | null;
   activeContentId: string | null;
   activationSpine: ActivationSpineEvent[];
+  proofSignals: ProofSignalEvent[];
+  telemetrySnapshots: Record<string, TelemetrySnapshot>;
 }

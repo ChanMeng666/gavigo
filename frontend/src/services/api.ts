@@ -4,6 +4,8 @@ import type {
   ResourceAllocation,
   ContainerStatus,
   OperationalMode,
+  TelemetrySnapshot,
+  ProofSignalEvent,
 } from '../types';
 
 const API_BASE = '/api/v1';
@@ -98,6 +100,13 @@ export const api = {
         }),
       }
     ),
+
+  // Telemetry
+  getTelemetry: () =>
+    fetchJson<Record<string, TelemetrySnapshot>>(`${API_BASE}/telemetry`),
+
+  getProofSignals: (limit = 100) =>
+    fetchJson<ProofSignalEvent[]>(`${API_BASE}/proof-signals?limit=${limit}`),
 };
 
 export default api;

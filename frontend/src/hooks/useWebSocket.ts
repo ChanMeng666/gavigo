@@ -18,6 +18,8 @@ import type {
   SocialEvent,
   EngagementSummary,
   UserActivityEvent,
+  ProofSignalEvent,
+  TelemetrySnapshot,
 } from '../types';
 
 interface UseWebSocketOptions {
@@ -34,6 +36,8 @@ interface UseWebSocketOptions {
   onSocialEvent?: (payload: SocialEvent) => void;
   onEngagementUpdate?: (payload: EngagementSummary) => void;
   onUserActivity?: (payload: UserActivityEvent) => void;
+  onProofSignal?: (payload: ProofSignalEvent) => void;
+  onTelemetryUpdate?: (payload: TelemetrySnapshot) => void;
   onError?: (payload: ErrorPayload) => void;
 }
 
@@ -52,6 +56,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onSocialEvent,
     onEngagementUpdate,
     onUserActivity,
+    onProofSignal,
+    onTelemetryUpdate,
     onError,
   } = options;
 
@@ -150,6 +156,14 @@ export function useWebSocket(options: UseWebSocketOptions) {
         onUserActivity?.(message.payload as UserActivityEvent);
         break;
 
+      case 'proof_signal':
+        onProofSignal?.(message.payload as ProofSignalEvent);
+        break;
+
+      case 'telemetry_update':
+        onTelemetryUpdate?.(message.payload as TelemetrySnapshot);
+        break;
+
       case 'error':
         onError?.(message.payload as ErrorPayload);
         break;
@@ -170,6 +184,8 @@ export function useWebSocket(options: UseWebSocketOptions) {
     onSocialEvent,
     onEngagementUpdate,
     onUserActivity,
+    onProofSignal,
+    onTelemetryUpdate,
     onError,
   ]);
 

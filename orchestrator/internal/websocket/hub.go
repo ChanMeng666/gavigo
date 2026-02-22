@@ -261,3 +261,19 @@ func (h *Hub) BroadcastUserActivity(event *models.UserActivityEvent) {
 		Payload: event,
 	})
 }
+
+// BroadcastProofSignal sends a proof signal event to all clients
+func (h *Hub) BroadcastProofSignal(event *models.ProofSignalEvent) {
+	h.Broadcast(Message{
+		Type:    "proof_signal",
+		Payload: event,
+	})
+}
+
+// BroadcastTelemetryUpdate sends a telemetry snapshot to all clients
+func (h *Hub) BroadcastTelemetryUpdate(snapshot *models.TelemetrySnapshot) {
+	h.Broadcast(Message{
+		Type:    "telemetry_update",
+		Payload: snapshot,
+	})
+}

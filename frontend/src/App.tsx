@@ -27,6 +27,8 @@ import type {
   SocialEvent,
   EngagementSummary,
   UserActivityEvent,
+  ProofSignalEvent,
+  TelemetrySnapshot,
 } from "./types"
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
   const [socialEvents, setSocialEvents] = useState<SocialEvent[]>([])
   const [engagement, setEngagement] = useState<EngagementSummary | null>(null)
   const [userActivities, setUserActivities] = useState<UserActivityEvent[]>([])
+  const [proofSignals, setProofSignals] = useState<ProofSignalEvent[]>([])
+  const [telemetrySnapshots, setTelemetrySnapshots] = useState<Record<string, TelemetrySnapshot>>({})
   const [viewMode, setViewMode] = useState<ViewMode>("split")
 
   // Responsive
@@ -150,6 +154,17 @@ function App() {
     setUserActivities((prev) => [event, ...prev].slice(0, 200))
   }, [])
 
+  const handleProofSignal = useCallback((event: ProofSignalEvent) => {
+    setProofSignals((prev) => [event, ...prev].slice(0, 500))
+  }, [])
+
+  const handleTelemetryUpdate = useCallback((snapshot: TelemetrySnapshot) => {
+    setTelemetrySnapshots((prev) => ({
+      ...prev,
+      [snapshot.content_id]: snapshot,
+    }))
+  }, [])
+
   const {
     connected,
     sessionId,
@@ -171,6 +186,8 @@ function App() {
     onSocialEvent: handleSocialEvent,
     onEngagementUpdate: handleEngagementUpdate,
     onUserActivity: handleUserActivity,
+    onProofSignal: handleProofSignal,
+    onTelemetryUpdate: handleTelemetryUpdate,
   })
 
   // Fetch initial data
@@ -232,6 +249,8 @@ function App() {
       setSocialEvents([])
       setEngagement(null)
       setUserActivities([])
+      setProofSignals([])
+      setTelemetrySnapshots({})
       setCurrentMode("MIXED_STREAM_BROWSING")
       setActiveContentId(null)
       // Refetch content
@@ -324,6 +343,8 @@ function App() {
                 socialEvents={socialEvents}
                 engagement={engagement}
                 userActivities={userActivities}
+                proofSignals={proofSignals}
+                telemetrySnapshots={telemetrySnapshots}
                 onDemoControl={handleDemoControl}
                 onResetDemo={handleResetDemo}
               />

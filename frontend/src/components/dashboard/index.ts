@@ -11,3 +11,4 @@ export { SocialActivityFeed } from './SocialActivityFeed';
 export { UserEngagement } from './UserEngagement';
 export { UserJourney } from './UserJourney';
 export { ScreenDistribution } from './ScreenDistribution';
+export { TelemetryPanel } from './TelemetryPanel';

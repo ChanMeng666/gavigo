@@ -5,14 +5,26 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { StatusIndicator } from "@/components/ui/status-indicator"
 import { Gamepad2 } from "lucide-react"
 import { statusIcons, statusConfig } from "@/components/icons"
-import type { ContentItem, ContainerStatus as ContainerStatusType } from "@/types"
+import type { ContentItem, ContainerStatus as ContainerStatusType, TelemetrySnapshot } from "@/types"
 
 interface WorkloadStatusProps {
   content: ContentItem[]
   containerStates: Record<string, ContainerStatusType>
+  telemetrySnapshots?: Record<string, TelemetrySnapshot>
 }
 
-export function WorkloadStatus({ content, containerStates }: WorkloadStatusProps) {
+function getWarmingLabel(snapshot: TelemetrySnapshot | undefined): string | null {
+  if (!snapshot) return null
+  if (snapshot.prewarm_start_ts > 0 && snapshot.warm_ready_ts === 0 && snapshot.current_state !== "HOT") {
+    return "Warming..."
+  }
+  if (snapshot.warm_ready_ts > 0 && snapshot.current_state === "WARM") {
+    return "Prewarmed"
+  }
+  return null
+}
+
+export function WorkloadStatus({ content, containerStates, telemetrySnapshots }: WorkloadStatusProps) {
   // Filter to game workloads only
   const gameContent = content.filter((item) => item.type === "GAME")
 
@@ -39,6 +51,8 @@ export function WorkloadStatus({ content, containerStates }: WorkloadStatusProps
           <div className="space-y-2" role="list" aria-label="Workload status list">
             {gameContent.map((item) => {
               const status = containerStates[item.id] || item.container_status
+              const snapshot = telemetrySnapshots?.[item.id]
+              const warmingLabel = getWarmingLabel(snapshot)
 
               return (
                 <div
@@ -53,9 +67,20 @@ export function WorkloadStatus({ content, containerStates }: WorkloadStatusProps
                       <p className="text-sm font-medium text-foreground truncate">
                         {item.title}
                       </p>
-                      <p className="text-xs text-muted-foreground font-mono truncate">
-                        {item.deployment_name}
-                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-xs text-muted-foreground font-mono truncate">
+                          {item.deployment_name}
+                        </p>
+                        {warmingLabel && (
+                          <span className={`text-[10px] font-medium ${
+                            warmingLabel === "Warming..."
+                              ? "text-warm animate-pulse"
+                              : "text-warm"
+                          }`}>
+                            {warmingLabel}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <StatusBadge status={status} glow={status !== "COLD"} />

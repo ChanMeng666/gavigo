@@ -17,6 +17,8 @@ type Config struct {
 	RecommendationThreshold float64
 	PersonalScoreWeight     float64
 	GlobalScoreWeight       float64
+	ProofSignalsEnabled     bool
+	RestoreWindowMs         int64
 }
 
 func Load() *Config {
@@ -32,6 +34,8 @@ func Load() *Config {
 		RecommendationThreshold: getEnvFloat("RECOMMENDATION_THRESHOLD", 0.6),
 		PersonalScoreWeight:     getEnvFloat("PERSONAL_SCORE_WEIGHT", 0.6),
 		GlobalScoreWeight:       getEnvFloat("GLOBAL_SCORE_WEIGHT", 0.4),
+		ProofSignalsEnabled:     getEnvBool("PROOF_SIGNALS_ENABLED", true),
+		RestoreWindowMs:         int64(getEnvInt("RESTORE_WINDOW_MS", 120000)),
 	}
 }
 
