@@ -172,14 +172,18 @@ export async function resetPassword(email: string) {
   if (error) throw new Error(error.message);
 }
 
-// Module-level flag: when PASSWORD_RECOVERY fires, suppress the SIGNED_IN
-// event that Supabase immediately emits afterwards so the user stays on the
-// reset-password screen instead of being auto-logged into the app.
-let _inPasswordRecovery = false;
+// Detect password recovery from the URL hash SYNCHRONOUSLY at module load.
+// Supabase redirects with #access_token=...&type=recovery in the hash.
+// We must detect this BEFORE any async getSession() call, which would
+// otherwise see a valid session and auto-log the user into the app.
+let _inPasswordRecovery = (() => {
+  if (typeof window === 'undefined') return false;
+  const hash = window.location.hash;
+  return hash.includes('type=recovery');
+})();
 
 export function onAuthStateChanged(callback: (user: any) => void) {
-  // Check initial session — but skip if we're in password recovery mode
-  // (the URL contains a recovery token that Supabase already picked up).
+  // Check initial session — but skip if we're in password recovery mode.
   supabase.auth.getSession().then(({ data: { session } }) => {
     if (_inPasswordRecovery) return;
 
