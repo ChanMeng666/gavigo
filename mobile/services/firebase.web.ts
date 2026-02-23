@@ -162,7 +162,13 @@ export async function signOut() {
 }
 
 export async function resetPassword(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const redirectTo = typeof window !== 'undefined'
+    ? `${window.location.origin}/mobile/reset-password`
+    : 'https://ire.gavigo.com/mobile/reset-password';
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo,
+  });
   if (error) throw new Error(error.message);
 }
 
@@ -186,7 +192,21 @@ export function onAuthStateChanged(callback: (user: any) => void) {
   // Listen for auth state changes
   const {
     data: { subscription },
-  } = supabase.auth.onAuthStateChange((_event, session) => {
+  } = supabase.auth.onAuthStateChange((event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      // Signal password recovery mode — pass a special marker so the
+      // auth hook can navigate to the reset-password screen.
+      callback({
+        uid: session?.user?.id ?? 'recovery',
+        displayName: null,
+        email: session?.user?.email ?? null,
+        photoURL: null,
+        getIdToken: async () => session?.access_token ?? '',
+        _passwordRecovery: true,
+      });
+      return;
+    }
+
     if (session?.user) {
       const user = session.user;
       callback({

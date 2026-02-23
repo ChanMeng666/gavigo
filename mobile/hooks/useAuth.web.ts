@@ -1,17 +1,28 @@
 // Web-specific auth hook - real Supabase session listener
 // Metro bundler automatically picks .web.ts over .ts for web builds
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { onAuthStateChanged } from '@/services/firebase';
 import { supabase } from '@/services/supabase';
+import { router } from 'expo-router';
 
 export function useAuth() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const recoveryHandled = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(async (user) => {
-      if (user) {
+      if (user?._passwordRecovery && !recoveryHandled.current) {
+        // PASSWORD_RECOVERY event — navigate to reset screen instead of
+        // logging the user into the main app.
+        recoveryHandled.current = true;
+        useAuthStore.getState().setLoading(false);
+        router.replace('/(auth)/reset-password');
+        return;
+      }
+
+      if (user && !user._passwordRecovery) {
         useAuthStore.getState().setFirebaseAuth(user.uid, await user.getIdToken());
 
         // Fetch profile from Supabase
@@ -34,7 +45,7 @@ export function useAuth() {
             created_at: profile.created_at,
           });
         }
-      } else {
+      } else if (!user) {
         useAuthStore.getState().logout();
       }
       useAuthStore.getState().setLoading(false);
