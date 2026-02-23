@@ -201,14 +201,17 @@ export function onAuthStateChanged(callback: (user: any) => void) {
     }
   });
 
-  // Listen for auth state changes
+  // Listen for auth state changes.
+  // Supabase fires events in this order after a recovery redirect:
+  //   INITIAL_SESSION → PASSWORD_RECOVERY → SIGNED_IN
+  // We must suppress ALL of them except PASSWORD_RECOVERY when in
+  // recovery mode, otherwise any event with a valid session will
+  // trigger login and redirect the user away from the reset screen.
   const {
     data: { subscription },
   } = supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
       _inPasswordRecovery = true;
-      // Signal password recovery mode — pass a special marker so the
-      // auth hook can navigate to the reset-password screen.
       callback({
         uid: session?.user?.id ?? 'recovery',
         displayName: null,
@@ -220,8 +223,9 @@ export function onAuthStateChanged(callback: (user: any) => void) {
       return;
     }
 
-    // Suppress the SIGNED_IN event that fires right after PASSWORD_RECOVERY
-    if (_inPasswordRecovery && event === 'SIGNED_IN') {
+    // When in recovery mode, suppress ALL events that carry a session
+    // (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, etc.)
+    if (_inPasswordRecovery && event !== 'SIGNED_OUT') {
       return;
     }
 
