@@ -172,9 +172,17 @@ export async function resetPassword(email: string) {
   if (error) throw new Error(error.message);
 }
 
+// Module-level flag: when PASSWORD_RECOVERY fires, suppress the SIGNED_IN
+// event that Supabase immediately emits afterwards so the user stays on the
+// reset-password screen instead of being auto-logged into the app.
+let _inPasswordRecovery = false;
+
 export function onAuthStateChanged(callback: (user: any) => void) {
-  // Check initial session
+  // Check initial session — but skip if we're in password recovery mode
+  // (the URL contains a recovery token that Supabase already picked up).
   supabase.auth.getSession().then(({ data: { session } }) => {
+    if (_inPasswordRecovery) return;
+
     if (session?.user) {
       const user = session.user;
       callback({
@@ -194,6 +202,7 @@ export function onAuthStateChanged(callback: (user: any) => void) {
     data: { subscription },
   } = supabase.auth.onAuthStateChange((event, session) => {
     if (event === 'PASSWORD_RECOVERY') {
+      _inPasswordRecovery = true;
       // Signal password recovery mode — pass a special marker so the
       // auth hook can navigate to the reset-password screen.
       callback({
@@ -204,6 +213,11 @@ export function onAuthStateChanged(callback: (user: any) => void) {
         getIdToken: async () => session?.access_token ?? '',
         _passwordRecovery: true,
       });
+      return;
+    }
+
+    // Suppress the SIGNED_IN event that fires right after PASSWORD_RECOVERY
+    if (_inPasswordRecovery && event === 'SIGNED_IN') {
       return;
     }
 
@@ -218,11 +232,19 @@ export function onAuthStateChanged(callback: (user: any) => void) {
         getIdToken: async () => session.access_token,
       });
     } else {
+      // User signed out — clear recovery flag
+      _inPasswordRecovery = false;
       callback(null);
     }
   });
 
   return () => subscription.unsubscribe();
+}
+
+/** Call this after the user successfully updates their password to
+ *  re-enable normal auth flow before signing them out. */
+export function clearPasswordRecovery() {
+  _inPasswordRecovery = false;
 }
 
 export function getCurrentUser() {

@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
+import { clearPasswordRecovery } from '@/services/firebase';
 import { Button, TextInput } from '@/components/ui';
 
 export default function ResetPasswordScreen() {
@@ -40,7 +41,9 @@ export default function ResetPasswordScreen() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
-      // Sign out so the user logs in fresh with the new password
+      // Clear recovery flag so the sign-out event flows normally,
+      // then sign out so the user logs in fresh with the new password.
+      clearPasswordRecovery();
       await supabase.auth.signOut();
       setDone(true);
       setTimeout(() => router.replace('/(auth)/login'), 3000);
