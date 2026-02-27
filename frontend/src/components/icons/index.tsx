@@ -179,6 +179,7 @@ export const triggerTypeConfig: Record<TriggerType, { label: string; className: 
   RESOURCE_THROTTLE: { label: "Resource Throttle", className: "text-hot bg-hot/10" },
   INITIAL_WARM: { label: "Initial Warm", className: "text-accent-success bg-accent-success/10" },
   LOOKAHEAD_WARM: { label: "Lookahead Warm", className: "text-accent-primary bg-accent-primary/10" },
+  MANUAL: { label: "Manual", className: "text-muted-foreground bg-muted-foreground/10" },
 }
 
 // Status config with labels and colors
