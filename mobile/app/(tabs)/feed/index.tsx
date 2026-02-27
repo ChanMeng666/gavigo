@@ -166,6 +166,9 @@ export default function FeedScreen() {
     onResourceUpdate: (resources) => {
       setResources(resources);
     },
+    onActivationReady: (payload) => {
+      updateContainerState(payload.content_id, payload.status);
+    },
   });
 
   // Expose WebSocket send globally for screen tracking

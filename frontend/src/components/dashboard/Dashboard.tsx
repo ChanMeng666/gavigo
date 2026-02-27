@@ -11,6 +11,7 @@ import { UserEngagement } from "./UserEngagement"
 import { UserJourney } from "./UserJourney"
 import { ScreenDistribution } from "./ScreenDistribution"
 import { TelemetryPanel } from "./TelemetryPanel"
+import { ProofSignalLog } from "./ProofSignalLog"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type {
   ContentItem,
@@ -78,11 +79,18 @@ export function Dashboard({
           <ActivationTimeline
             events={activationSpine}
             contentTitles={contentTitles}
+            telemetrySnapshots={telemetrySnapshots}
           />
 
           {/* Telemetry Panel (full width) */}
           <TelemetryPanel
             telemetrySnapshots={telemetrySnapshots}
+            proofSignals={proofSignals}
+            contentTitles={contentTitles}
+          />
+
+          {/* Proof Signal Event Log (full width) */}
+          <ProofSignalLog
             proofSignals={proofSignals}
             contentTitles={contentTitles}
           />

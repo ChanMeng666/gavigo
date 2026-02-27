@@ -344,6 +344,23 @@ func main() {
 			if content != nil {
 				rulesEngine.ProcessTrendSpike(targetContentID, value, scores, content.ContainerStatus)
 			}
+
+			// Emit a MANUAL decision for the trend spike
+			trendScores := models.InputScores{}
+			if scores != nil {
+				trendScores = *scores
+			}
+			trendDecision := models.NewDecision(
+				models.TriggerManual,
+				targetContentID,
+				"Manual demo control: trigger trend spike",
+				trendScores,
+				models.ActionScaleWarm,
+			)
+			trendDecision.Success = true
+			handlers.AddDecision(trendDecision)
+			hub.BroadcastDecision(trendDecision)
+			proofManager.OnDecisionMade(trendDecision)
 		case "reset_demo":
 			handlers.OnReset()
 			spine.Reset()
@@ -355,7 +372,20 @@ func main() {
 			}
 			handlers.UpdateContainerState(targetContentID, models.StatusWarm)
 			hub.BroadcastContainerStateChange(targetContentID, oldState, models.StatusWarm)
-			proofManager.InvalidateAttempt(targetContentID)
+			proofManager.OnContainerStateChange(targetContentID, oldState, models.StatusWarm)
+
+			// Emit a MANUAL decision for the force-warm action
+			decision := models.NewDecision(
+				models.TriggerManual,
+				targetContentID,
+				"Manual demo control: force warm",
+				models.InputScores{},
+				models.ActionScaleWarm,
+			)
+			decision.Success = true
+			handlers.AddDecision(decision)
+			hub.BroadcastDecision(decision)
+			proofManager.OnDecisionMade(decision)
 		case "force_cold":
 			oldState := models.StatusCold
 			if c := handlers.GetContentByID(targetContentID); c != nil {

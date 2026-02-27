@@ -5,11 +5,12 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Zap, Activity } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { ActivationSpineEvent, ActivationPhase, ResourceWeight } from "@/types"
+import type { ActivationSpineEvent, ActivationPhase, ResourceWeight, TelemetrySnapshot } from "@/types"
 
 interface ActivationTimelineProps {
   events: ActivationSpineEvent[]
   contentTitles: Record<string, string>
+  telemetrySnapshots?: Record<string, TelemetrySnapshot>
 }
 
 const phaseConfig: Record<ActivationPhase, { label: string; color: string; bgColor: string; dotColor: string }> = {
@@ -43,7 +44,13 @@ interface ContentTimelineData {
   restoreDurationMs?: number
 }
 
-export function ActivationTimeline({ events, contentTitles }: ActivationTimelineProps) {
+function formatMetricMs(ms: number): string {
+  if (ms === -1 || ms === 0) return ""
+  if (ms < 1000) return `${ms}ms`
+  return `${(ms / 1000).toFixed(1)}s`
+}
+
+export function ActivationTimeline({ events, contentTitles, telemetrySnapshots }: ActivationTimelineProps) {
   // Group events by content_id and build timelines
   const timelines = useMemo(() => {
     const grouped = new Map<string, ActivationSpineEvent[]>()
@@ -190,6 +197,31 @@ export function ActivationTimeline({ events, contentTitles }: ActivationTimeline
                         )
                       })}
                     </div>
+
+                    {/* Inline telemetry metrics */}
+                    {(() => {
+                      const snap = telemetrySnapshots?.[tl.contentId]
+                      if (!snap) return null
+                      const items = [
+                        { label: "Decision", val: snap.orchestration_decision_time_ms },
+                        { label: "Prewarm", val: snap.prewarm_duration_ms },
+                        { label: "Activation", val: snap.activation_latency_ms },
+                        ...(snap.restore_latency_ms > 0 ? [{ label: "Restore", val: snap.restore_latency_ms }] : []),
+                      ].filter(m => m.val > 0)
+                      if (items.length === 0) return null
+                      return (
+                        <div className="flex items-center gap-3 mt-2 pt-1.5 border-t border-muted-foreground/10">
+                          {snap.cache_hit_indicator && (
+                            <span className="text-[9px] text-accent-success font-medium">CACHE HIT</span>
+                          )}
+                          {items.map(m => (
+                            <span key={m.label} className="text-[9px] text-muted-foreground">
+                              {m.label}: <span className="font-mono text-foreground/70">{formatMetricMs(m.val)}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </motion.div>
                 ))}
               </div>
