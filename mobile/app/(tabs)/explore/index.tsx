@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Chip, EmptyState } from '@/components/ui';
+import { StudioCard, STUDIOS } from '@/components/explore/StudioCard';
 import { sendUserAction } from '@/services/wsEvents';
 import {
   searchVideos as searchSupabaseVideos,
@@ -35,6 +36,39 @@ const THEMES = [
   { key: 'space', label: 'Space', icon: 'planet-outline' as const },
   { key: 'dance', label: 'Dance', icon: 'musical-notes-outline' as const },
 ];
+
+// Videos per row in the grid
+const VIDEOS_PER_ROW = 2;
+// Insert a studio card after this many video rows
+const STUDIO_INTERVAL = 2;
+
+type ExploreItem =
+  | { type: 'video-row'; videos: Video[] }
+  | { type: 'studio'; studioIndex: number };
+
+function buildExploreData(videos: Video[]): ExploreItem[] {
+  const items: ExploreItem[] = [];
+  let videoIdx = 0;
+  let studioIdx = 0;
+  let rowsSinceStudio = 0;
+
+  while (videoIdx < videos.length) {
+    // Add a video row (2 videos)
+    const row = videos.slice(videoIdx, videoIdx + VIDEOS_PER_ROW);
+    items.push({ type: 'video-row', videos: row });
+    videoIdx += VIDEOS_PER_ROW;
+    rowsSinceStudio++;
+
+    // Insert a studio card after every STUDIO_INTERVAL rows
+    if (rowsSinceStudio >= STUDIO_INTERVAL && studioIdx < STUDIOS.length) {
+      items.push({ type: 'studio', studioIndex: studioIdx });
+      studioIdx++;
+      rowsSinceStudio = 0;
+    }
+  }
+
+  return items;
+}
 
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
@@ -80,15 +114,26 @@ export default function ExploreScreen() {
     setRefreshing(false);
   }, [loadVideos]);
 
+  const handleGamePressRef = useRef((gameId: string) => {
+    sendUserAction({ action: 'game_tap', screen: 'explore', value: gameId });
+    router.push('/(tabs)/feed');
+  });
+  handleGamePressRef.current = (gameId: string) => {
+    sendUserAction({ action: 'game_tap', screen: 'explore', value: gameId });
+    router.push('/(tabs)/feed');
+  };
+
   const formatCount = (n: number) => {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
     return n.toString();
   };
 
-  const renderCard = ({ item }: { item: Video }) => (
+  const exploreData = buildExploreData(videos);
+
+  const renderVideoCard = (item: Video) => (
     <TouchableOpacity
-      className="mb-3"
-      style={{ width: CARD_WIDTH }}
+      key={item.id}
+      style={{ width: CARD_WIDTH, marginBottom: 12 }}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`Play ${item.title}`}
@@ -152,6 +197,39 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
+  const renderItem = useRef(({ item }: { item: ExploreItem }) => {
+    if (item.type === 'studio') {
+      return (
+        <StudioCard
+          studio={STUDIOS[item.studioIndex]}
+          onGamePress={(id) => handleGamePressRef.current(id)}
+        />
+      );
+    }
+
+    // video-row: render 2 videos side by side
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+        }}
+      >
+        {item.videos.map((v) => renderVideoCard(v))}
+        {/* Spacer if odd number */}
+        {item.videos.length < VIDEOS_PER_ROW && (
+          <View style={{ width: CARD_WIDTH }} />
+        )}
+      </View>
+    );
+  }).current;
+
+  const keyExtractor = useRef((item: ExploreItem, index: number) => {
+    if (item.type === 'studio') return `studio-${item.studioIndex}`;
+    return `row-${item.videos.map((v) => v.id).join('-')}`;
+  }).current;
+
   return (
     <View className="flex-1 bg-bg-base" style={{ paddingTop: insets.top }}>
       {/* Header */}
@@ -163,7 +241,7 @@ export default function ExploreScreen() {
           Explore
         </Text>
         <Text className="text-caption text-text-secondary mb-4">
-          Discover videos
+          Discover videos & games
         </Text>
 
         {/* Search */}
@@ -202,14 +280,11 @@ export default function ExploreScreen() {
         </ScrollView>
       </View>
 
-      {/* Grid */}
+      {/* Grid with interleaved studio cards */}
       <FlatList
-        data={videos}
-        renderItem={renderCard}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-        columnWrapperStyle={{ justifyContent: 'space-between' }}
+        data={exploreData}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl

@@ -16,6 +16,11 @@ const gameUrlMap: Record<string, string> = {
   'game-poker-quest': 'https://playsaurus.com/kongPokerQuest63/',
   'game-grindcraft': 'https://grindcraft.com/game.php',
   'game-fray-fight': 'https://frayfight.com/game/',
+  'game-2048': 'https://games.crazygames.com/en_US/2048/index.html',
+  'game-slice-master': 'https://games.crazygames.com/en_US/slice-master/index.html',
+  'game-space-waves': 'https://games.crazygames.com/en_US/space-waves/index.html',
+  'game-drift-boss': 'https://games.crazygames.com/en_US/drift-boss/index.html',
+  'game-tiny-fishing': 'https://games.crazygames.com/en_US/tiny-fishing/index.html',
 };
 
 interface GameEmbedProps {
