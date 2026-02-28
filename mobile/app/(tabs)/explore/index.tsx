@@ -13,7 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Chip, EmptyState } from '@/components/ui';
-import { StudioCard, STUDIOS } from '@/components/explore/StudioCard';
+import { STUDIOS, type StudioGame } from '@/components/explore/StudioCard';
 import { sendUserAction } from '@/services/wsEvents';
 import {
   searchVideos as searchSupabaseVideos,
@@ -39,35 +39,94 @@ const THEMES = [
 
 // Videos per row in the grid
 const VIDEOS_PER_ROW = 2;
-// Insert a studio card after this many video rows
-const STUDIO_INTERVAL = 2;
 
-type ExploreItem =
-  | { type: 'video-row'; videos: Video[] }
-  | { type: 'studio'; studioIndex: number };
+// Flatten all games from all studios into a single list
+const ALL_GAMES: StudioGame[] = STUDIOS.flatMap((s) => s.games);
+
+const GAME_CARD_WIDTH = 110;
+
+type ExploreItem = { type: 'video-row'; videos: Video[] };
 
 function buildExploreData(videos: Video[]): ExploreItem[] {
   const items: ExploreItem[] = [];
   let videoIdx = 0;
-  let studioIdx = 0;
-  let rowsSinceStudio = 0;
 
   while (videoIdx < videos.length) {
-    // Add a video row (2 videos)
     const row = videos.slice(videoIdx, videoIdx + VIDEOS_PER_ROW);
     items.push({ type: 'video-row', videos: row });
     videoIdx += VIDEOS_PER_ROW;
-    rowsSinceStudio++;
-
-    // Insert a studio card after every STUDIO_INTERVAL rows
-    if (rowsSinceStudio >= STUDIO_INTERVAL && studioIdx < STUDIOS.length) {
-      items.push({ type: 'studio', studioIndex: studioIdx });
-      studioIdx++;
-      rowsSinceStudio = 0;
-    }
   }
 
   return items;
+}
+
+function GameThumbnailCard({ game, onPress }: { game: StudioGame; onPress: () => void }) {
+  const [imgFailed, setImgFailed] = useState(false);
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.8}
+      style={{
+        width: GAME_CARD_WIDTH,
+        borderRadius: 12,
+        overflow: 'hidden',
+        backgroundColor: '#1a1a2e',
+        borderWidth: 1,
+        borderColor: '#2a2a40',
+      }}
+    >
+      {/* Cover image */}
+      <View style={{ height: GAME_CARD_WIDTH, backgroundColor: '#0e0e18' }}>
+        {game.thumbnail && !imgFailed ? (
+          <Image
+            source={{ uri: game.thumbnail }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+            onError={() => setImgFailed(true)}
+          />
+        ) : (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ fontSize: 36 }}>{game.emoji}</Text>
+          </View>
+        )}
+        {/* Play icon overlay */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Ionicons name="play" size={16} color="white" />
+          </View>
+        </View>
+      </View>
+      {/* Title */}
+      <View style={{ paddingHorizontal: 8, paddingVertical: 6 }}>
+        <Text
+          numberOfLines={1}
+          style={{ color: '#f0f0f5', fontSize: 12, fontWeight: '600' }}
+        >
+          {game.title}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 }
 
 export default function ExploreScreen() {
@@ -114,14 +173,13 @@ export default function ExploreScreen() {
     setRefreshing(false);
   }, [loadVideos]);
 
-  const handleGamePressRef = useRef((gameId: string) => {
-    sendUserAction({ action: 'game_tap', screen: 'explore', value: gameId });
-    router.push('/(tabs)/feed');
-  });
-  handleGamePressRef.current = (gameId: string) => {
-    sendUserAction({ action: 'game_tap', screen: 'explore', value: gameId });
-    router.push('/(tabs)/feed');
-  };
+  const handleGamePress = useCallback(
+    (gameId: string) => {
+      sendUserAction({ action: 'game_tap', screen: 'explore', value: gameId });
+      router.push(`/game/${gameId}`);
+    },
+    [router]
+  );
 
   const formatCount = (n: number) => {
     if (n >= 1000) return `${(n / 1000).toFixed(1)}K`;
@@ -198,16 +256,6 @@ export default function ExploreScreen() {
   );
 
   const renderItem = useRef(({ item }: { item: ExploreItem }) => {
-    if (item.type === 'studio') {
-      return (
-        <StudioCard
-          studio={STUDIOS[item.studioIndex]}
-          onGamePress={(id) => handleGamePressRef.current(id)}
-        />
-      );
-    }
-
-    // video-row: render 2 videos side by side
     return (
       <View
         style={{
@@ -226,9 +274,47 @@ export default function ExploreScreen() {
   }).current;
 
   const keyExtractor = useRef((item: ExploreItem, index: number) => {
-    if (item.type === 'studio') return `studio-${item.studioIndex}`;
     return `row-${item.videos.map((v) => v.id).join('-')}`;
   }).current;
+
+  const gamesSection = (
+    <View style={{ marginBottom: 16 }}>
+      {/* Section header */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 16,
+          marginBottom: 10,
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Ionicons name="game-controller" size={16} color="#a78bfa" />
+          <Text style={{ color: '#f0f0f5', fontSize: 15, fontWeight: '600' }}>
+            Games
+          </Text>
+        </View>
+        <Text style={{ color: '#8e8ea0', fontSize: 12 }}>
+          {ALL_GAMES.length} games
+        </Text>
+      </View>
+      {/* Horizontal scroll */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+      >
+        {ALL_GAMES.map((game) => (
+          <GameThumbnailCard
+            key={game.id}
+            game={game}
+            onPress={() => handleGamePress(game.id)}
+          />
+        ))}
+      </ScrollView>
+    </View>
+  );
 
   return (
     <View className="flex-1 bg-bg-base" style={{ paddingTop: insets.top }}>
@@ -280,12 +366,13 @@ export default function ExploreScreen() {
         </ScrollView>
       </View>
 
-      {/* Grid with interleaved studio cards */}
+      {/* Video grid with games section header */}
       <FlatList
         data={exploreData}
         renderItem={renderItem}
         keyExtractor={keyExtractor}
         showsVerticalScrollIndicator={false}
+        ListHeaderComponent={gamesSection}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

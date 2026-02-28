@@ -56,6 +56,14 @@ export default function RootLayout() {
             gestureDirection: 'vertical',
           }}
         />
+        <Stack.Screen
+          name="game/[id]"
+          options={{
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+            gestureDirection: 'vertical',
+          }}
+        />
       </Stack>
     </AuthGuard>
   );

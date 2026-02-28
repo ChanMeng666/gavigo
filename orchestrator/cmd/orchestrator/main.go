@@ -39,7 +39,7 @@ func main() {
 	}
 
 	// Define workload deployment names
-	workloadDeployments := []string{"game-clicker-heroes", "game-mrmine", "game-poker-quest", "game-grindcraft", "game-fray-fight", "ai-service"}
+	workloadDeployments := []string{"ai-service"}
 
 	// Initialize scorer
 	scorer := engine.NewScorer(nil)

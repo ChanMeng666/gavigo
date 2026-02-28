@@ -1,10 +1,12 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 export interface StudioGame {
   id: string;
   title: string;
   emoji: string;
+  thumbnail: string;
 }
 
 export interface Studio {
@@ -13,6 +15,36 @@ export interface Studio {
   tagline: string;
   accentColor: string;
   games: StudioGame[];
+}
+
+function GameThumbnail({ game, accentColor }: { game: StudioGame; accentColor: string }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!game.thumbnail || failed) {
+    return (
+      <View
+        style={{
+          height: 72,
+          backgroundColor: accentColor + '15',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 28 }}>{game.emoji}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ height: 72, backgroundColor: accentColor + '15' }}>
+      <Image
+        source={{ uri: game.thumbnail }}
+        style={{ width: '100%', height: '100%' }}
+        resizeMode="cover"
+        onError={() => setFailed(true)}
+      />
+    </View>
+  );
 }
 
 interface StudioCardProps {
@@ -92,17 +124,8 @@ export function StudioCard({ studio, onGamePress }: StudioCardProps) {
                 borderColor: '#2a2a40',
               }}
             >
-              {/* Thumbnail placeholder with emoji */}
-              <View
-                style={{
-                  height: 72,
-                  backgroundColor: studio.accentColor + '15',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text style={{ fontSize: 28 }}>{game.emoji}</Text>
-              </View>
+              {/* Thumbnail */}
+              <GameThumbnail game={game} accentColor={studio.accentColor} />
               {/* Game info */}
               <View style={{ padding: 8 }}>
                 <Text
@@ -159,8 +182,8 @@ export const STUDIOS: Studio[] = [
     tagline: 'Brain teasers & number games',
     accentColor: '#60a5fa',
     games: [
-      { id: 'game-2048', title: '2048', emoji: '\u{1F522}' },
-      { id: 'game-poker-quest', title: 'Poker Quest', emoji: '\u{1F0CF}' },
+      { id: 'game-2048', title: '2048', emoji: '\u{1F522}', thumbnail: 'https://imgs.crazygames.com/games/2048/cover_1x1-1707828857318.png?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-paper-io-2', title: 'Paper.io 2', emoji: '\u{1F4DD}', thumbnail: 'https://imgs.crazygames.com/paper-io-2_1x1/20250214024144/paper-io-2_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
     ],
   },
   {
@@ -169,9 +192,10 @@ export const STUDIOS: Studio[] = [
     tagline: 'Fast-paced arcade action',
     accentColor: '#f87171',
     games: [
-      { id: 'game-space-waves', title: 'Space Waves', emoji: '\u{1F680}' },
-      { id: 'game-drift-boss', title: 'Drift Boss', emoji: '\u{1F3CE}\uFE0F' },
-      { id: 'game-fray-fight', title: 'Fray Fight', emoji: '\u{1F94A}' },
+      { id: 'game-space-waves', title: 'Space Waves', emoji: '\u{1F680}', thumbnail: 'https://imgs.crazygames.com/space-waves_1x1/20241203031650/space-waves_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-drift-boss', title: 'Drift Boss', emoji: '\u{1F3CE}\uFE0F', thumbnail: 'https://imgs.crazygames.com/drift-boss_1x1/20260209092420/drift-boss_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-tunnel-rush', title: 'Tunnel Rush', emoji: '\u{1F300}', thumbnail: 'https://imgs.crazygames.com/tunnel-rush_1x1/20231122034041/tunnel-rush_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-temple-of-boom', title: 'Temple of Boom', emoji: '\u{1F4A5}', thumbnail: 'https://imgs.crazygames.com/temple-of-boom_1x1/20231122034004/temple-of-boom_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
     ],
   },
   {
@@ -180,19 +204,29 @@ export const STUDIOS: Studio[] = [
     tagline: 'Quick fun, play & move on',
     accentColor: '#34d399',
     games: [
-      { id: 'game-slice-master', title: 'Slice Master', emoji: '\u{1F52A}' },
-      { id: 'game-tiny-fishing', title: 'Tiny Fishing', emoji: '\u{1F3A3}' },
+      { id: 'game-slice-master', title: 'Slice Master', emoji: '\u{1F52A}', thumbnail: 'https://imgs.crazygames.com/slice-master_1x1/20240731033229/slice-master_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-tiny-fishing', title: 'Tiny Fishing', emoji: '\u{1F3A3}', thumbnail: 'https://imgs.crazygames.com/games/tiny-fishing/cover_1x1-1707829871792.png?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-stickman-hook', title: 'Stickman Hook', emoji: '\u{1F3A3}', thumbnail: 'https://imgs.crazygames.com/stickman-hook_1x1/20250522103710/stickman-hook_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+    ],
+  },
+  {
+    name: 'Racing & Karts',
+    emoji: '\u{1F3CE}\uFE0F',
+    tagline: 'Speed, stunts & competition',
+    accentColor: '#fbbf24',
+    games: [
+      { id: 'game-moto-x3m', title: 'Moto X3M', emoji: '\u{1F3CD}\uFE0F', thumbnail: 'https://imgs.crazygames.com/moto-x3m_1x1/20231122033955/moto-x3m_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-smash-karts', title: 'Smash Karts', emoji: '\u{1F697}', thumbnail: 'https://imgs.crazygames.com/smash-karts_1x1/20260210123937/smash-karts_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
+      { id: 'game-narrow-one', title: 'Narrow One', emoji: '\u{1F3F9}', thumbnail: 'https://imgs.crazygames.com/auto-covers/narrow-one_1x1?format=auto&quality=100&metadata=none&width=400' },
     ],
   },
   {
     name: 'Idle Kingdom',
     emoji: '\u{1F451}',
     tagline: 'Idle & incremental adventures',
-    accentColor: '#fbbf24',
+    accentColor: '#a78bfa',
     games: [
-      { id: 'game-clicker-heroes', title: 'Clicker Heroes', emoji: '\u{2694}\uFE0F' },
-      { id: 'game-mrmine', title: 'Mr.Mine', emoji: '\u{26CF}\uFE0F' },
-      { id: 'game-grindcraft', title: 'Grindcraft', emoji: '\u{1F528}' },
+      { id: 'game-monkey-mart', title: 'Monkey Mart', emoji: '\u{1F412}', thumbnail: 'https://imgs.crazygames.com/monkey-mart_1x1/20231122033835/monkey-mart_1x1-cover?format=auto&quality=100&metadata=none&width=400' },
     ],
   },
 ];

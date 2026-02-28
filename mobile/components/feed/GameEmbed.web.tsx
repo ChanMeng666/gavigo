@@ -11,16 +11,19 @@ import Animated, {
 import { SkeletonLoader, EmptyState, Chip } from '@/components/ui';
 
 const gameUrlMap: Record<string, string> = {
-  'game-clicker-heroes': 'https://cdn.clickerheroes.com/gamebuild/index.php',
-  'game-mrmine': 'https://mrmine.com/game/',
-  'game-poker-quest': 'https://playsaurus.com/kongPokerQuest63/',
-  'game-grindcraft': 'https://grindcraft.com/game.php',
-  'game-fray-fight': 'https://frayfight.com/game/',
   'game-2048': 'https://games.crazygames.com/en_US/2048/index.html',
   'game-slice-master': 'https://games.crazygames.com/en_US/slice-master/index.html',
   'game-space-waves': 'https://games.crazygames.com/en_US/space-waves/index.html',
   'game-drift-boss': 'https://games.crazygames.com/en_US/drift-boss/index.html',
   'game-tiny-fishing': 'https://games.crazygames.com/en_US/tiny-fishing/index.html',
+  'game-stickman-hook': 'https://games.crazygames.com/en_US/stickman-hook/index.html',
+  'game-moto-x3m': 'https://games.crazygames.com/en_US/moto-x3m/index.html',
+  'game-paper-io-2': 'https://games.crazygames.com/en_US/paper-io-2/index.html',
+  'game-temple-of-boom': 'https://games.crazygames.com/en_US/temple-of-boom/index.html',
+  'game-monkey-mart': 'https://games.crazygames.com/en_US/monkey-mart/index.html',
+  'game-tunnel-rush': 'https://games.crazygames.com/en_US/tunnel-rush/index.html',
+  'game-narrow-one': 'https://games.crazygames.com/en_US/narrow-one/index.html',
+  'game-smash-karts': 'https://games.crazygames.com/en_US/smash-karts/index.html',
 };
 
 interface GameEmbedProps {
