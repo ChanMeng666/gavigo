@@ -2,7 +2,6 @@ import { useRef, useEffect, useCallback, useState } from "react"
 import { PhoneMockup } from "./PhoneMockup"
 import { TikTokContentView } from "./TikTokContentView"
 import { useEngagement } from "@/hooks/useEngagement"
-import { Badge } from "@/components/ui/badge"
 import { StreamIcon } from "@/components/icons"
 import type {
   ContentItem,
@@ -32,7 +31,6 @@ export function MediaStream({
   onActivationRequest,
 }: MediaStreamProps) {
   const [currentContentId, setCurrentContentId] = useState<string | null>(null)
-  const [currentTheme, setCurrentTheme] = useState<string | null>(null)
   const lastScrollTime = useRef(Date.now())
   const useNativeApp = !!RN_WEB_URL
 
@@ -51,7 +49,6 @@ export function MediaStream({
 
       // Start focus on new content
       setCurrentContentId(contentId)
-      setCurrentTheme(theme)
       startFocus(contentId, theme)
 
       // Send scroll update
@@ -80,35 +77,12 @@ export function MediaStream({
     if (content.length > 0 && !currentContentId) {
       const firstItem = content[0]
       setCurrentContentId(firstItem.id)
-      setCurrentTheme(firstItem.theme)
       startFocus(firstItem.id, firstItem.theme)
     }
   }, [content, currentContentId, startFocus])
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-base via-elevated to-base">
-      {/* Header */}
-      <div className="flex-shrink-0 p-3 border-b border-border bg-surface/50 backdrop-blur-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <StreamIcon className="h-4 w-4 text-accent-primary" />
-            <h2 className="text-sm font-display font-semibold text-foreground">
-              Content Stream
-            </h2>
-            {useNativeApp && (
-              <Badge variant="default" className="text-[10px] bg-green-600">
-                Native
-              </Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="text-[10px]">
-              {content.length} items
-            </Badge>
-          </div>
-        </div>
-      </div>
-
       {/* Phone mockup with content view */}
       <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
         {useNativeApp ? (
@@ -139,24 +113,6 @@ export function MediaStream({
             />
           </PhoneMockup>
         )}
-      </div>
-
-      {/* Footer with current content info */}
-      <div className="flex-shrink-0 p-2 border-t border-border bg-surface/50 backdrop-blur-sm">
-        <div className="flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            {currentTheme && (
-              <Badge variant="outline" className="text-[10px]">
-                #{currentTheme}
-              </Badge>
-            )}
-          </div>
-          {currentContentId && (
-            <span className="text-muted-foreground font-mono text-[10px]">
-              {currentContentId}
-            </span>
-          )}
-        </div>
       </div>
     </div>
   )
