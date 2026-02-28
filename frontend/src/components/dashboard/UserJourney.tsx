@@ -1,4 +1,5 @@
 import { useRef, useEffect } from "react"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import type { UserActivityEvent, SocialEvent } from "@/types"
 
 interface UserJourneyProps {
@@ -98,13 +99,24 @@ function getSocialIcon(type: string): string {
   }
 }
 
+function formatRelativeTime(timestamp: string): string {
+  const now = Date.now()
+  const then = new Date(timestamp).getTime()
+  const diffS = Math.floor((now - then) / 1000)
+
+  if (diffS < 5) return "now"
+  if (diffS < 60) return `${diffS}s`
+  const diffM = Math.floor(diffS / 60)
+  if (diffM < 60) return `${diffM}m`
+  return `${Math.floor(diffM / 60)}h`
+}
+
 function mergeAndSort(
   activities: UserActivityEvent[],
   socials: SocialEvent[]
 ): JourneyNode[] {
   const nodes: JourneyNode[] = []
 
-  // Add activity events
   for (const a of activities) {
     nodes.push({
       icon: getEventIcon(a),
@@ -115,7 +127,6 @@ function mergeAndSort(
     })
   }
 
-  // Add social events
   for (const s of socials) {
     nodes.push({
       icon: getSocialIcon(s.event_type),
@@ -125,12 +136,11 @@ function mergeAndSort(
     })
   }
 
-  // Sort by timestamp ascending (oldest first = left of timeline)
   nodes.sort(
     (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   )
 
-  return nodes.slice(-30) // last 30 events
+  return nodes.slice(-30)
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -147,10 +157,14 @@ export function UserJourney({
   const scrollRef = useRef<HTMLDivElement>(null)
   const nodes = mergeAndSort(userActivities, socialEvents)
 
-  // Auto-scroll to latest event
+  // Auto-scroll to bottom to show latest events
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth
+    const el = scrollRef.current
+    if (!el) return
+    // ScrollArea viewport is the first child
+    const viewport = el.querySelector("[data-radix-scroll-area-viewport]")
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight
     }
   }, [nodes.length])
 
@@ -172,7 +186,7 @@ export function UserJourney({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card overflow-hidden">
+    <div className="rounded-lg border border-border bg-card">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-sm font-medium text-foreground">
           User Journey
@@ -182,42 +196,24 @@ export function UserJourney({
         </span>
       </div>
 
-      <div
-        ref={scrollRef}
-        className="flex items-center gap-1 px-4 py-3 overflow-x-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-muted/30"
-      >
-        {nodes.map((node, i) => (
-          <div key={`${node.timestamp}-${i}`} className="flex items-center flex-shrink-0">
-            {/* Node */}
-            <div
-              className={`flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] ${
-                TYPE_COLORS[node.type] || TYPE_COLORS.action
-              }`}
-              title={node.detail || node.label}
-            >
-              <span className="text-xs leading-none">{node.icon}</span>
-              <span className="whitespace-nowrap max-w-[100px] truncate">
-                {node.label}
-              </span>
-            </div>
-            {/* Arrow connector */}
-            {i < nodes.length - 1 && (
-              <svg
-                width="16"
-                height="10"
-                viewBox="0 0 16 10"
-                className="flex-shrink-0 text-muted-foreground/30"
+      <div ref={scrollRef}>
+        <ScrollArea className="h-[120px]">
+          <div className="flex flex-wrap gap-1.5 px-4 py-3">
+            {nodes.map((node, i) => (
+              <div
+                key={`${node.timestamp}-${i}`}
+                className={`inline-flex items-center gap-1 px-2 py-1 rounded-md border text-[11px] ${
+                  TYPE_COLORS[node.type] || TYPE_COLORS.action
+                }`}
+                title={`${node.detail || node.label} — ${new Date(node.timestamp).toLocaleTimeString()}`}
               >
-                <path
-                  d="M0 5 L12 5 M9 2 L12 5 L9 8"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                />
-              </svg>
-            )}
+                <span className="text-xs leading-none">{node.icon}</span>
+                <span className="max-w-[80px] truncate">{node.label}</span>
+                <span className="text-[9px] opacity-50">{formatRelativeTime(node.timestamp)}</span>
+              </div>
+            ))}
           </div>
-        ))}
+        </ScrollArea>
       </div>
     </div>
   )
