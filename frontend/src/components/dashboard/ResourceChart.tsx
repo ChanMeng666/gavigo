@@ -19,14 +19,14 @@ export function ResourceChart({ history, maxPoints = 30 }: ResourceChartProps) {
   const latestData = history[history.length - 1]
 
   return (
-    <Card className="h-full flex flex-col">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <PulseIcon className="h-4 w-4 text-muted-foreground" />
           Resource Allocation
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1">
+      <CardContent>
         {data.length === 0 ? (
           <div className="h-40 flex flex-col items-center justify-center text-center">
             <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">

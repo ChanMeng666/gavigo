@@ -113,9 +113,11 @@ export function Dashboard({
               <ServiceStatus />
             </div>
 
-            {/* Row 1 Right — Game Workloads */}
-            <div className="min-w-0">
-              <WorkloadStatus content={content} containerStates={containerStates} telemetrySnapshots={telemetrySnapshots} />
+            {/* Row 1 Right — Game Workloads (height matched to left) */}
+            <div className="min-w-0 md:relative">
+              <div className="md:absolute md:inset-0">
+                <WorkloadStatus content={content} containerStates={containerStates} telemetrySnapshots={telemetrySnapshots} />
+              </div>
             </div>
 
             {/* Row 2 Left — User Engagement + Screen Distribution */}
@@ -132,13 +134,15 @@ export function Dashboard({
               />
             </div>
 
-            {/* Row 3 Left — AI Decision Log */}
-            <div className="min-w-0 h-[420px]">
-              <AIDecisionLog decisions={decisions} maxItems={30} />
+            {/* Row 3 Left — AI Decision Log (height matched to right) */}
+            <div className="min-w-0 md:relative">
+              <div className="md:absolute md:inset-0">
+                <AIDecisionLog decisions={decisions} maxItems={30} />
+              </div>
             </div>
 
-            {/* Row 3 Right — Scores + Resources */}
-            <div className="flex flex-col gap-4 min-w-0">
+            {/* Row 3 Right — Scores + Resources (determines height) */}
+            <div className="space-y-4 min-w-0">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
             </div>
