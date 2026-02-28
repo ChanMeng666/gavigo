@@ -229,7 +229,7 @@ cd orchestrator && go test ./...
 cd orchestrator && go build -o bin/orchestrator ./cmd/orchestrator
 
 # Docker build (for DigitalOcean registry)
-docker build -t registry.digitalocean.com/gavigo-registry/orchestrator:latest -f orchestrator/Dockerfile orchestrator/
+docker build -t registry.digitalocean.com/gavigo-registry/orchestrator:latest -f orchestrator/Dockerfile .
 docker push registry.digitalocean.com/gavigo-registry/orchestrator:latest
 ```
 
@@ -246,7 +246,7 @@ cd frontend && npm run dev
 cd frontend && npm run build
 
 # Docker build (for DigitalOcean registry)
-docker build -t registry.digitalocean.com/gavigo-registry/frontend:latest -f frontend/Dockerfile frontend/
+docker build -t registry.digitalocean.com/gavigo-registry/frontend:latest -f frontend/Dockerfile .
 docker push registry.digitalocean.com/gavigo-registry/frontend:latest
 ```
 
@@ -266,7 +266,7 @@ cd mobile && npx expo start --android # Android emulator
 cd mobile && npx expo export --platform web
 
 # Docker build (web only, for DigitalOcean registry)
-docker build -t registry.digitalocean.com/gavigo-registry/mobile-web:latest -f mobile/Dockerfile mobile/
+docker build -t registry.digitalocean.com/gavigo-registry/mobile-web:latest -f mobile/Dockerfile .
 docker push registry.digitalocean.com/gavigo-registry/mobile-web:latest
 ```
 
@@ -312,9 +312,9 @@ doctl registry login
 doctl registry repository list-v2
 
 # Build and push all images
-docker build -t registry.digitalocean.com/gavigo-registry/orchestrator:latest -f orchestrator/Dockerfile orchestrator/
-docker build -t registry.digitalocean.com/gavigo-registry/frontend:latest -f frontend/Dockerfile frontend/
-docker build -t registry.digitalocean.com/gavigo-registry/mobile-web:latest -f mobile/Dockerfile mobile/
+docker build -t registry.digitalocean.com/gavigo-registry/orchestrator:latest -f orchestrator/Dockerfile .
+docker build -t registry.digitalocean.com/gavigo-registry/frontend:latest -f frontend/Dockerfile .
+docker build -t registry.digitalocean.com/gavigo-registry/mobile-web:latest -f mobile/Dockerfile .
 docker push registry.digitalocean.com/gavigo-registry/orchestrator:latest
 docker push registry.digitalocean.com/gavigo-registry/frontend:latest
 docker push registry.digitalocean.com/gavigo-registry/mobile-web:latest

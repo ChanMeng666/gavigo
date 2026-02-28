@@ -1,0 +1,23 @@
+# Root .dockerignore — used when building orchestrator from repo root
+# (docker build -f orchestrator/Dockerfile .)
+
+# Node modules (large, not needed for Go build)
+**/node_modules
+
+# Build outputs
+frontend/dist
+mobile/dist
+mobile/.expo
+
+# Git
+.git
+
+# IDE
+.vscode
+.idea
+
+# Docs (not needed in build)
+docs/
+specs/
+*.md
+!shared/games.json

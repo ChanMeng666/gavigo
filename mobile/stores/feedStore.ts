@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { appStorage } from '@/services/storage';
 import type {
   ContentItem,
   ContainerStatus,
@@ -8,6 +9,8 @@ import type {
   ResourceAllocation,
 } from '@/types';
 import type { Video } from '@/types/supabase';
+
+const CACHE_KEY = 'feed-cache';
 
 interface FeedState {
   sessionId: string | null;
@@ -47,75 +50,103 @@ interface FeedState {
   reset: () => void;
 }
 
-export const useFeedStore = create<FeedState>((set) => ({
-  sessionId: null,
-  connected: false,
-  currentMode: 'MIXED_STREAM_BROWSING',
-  content: [],
-  containerStates: {},
-  scores: {},
-  decisions: [],
-  resources: null,
-  activeContentId: null,
-  currentIndex: 0,
-  videos: [],
-  videosPage: 1,
-  videosLoading: false,
-  videosHasMore: true,
+export const useFeedStore = create<FeedState>()(
+  (set) => ({
+    sessionId: null,
+    connected: false,
+    currentMode: 'MIXED_STREAM_BROWSING',
+    content: [],
+    containerStates: {},
+    scores: {},
+    decisions: [],
+    resources: null,
+    activeContentId: null,
+    currentIndex: 0,
+    videos: [],
+    videosPage: 1,
+    videosLoading: false,
+    videosHasMore: true,
 
-  setSessionId: (id) => set({ sessionId: id }),
-  setConnected: (connected) => set({ connected }),
-  setContent: (content) => set({ content }),
-  setContainerStates: (states) => set({ containerStates: states }),
+    setSessionId: (id) => set({ sessionId: id }),
+    setConnected: (connected) => set({ connected }),
+    setContent: (content) => set({ content }),
+    setContainerStates: (states) => set({ containerStates: states }),
 
-  updateContainerState: (contentId, status) =>
-    set((state) => ({
-      containerStates: { ...state.containerStates, [contentId]: status },
-    })),
+    updateContainerState: (contentId, status) =>
+      set((state) => ({
+        containerStates: { ...state.containerStates, [contentId]: status },
+      })),
 
-  updateScore: (contentId, scores) =>
-    set((state) => ({
-      scores: { ...state.scores, [contentId]: scores },
-    })),
+    updateScore: (contentId, scores) =>
+      set((state) => ({
+        scores: { ...state.scores, [contentId]: scores },
+      })),
 
-  setCurrentMode: (mode) => set({ currentMode: mode }),
+    setCurrentMode: (mode) => set({ currentMode: mode }),
 
-  addDecision: (decision) =>
-    set((state) => ({
-      decisions: [decision, ...state.decisions].slice(0, 100),
-    })),
+    addDecision: (decision) =>
+      set((state) => ({
+        decisions: [decision, ...state.decisions].slice(0, 100),
+      })),
 
-  setResources: (resources) => set({ resources }),
-  setActiveContentId: (id) => set({ activeContentId: id }),
-  setCurrentIndex: (index) => set({ currentIndex: index }),
+    setResources: (resources) => set({ resources }),
+    setActiveContentId: (id) => set({ activeContentId: id }),
+    setCurrentIndex: (index) => set({ currentIndex: index }),
 
-  injectContent: (content, position) =>
-    set((state) => {
-      const newContent = [...state.content];
-      const safePos = Math.min(position, newContent.length);
-      newContent.splice(safePos, 0, content);
-      return { content: newContent };
-    }),
+    injectContent: (content, position) =>
+      set((state) => {
+        const newContent = [...state.content];
+        const safePos = Math.min(position, newContent.length);
+        newContent.splice(safePos, 0, content);
+        return { content: newContent };
+      }),
 
-  setVideos: (videos) => set({ videos }),
-  appendVideos: (videos) =>
-    set((state) => ({ videos: [...state.videos, ...videos] })),
-  setVideosPage: (page) => set({ videosPage: page }),
-  setVideosLoading: (loading) => set({ videosLoading: loading }),
-  setVideosHasMore: (hasMore) => set({ videosHasMore: hasMore }),
+    setVideos: (videos) => set({ videos }),
+    appendVideos: (videos) =>
+      set((state) => ({ videos: [...state.videos, ...videos] })),
+    setVideosPage: (page) => set({ videosPage: page }),
+    setVideosLoading: (loading) => set({ videosLoading: loading }),
+    setVideosHasMore: (hasMore) => set({ videosHasMore: hasMore }),
 
-  reset: () =>
-    set({
-      content: [],
-      containerStates: {},
-      scores: {},
-      decisions: [],
-      resources: null,
-      activeContentId: null,
-      currentIndex: 0,
-      currentMode: 'MIXED_STREAM_BROWSING',
-      videos: [],
-      videosPage: 1,
-      videosHasMore: true,
-    }),
-}));
+    reset: () =>
+      set({
+        content: [],
+        containerStates: {},
+        scores: {},
+        decisions: [],
+        resources: null,
+        activeContentId: null,
+        currentIndex: 0,
+        currentMode: 'MIXED_STREAM_BROWSING',
+        videos: [],
+        videosPage: 1,
+        videosHasMore: true,
+      }),
+  })
+);
+
+// --- Manual persist (avoids zustand/middleware which bundles devtools with import.meta) ---
+
+// Hydrate cached videos on startup
+try {
+  const cached = appStorage.getItem(CACHE_KEY);
+  if (cached) {
+    const parsed = JSON.parse(cached);
+    if (parsed?.videos && Array.isArray(parsed.videos) && parsed.videos.length > 0) {
+      useFeedStore.setState({ videos: parsed.videos });
+    }
+  }
+} catch {
+  // Ignore parse errors
+}
+
+// Persist videos whenever they change
+useFeedStore.subscribe((state, prev) => {
+  if (state.videos !== prev.videos) {
+    try {
+      appStorage.setItem(CACHE_KEY, JSON.stringify({ videos: state.videos }));
+    } catch {
+      // Ignore write errors
+    }
+  }
+});

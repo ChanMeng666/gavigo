@@ -7,14 +7,16 @@ WORKDIR /app
 RUN apk add --no-cache git ca-certificates
 
 # Copy go mod files
-COPY go.mod ./
-COPY go.sum* ./
+COPY orchestrator/go.mod orchestrator/go.sum* ./
 
 # Download dependencies
 RUN go mod download || go mod tidy
 
 # Copy source code
-COPY . .
+COPY orchestrator/ .
+
+# Copy shared game data for go:embed
+COPY shared/games.json internal/models/games.json
 
 # Ensure dependencies are resolved
 RUN go mod tidy

@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { GameEmbed } from '@/components/feed/GameEmbed';
-import { STUDIOS } from '@/components/explore/StudioCard';
+import { STUDIOS } from '@/data/games';
 
 // Build a lookup from game ID to title from STUDIOS data
 const gameTitleMap: Record<string, string> = {};

@@ -1,0 +1,879 @@
+{
+  "studios": [
+    {
+      "name": "Puzzle Lab",
+      "emoji": "🧩",
+      "tagline": "Brain teasers & number games",
+      "accentColor": "#60a5fa",
+      "games": [
+        {
+          "id": "game-2048",
+          "title": "2048",
+          "emoji": "🔢",
+          "thumbnail": "https://imgs.crazygames.com/games/2048/cover_1x1-1707828857318.png?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/2048/index.html",
+          "theme": "puzzle",
+          "description": "Classic number puzzle - merge tiles to reach 2048"
+        },
+        {
+          "id": "game-paper-io-2",
+          "title": "Paper.io 2",
+          "emoji": "📝",
+          "thumbnail": "https://imgs.crazygames.com/paper-io-2_1x1/20250214024144/paper-io-2_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/paper-io-2/index.html",
+          "theme": "territory",
+          "description": "Claim territory in this multiplayer arena"
+        },
+        {
+          "id": "game-uno-online",
+          "title": "Uno Online",
+          "emoji": "🃏",
+          "thumbnail": "https://imgs.crazygames.com/games/uno-online/cover-1679068977831.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/uno-online/index.html",
+          "theme": "puzzle",
+          "description": "Classic card game online"
+        },
+        {
+          "id": "game-chess",
+          "title": "Chess",
+          "emoji": "♟️",
+          "thumbnail": "https://imgs.crazygames.com/chess-free_16x9/20241227034433/chess-free_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/chess-free/index.html",
+          "theme": "puzzle",
+          "description": "Classic chess against AI or friends"
+        },
+        {
+          "id": "game-checkers",
+          "title": "Checkers",
+          "emoji": "🩸",
+          "thumbnail": "https://imgs.crazygames.com/checkers-free_16x9/20250331052950/checkers-free_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/checkers-free/index.html",
+          "theme": "puzzle",
+          "description": "Classic checkers board game"
+        },
+        {
+          "id": "game-backgammon",
+          "title": "Backgammon",
+          "emoji": "🎲",
+          "thumbnail": "https://imgs.crazygames.com/games/classic-backgammon/cover_16x9-1707829263148.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/classic-backgammon/index.html",
+          "theme": "puzzle",
+          "description": "Classic backgammon board game"
+        },
+        {
+          "id": "game-mahjong",
+          "title": "Mahjong",
+          "emoji": "🀄",
+          "thumbnail": "https://imgs.crazygames.com/games/mahjongg-solitaire/cover_16x9-1707829450935.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/mahjongg-solitaire/index.html",
+          "theme": "puzzle",
+          "description": "Classic tile matching puzzle"
+        },
+        {
+          "id": "game-master-chess",
+          "title": "Master Chess",
+          "emoji": "♚",
+          "thumbnail": "https://imgs.crazygames.com/games/master-chess/cover-1624894080822.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/master-chess/index.html",
+          "theme": "puzzle",
+          "description": "Advanced chess with multiple modes"
+        },
+        {
+          "id": "game-mancala",
+          "title": "Mancala",
+          "emoji": "🟤",
+          "thumbnail": "https://imgs.crazygames.com/mancala-classic_1x1/20240419092652/mancala-classic_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/mancala-classic/index.html",
+          "theme": "puzzle",
+          "description": "Ancient stone strategy game"
+        }
+      ]
+    },
+    {
+      "name": "Arcade Zone",
+      "emoji": "🕹️",
+      "tagline": "Fast-paced arcade action",
+      "accentColor": "#f87171",
+      "games": [
+        {
+          "id": "game-space-waves",
+          "title": "Space Waves",
+          "emoji": "🚀",
+          "thumbnail": "https://imgs.crazygames.com/space-waves_1x1/20241203031650/space-waves_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/space-waves/index.html",
+          "theme": "arcade",
+          "description": "Dodge obstacles in space - one-tap arcade action"
+        },
+        {
+          "id": "game-drift-boss",
+          "title": "Drift Boss",
+          "emoji": "🏎️",
+          "thumbnail": "https://imgs.crazygames.com/drift-boss_1x1/20260209092420/drift-boss_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/drift-boss/index.html",
+          "theme": "driving",
+          "description": "One-button drifting - how far can you go?"
+        },
+        {
+          "id": "game-tunnel-rush",
+          "title": "Tunnel Rush",
+          "emoji": "🌀",
+          "thumbnail": "https://imgs.crazygames.com/space-waves_16x9/20241203031650/space-waves_16x9-cover?metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/tunnel-rush/index.html",
+          "theme": "arcade",
+          "description": "Dodge obstacles in a high-speed tunnel"
+        },
+        {
+          "id": "game-temple-of-boom",
+          "title": "Temple of Boom",
+          "emoji": "💥",
+          "thumbnail": "https://imgs.crazygames.com/count-masters-stickman-games_16x9/20250220041115/count-masters-stickman-games_16x9-cover?metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/temple-of-boom/index.html",
+          "theme": "action",
+          "description": "Run and gun through temple dungeons"
+        },
+        {
+          "id": "game-geometry-dash",
+          "title": "Geometry Dash",
+          "emoji": "▶️",
+          "thumbnail": "https://imgs.crazygames.com/games/geometry-dash-online/cover_16x9-1732744370399.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/geometry-dash-online/index.html",
+          "theme": "arcade",
+          "description": "Rhythm-based platformer"
+        },
+        {
+          "id": "game-color-tunnel",
+          "title": "Color Tunnel",
+          "emoji": "🌈",
+          "thumbnail": "https://imgs.crazygames.com/tunnelrushb.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/color-tunnel/index.html",
+          "theme": "arcade",
+          "description": "Colorful tunnel dodging game"
+        },
+        {
+          "id": "game-helix-jump",
+          "title": "Helix Jump",
+          "emoji": "🔄",
+          "thumbnail": "https://imgs.crazygames.com/games/helix-jump/cover_16x9-1733222901873.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/helix-jump/index.html",
+          "theme": "arcade",
+          "description": "Bounce through helix tower"
+        },
+        {
+          "id": "game-stacky-bird",
+          "title": "Stacky Bird",
+          "emoji": "🐦",
+          "thumbnail": "https://imgs.crazygames.com/stacky-bird_1x1/20240502071013/stacky-bird_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/stacky-bird/index.html",
+          "theme": "arcade",
+          "description": "Stack and fly bird game"
+        },
+        {
+          "id": "game-jet-rush",
+          "title": "Jet Rush",
+          "emoji": "✈️",
+          "thumbnail": "https://imgs.crazygames.com/games/jet-rush/cover-1663772569110.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/jet-rush/index.html",
+          "theme": "arcade",
+          "description": "High-speed jet obstacle course"
+        },
+        {
+          "id": "game-count-masters",
+          "title": "Count Masters",
+          "emoji": "🏃",
+          "thumbnail": "https://imgs.crazygames.com/count-masters-stickman-games_1x1/20250220041115/count-masters-stickman-games_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/count-masters-stickman-games/index.html",
+          "theme": "arcade",
+          "description": "Stickman crowd battle runner"
+        },
+        {
+          "id": "game-man-runner-2048",
+          "title": "Man Runner 2048",
+          "emoji": "🏃‍♂️",
+          "thumbnail": "https://imgs.crazygames.com/man-runner-2048_16x9/20250430034730/man-runner-2048_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/man-runner-2048/index.html",
+          "theme": "arcade",
+          "description": "Merge and run number game"
+        }
+      ]
+    },
+    {
+      "name": "Casual Play",
+      "emoji": "✨",
+      "tagline": "Quick fun, play & move on",
+      "accentColor": "#34d399",
+      "games": [
+        {
+          "id": "game-slice-master",
+          "title": "Slice Master",
+          "emoji": "🔪",
+          "thumbnail": "https://imgs.crazygames.com/slice-master_1x1/20240731033229/slice-master_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/slice-master/index.html",
+          "theme": "casual",
+          "description": "Satisfying slicing action - cut everything!"
+        },
+        {
+          "id": "game-tiny-fishing",
+          "title": "Tiny Fishing",
+          "emoji": "🎣",
+          "thumbnail": "https://imgs.crazygames.com/games/tiny-fishing/cover_1x1-1707829871792.png?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/tiny-fishing/index.html",
+          "theme": "casual",
+          "description": "Relaxing fishing idle game - catch and upgrade"
+        },
+        {
+          "id": "game-stickman-hook",
+          "title": "Stickman Hook",
+          "emoji": "🎣",
+          "thumbnail": "https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=400,height=400,fit=cover,f=png/99e090d154caf30f3625df7e456d5984/stickman-hook.png",
+          "url": "https://games.crazygames.com/en_US/stickman-hook/index.html",
+          "theme": "physics",
+          "description": "Swing through levels with grappling physics"
+        },
+        {
+          "id": "game-crazy-fish",
+          "title": "Crazy Fish",
+          "emoji": "🐠",
+          "thumbnail": "https://imgs.crazygames.com/crazy-fish_1x1/20260225170633/crazy-fish_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/crazy-fish/index.html",
+          "theme": "casual",
+          "description": "Underwater fish adventure"
+        },
+        {
+          "id": "game-papas-pizzeria",
+          "title": "Papa's Pizzeria",
+          "emoji": "🍕",
+          "thumbnail": "https://imgs.crazygames.com/games/papas-pizzeria/cover-1628776612329.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/papas-pizzeria/index.html",
+          "theme": "casual",
+          "description": "Run your own pizza shop"
+        },
+        {
+          "id": "game-getting-over-it",
+          "title": "Getting Over It",
+          "emoji": "🏔️",
+          "thumbnail": "https://imgs.crazygames.com/games/getting-over-it/cover-1655200712094.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/getting-over-it/index.html",
+          "theme": "casual",
+          "description": "Challenging climbing game"
+        },
+        {
+          "id": "game-friday-night-funkin",
+          "title": "Friday Night Funkin",
+          "emoji": "🎤",
+          "thumbnail": "https://imgs.crazygames.com/games/friday-night-funkin/cover-1614085803807.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/friday-night-funkin/index.html",
+          "theme": "casual",
+          "description": "Rhythm-based music battle"
+        },
+        {
+          "id": "game-bubble-blast",
+          "title": "Bubble Blast",
+          "emoji": "🫧",
+          "thumbnail": "https://imgs.crazygames.com/bubble-blast-pwd_1x1/20240927035025/bubble-blast-pwd_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/bubble-blast-pwd/index.html",
+          "theme": "casual",
+          "description": "Pop bubbles puzzle game"
+        },
+        {
+          "id": "game-fireboy-watergirl",
+          "title": "Fireboy & Watergirl",
+          "emoji": "🔥",
+          "thumbnail": "https://imgs.crazygames.com/games/fireboy-and-watergirl-6-fairy-tales/cover-1633535362787.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/fireboy-and-watergirl-6-fairy-tales/index.html",
+          "theme": "casual",
+          "description": "Cooperative puzzle platformer"
+        }
+      ]
+    },
+    {
+      "name": "Racing & Karts",
+      "emoji": "🏎️",
+      "tagline": "Speed, stunts & competition",
+      "accentColor": "#fbbf24",
+      "games": [
+        {
+          "id": "game-moto-x3m",
+          "title": "Moto X3M",
+          "emoji": "🏍️",
+          "thumbnail": "https://imgs.crazygames.com/moto-x3m_1x1/20231122033955/moto-x3m_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/moto-x3m/index.html",
+          "theme": "racing",
+          "description": "Extreme motorcycle racing with stunts"
+        },
+        {
+          "id": "game-smash-karts",
+          "title": "Smash Karts",
+          "emoji": "🚗",
+          "thumbnail": "https://imgs.crazygames.com/smash-karts_1x1/20260210123937/smash-karts_1x1-cover?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/smash-karts/index.html",
+          "theme": "racing",
+          "description": "3D multiplayer kart battle arena"
+        },
+        {
+          "id": "game-narrow-one",
+          "title": "Narrow One",
+          "emoji": "🏹",
+          "thumbnail": "https://imgs.crazygames.com/auto-covers/narrow-one_1x1?format=auto&quality=100&metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/narrow-one/index.html",
+          "theme": "archery",
+          "description": "Multiplayer archery capture-the-flag"
+        },
+        {
+          "id": "game-night-city-racing",
+          "title": "Night City Racing",
+          "emoji": "🌌",
+          "thumbnail": "https://imgs.crazygames.com/night-city-racing_1x1/20260220035423/night-city-racing_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/night-city-racing/index.html",
+          "theme": "racing",
+          "description": "Street racing at night"
+        },
+        {
+          "id": "game-mx-offroad",
+          "title": "MX Offroad",
+          "emoji": "🛣️",
+          "thumbnail": "https://imgs.crazygames.com/mx-offroad-master_1x1/20260220035406/mx-offroad-master_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/mx-offroad-master/index.html",
+          "theme": "racing",
+          "description": "Extreme offroad motorcycle racing"
+        }
+      ]
+    },
+    {
+      "name": "Idle Kingdom",
+      "emoji": "👑",
+      "tagline": "Idle & incremental adventures",
+      "accentColor": "#a78bfa",
+      "games": [
+        {
+          "id": "game-monkey-mart",
+          "title": "Monkey Mart",
+          "emoji": "🐒",
+          "thumbnail": "https://img.poki-cdn.com/cdn-cgi/image/q=78,scq=50,width=400,height=400,fit=cover,f=png/ce4a204b6d2cc99d1879da0b2282b0d8/monkey-mart.png",
+          "url": "https://games.crazygames.com/en_US/monkey-mart/index.html",
+          "theme": "idle",
+          "description": "Run your own supermarket as a monkey"
+        },
+        {
+          "id": "game-clicker-heroes",
+          "title": "Clicker Heroes",
+          "emoji": "🗡️",
+          "thumbnail": "https://imgs.crazygames.com/games/clicker-heroes/cover-1661788327769.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/clicker-heroes/index.html",
+          "theme": "idle",
+          "description": "Classic idle clicker RPG"
+        },
+        {
+          "id": "game-mr-mine",
+          "title": "Mr. Mine",
+          "emoji": "⛏️",
+          "thumbnail": "https://imgs.crazygames.com/mister-mine_1x1/20260220044353/mister-mine_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/mister-mine/index.html",
+          "theme": "idle",
+          "description": "Idle mining adventure"
+        },
+        {
+          "id": "game-doge-miner",
+          "title": "Doge Miner",
+          "emoji": "🐶",
+          "thumbnail": "https://imgs.crazygames.com/games/doge-miner/cover-1593443166599.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/doge-miner/index.html",
+          "theme": "idle",
+          "description": "Mine to the moon with Doge"
+        },
+        {
+          "id": "game-doge-miner-2",
+          "title": "Doge Miner 2",
+          "emoji": "🚀",
+          "thumbnail": "https://imgs.crazygames.com/farm-ring-idle_1x1/20251107043253/farm-ring-idle_1x1-cover?metadata=none&width=400",
+          "url": "https://games.crazygames.com/en_US/doge-miner-2/index.html",
+          "theme": "idle",
+          "description": "Doge mining sequel - to Mars!"
+        },
+        {
+          "id": "game-planet-clicker",
+          "title": "Planet Clicker",
+          "emoji": "🌍",
+          "thumbnail": "https://imgs.crazygames.com/games/planet-clicker/cover_16x9-1746160591691.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/planet-clicker/index.html",
+          "theme": "idle",
+          "description": "Click to grow your planet"
+        },
+        {
+          "id": "game-race-clicker",
+          "title": "Race Clicker",
+          "emoji": "🏁",
+          "thumbnail": "https://imgs.crazygames.com/race-clicker-tap-tap-game_1x1/20260105041633/race-clicker-tap-tap-game_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/race-clicker-tap-tap-game/index.html",
+          "theme": "idle",
+          "description": "Tap to win the race"
+        },
+        {
+          "id": "game-idle-inventor",
+          "title": "Idle Inventor",
+          "emoji": "💡",
+          "thumbnail": "https://imgs.crazygames.com/idle-inventor_16x9/20230925161528/idle-inventor_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/idle-inventor/index.html",
+          "theme": "idle",
+          "description": "Invent and automate machines"
+        }
+      ]
+    },
+    {
+      "name": "FPS Arena",
+      "emoji": "🔫",
+      "tagline": "First-person shooter action",
+      "accentColor": "#ef4444",
+      "games": [
+        {
+          "id": "game-shell-shockers",
+          "title": "Shell Shockers",
+          "emoji": "🥚",
+          "thumbnail": "https://imgs.crazygames.com/shellshockersio_1x1/20260203211252/shellshockersio_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/shellshockersio/index.html",
+          "theme": "fps",
+          "description": "Egg-themed multiplayer FPS"
+        },
+        {
+          "id": "game-kour-io",
+          "title": "Kour.io",
+          "emoji": "🎯",
+          "thumbnail": "https://imgs.crazygames.com/kour-io_16x9/20241107024955/kour-io_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/kour-io/index.html",
+          "theme": "fps",
+          "description": "Fast-paced multiplayer FPS"
+        },
+        {
+          "id": "game-voxiom-io",
+          "title": "Voxiom.io",
+          "emoji": "🟩",
+          "thumbnail": "https://imgs.crazygames.com/games/voxiom-io/cover_16x9-1714408559317.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/voxiom-io/index.html",
+          "theme": "fps",
+          "description": "Voxel-based multiplayer shooter"
+        },
+        {
+          "id": "game-bullet-force",
+          "title": "Bullet Force",
+          "emoji": "💥",
+          "thumbnail": "https://imgs.crazygames.com/bullet-force-multiplayer_16x9/20260213105606/bullet-force-multiplayer_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/bullet-force-multiplayer/index.html",
+          "theme": "fps",
+          "description": "Multiplayer FPS with custom loadouts"
+        },
+        {
+          "id": "game-skillwarz",
+          "title": "SkillWarz",
+          "emoji": "⚔️",
+          "thumbnail": "https://imgs.crazygames.com/skillwarz_1x1/20260227023347/skillwarz_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/skillwarz/index.html",
+          "theme": "fps",
+          "description": "Tactical FPS arena combat"
+        },
+        {
+          "id": "game-buildnow-gg",
+          "title": "BuildNow GG",
+          "emoji": "🏗️",
+          "thumbnail": "https://imgs.crazygames.com/buildnow-gg_1x1/20251229084241/buildnow-gg_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/buildnow-gg/index.html",
+          "theme": "fps",
+          "description": "Build and shoot multiplayer"
+        },
+        {
+          "id": "game-1v1-lol",
+          "title": "1v1.LOL",
+          "emoji": "🎮",
+          "thumbnail": "https://imgs.crazygames.com/games/1v1-lol/cover-1585728351086.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/1v1-lol/index.html",
+          "theme": "fps",
+          "description": "Build and battle 1v1 shooter"
+        },
+        {
+          "id": "game-pixel-warfare",
+          "title": "Pixel Warfare",
+          "emoji": "💻",
+          "thumbnail": "https://imgs.crazygames.com/pixel-warfare_16x9/20250506070147/pixel-warfare_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/pixel-warfare/index.html",
+          "theme": "fps",
+          "description": "Pixelated multiplayer FPS"
+        }
+      ]
+    },
+    {
+      "name": "IO World",
+      "emoji": "🌐",
+      "tagline": "Multiplayer .io games",
+      "accentColor": "#06b6d4",
+      "games": [
+        {
+          "id": "game-agar-io",
+          "title": "Agar.io",
+          "emoji": "🟢",
+          "thumbnail": "https://imgs.crazygames.com/agario/20230719092731/agario-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/agario/index.html",
+          "theme": "io",
+          "description": "Classic cell-eating IO game"
+        },
+        {
+          "id": "game-evowars-io",
+          "title": "EvoWars.io",
+          "emoji": "⚔️",
+          "thumbnail": "https://imgs.crazygames.com/evowarsio_16x9/20251003061326/evowarsio_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/evowarsio/index.html",
+          "theme": "io",
+          "description": "Evolve and fight IO arena"
+        },
+        {
+          "id": "game-bloxd-io",
+          "title": "Bloxd.io",
+          "emoji": "🟦",
+          "thumbnail": "https://imgs.crazygames.com/bloxdhop-io_16x9/20250829023851/bloxdhop-io_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/bloxdhop-io/index.html",
+          "theme": "io",
+          "description": "Block-based multiplayer world"
+        },
+        {
+          "id": "game-cubes-2048",
+          "title": "Cubes 2048.io",
+          "emoji": "🟨",
+          "thumbnail": "https://imgs.crazygames.com/games/cubes-2048-io/cover_16x9-1693298929425.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/cubes-2048-io/index.html",
+          "theme": "io",
+          "description": "Merge cubes IO multiplayer"
+        },
+        {
+          "id": "game-diep-io",
+          "title": "Diep.io",
+          "emoji": "🔴",
+          "thumbnail": "https://imgs.crazygames.com/diepio/20230629173952/diepio-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/diepio/index.html",
+          "theme": "io",
+          "description": "Tank battle IO arena"
+        },
+        {
+          "id": "game-zombs-royale",
+          "title": "Zombs Royale",
+          "emoji": "🧟",
+          "thumbnail": "https://imgs.crazygames.com/games/zombsroyaleio/cover-1587299840102.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/zombsroyaleio/index.html",
+          "theme": "io",
+          "description": "2D battle royale IO game"
+        },
+        {
+          "id": "game-snake-io",
+          "title": "Snake.io",
+          "emoji": "🐍",
+          "thumbnail": "https://imgs.crazygames.com/snake-io_1x1/20260220103751/snake-io_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/snake-io/index.html",
+          "theme": "io",
+          "description": "Classic snake IO multiplayer"
+        },
+        {
+          "id": "game-skribbl-io",
+          "title": "Skribbl.io",
+          "emoji": "🖍️",
+          "thumbnail": "https://imgs.crazygames.com/skribblio.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/skribblio/index.html",
+          "theme": "io",
+          "description": "Drawing and guessing game"
+        },
+        {
+          "id": "game-lol-beans",
+          "title": "LOL Beans",
+          "emoji": "🫘",
+          "thumbnail": "https://imgs.crazygames.com/games/lolbeans-io/cover-1603275114093.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/lolbeans-io/index.html",
+          "theme": "io",
+          "description": "Fall guys style obstacle race"
+        },
+        {
+          "id": "game-fly-or-die",
+          "title": "Fly or Die",
+          "emoji": "🦅",
+          "thumbnail": "https://imgs.crazygames.com/flyordieio/20210614144226/flyordieio-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/flyordieio/index.html",
+          "theme": "io",
+          "description": "Evolving flying creature IO"
+        }
+      ]
+    },
+    {
+      "name": "Sports Hub",
+      "emoji": "⚽",
+      "tagline": "Sports & competition",
+      "accentColor": "#f97316",
+      "games": [
+        {
+          "id": "game-basketbros",
+          "title": "BasketBros",
+          "emoji": "🏀",
+          "thumbnail": "https://imgs.crazygames.com/basketbros_1x1/20251107022434/basketbros_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/basketbros/index.html",
+          "theme": "sports",
+          "description": "2D basketball brawler"
+        },
+        {
+          "id": "game-basketball-stars",
+          "title": "Basketball Stars",
+          "emoji": "⛹️",
+          "thumbnail": "https://imgs.crazygames.com/games/basketball-stars-2019/cover-1583231506155.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/basketball-stars-2019/index.html",
+          "theme": "sports",
+          "description": "1v1 basketball showdown"
+        },
+        {
+          "id": "game-goal-gang",
+          "title": "Goal Gang",
+          "emoji": "⚽",
+          "thumbnail": "https://imgs.crazygames.com/goal-gang_1x1/20260219100213/goal-gang_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/goal-gang/index.html",
+          "theme": "sports",
+          "description": "Multiplayer soccer action"
+        },
+        {
+          "id": "game-basket-random",
+          "title": "Basket Random",
+          "emoji": "🏀",
+          "thumbnail": "https://imgs.crazygames.com/basket-random_1x1/20240617090207/basket-random_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/basket-random/index.html",
+          "theme": "sports",
+          "description": "Wacky basketball physics"
+        },
+        {
+          "id": "game-8-ball-pool",
+          "title": "8 Ball Pool",
+          "emoji": "🎱",
+          "thumbnail": "https://imgs.crazygames.com/8-ball-billiards-classic_1x1/20231108025958/8-ball-billiards-classic_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/8-ball-billiards-classic/index.html",
+          "theme": "sports",
+          "description": "Classic billiards game"
+        },
+        {
+          "id": "game-mini-golf",
+          "title": "Mini Golf",
+          "emoji": "⛳",
+          "thumbnail": "https://imgs.crazygames.com/mini-golf-club_1x1/20250106022059/mini-golf-club_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/mini-golf-club/index.html",
+          "theme": "sports",
+          "description": "Miniature golf course challenge"
+        },
+        {
+          "id": "game-crazy-flips",
+          "title": "Crazy Flips 3D",
+          "emoji": "🤸",
+          "thumbnail": "https://imgs.crazygames.com/crazy-flips-3d_16x9/20251020061837/crazy-flips-3d_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/crazy-flips-3d/index.html",
+          "theme": "sports",
+          "description": "Extreme gymnastics flips"
+        }
+      ]
+    },
+    {
+      "name": "Battle Arena",
+      "emoji": "⚔️",
+      "tagline": "PvP combat & strategy",
+      "accentColor": "#dc2626",
+      "games": [
+        {
+          "id": "game-rooftop-snipers",
+          "title": "Rooftop Snipers",
+          "emoji": "🏢",
+          "thumbnail": "https://imgs.crazygames.com/rooftop-snipers_16x9/20250108040440/rooftop-snipers_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/rooftop-snipers/index.html",
+          "theme": "battle",
+          "description": "Physics-based rooftop duels"
+        },
+        {
+          "id": "game-getaway-shootout",
+          "title": "Getaway Shootout",
+          "emoji": "🏃",
+          "thumbnail": "https://imgs.crazygames.com/getaway-shootout_1x1/20241230044730/getaway-shootout_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/getaway-shootout/index.html",
+          "theme": "battle",
+          "description": "Wacky escape and shoot game"
+        },
+        {
+          "id": "game-ragdoll-archers",
+          "title": "Ragdoll Archers",
+          "emoji": "🏹",
+          "thumbnail": "https://imgs.crazygames.com/ragdoll-archers_1x1/20250926080758/ragdoll-archers_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/ragdoll-archers/index.html",
+          "theme": "battle",
+          "description": "Physics archery combat"
+        },
+        {
+          "id": "game-stickman-clash",
+          "title": "Stickman Clash",
+          "emoji": "🤺",
+          "thumbnail": "https://imgs.crazygames.com/games/stickman-clash/cover_16x9-1746127524433.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/stickman-clash/index.html",
+          "theme": "battle",
+          "description": "Stickman army battles"
+        },
+        {
+          "id": "game-tank-stars",
+          "title": "Tank Stars",
+          "emoji": "🚀",
+          "thumbnail": "https://imgs.crazygames.com/tank-stars-online_1x1/20260122111423/tank-stars-online_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/tank-stars-online/index.html",
+          "theme": "battle",
+          "description": "Turn-based tank combat"
+        },
+        {
+          "id": "game-castle-craft",
+          "title": "Castle Craft",
+          "emoji": "🏰",
+          "thumbnail": "https://imgs.crazygames.com/castle-craft_1x1/20250203045450/castle-craft_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/castle-craft/index.html",
+          "theme": "battle",
+          "description": "Castle building and defense"
+        },
+        {
+          "id": "game-iron-legion",
+          "title": "Iron Legion",
+          "emoji": "🤖",
+          "thumbnail": "https://imgs.crazygames.com/iron-legion_16x9/20251008073743/iron-legion_16x9-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/iron-legion/index.html",
+          "theme": "battle",
+          "description": "Mech combat battle arena"
+        },
+        {
+          "id": "game-hex-empire",
+          "title": "Hex Empire",
+          "emoji": "🗺️",
+          "thumbnail": "https://imgs.crazygames.com/hexempireb.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/hex-empire/index.html",
+          "theme": "battle",
+          "description": "Turn-based hex strategy"
+        },
+        {
+          "id": "game-rocket-bot-royale",
+          "title": "Rocket Bot Royale",
+          "emoji": "🚀",
+          "thumbnail": "https://imgs.crazygames.com/games/rocket-bot-royale/cover_16x9-1732723484943.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/rocket-bot-royale/index.html",
+          "theme": "battle",
+          "description": "Tank battle royale"
+        },
+        {
+          "id": "game-horde-killer",
+          "title": "Horde Killer",
+          "emoji": "🧟‍♂️",
+          "thumbnail": "https://imgs.crazygames.com/horde-killer-you-vs-100/20220415084727/horde-killer-you-vs-100-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/horde-killer-you-vs-100/index.html",
+          "theme": "battle",
+          "description": "You vs 100 enemies"
+        },
+        {
+          "id": "game-superhot",
+          "title": "SuperHot",
+          "emoji": "🔥",
+          "thumbnail": "https://imgs.crazygames.com/games/super-hot/thumb-1560179425892.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/super-hot/index.html",
+          "theme": "battle",
+          "description": "Time moves when you move"
+        },
+        {
+          "id": "game-time-shooter-2",
+          "title": "Time Shooter 2",
+          "emoji": "⏱️",
+          "thumbnail": "https://imgs.crazygames.com/time-shooter-2_1x1/20241113040556/time-shooter-2_1x1-cover?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/time-shooter-2/index.html",
+          "theme": "battle",
+          "description": "Time-control FPS action"
+        },
+        {
+          "id": "game-street-fighter-2",
+          "title": "Street Fighter 2",
+          "emoji": "🥊",
+          "thumbnail": "https://imgs.crazygames.com/streetfighter2.png?metadata=none&quality=100&width=400",
+          "url": "https://games.crazygames.com/en_US/street-fighter-2/index.html",
+          "theme": "battle",
+          "description": "Classic fighting game"
+        }
+      ]
+    }
+  ],
+  "crossDomainRelations": {
+    "game-2048": "game-slice-master",
+    "game-slice-master": "game-tiny-fishing",
+    "game-space-waves": "game-drift-boss",
+    "game-drift-boss": "game-space-waves",
+    "game-tiny-fishing": "game-slice-master",
+    "game-stickman-hook": "game-temple-of-boom",
+    "game-moto-x3m": "game-smash-karts",
+    "game-paper-io-2": "game-narrow-one",
+    "game-temple-of-boom": "game-stickman-hook",
+    "game-monkey-mart": "game-tiny-fishing",
+    "game-tunnel-rush": "game-space-waves",
+    "game-narrow-one": "game-paper-io-2",
+    "game-smash-karts": "game-moto-x3m",
+    "ai-service-tech": "game-monkey-mart",
+    "game-shell-shockers": "game-kour-io",
+    "game-kour-io": "game-voxiom-io",
+    "game-voxiom-io": "game-bullet-force",
+    "game-bullet-force": "game-skillwarz",
+    "game-skillwarz": "game-buildnow-gg",
+    "game-buildnow-gg": "game-1v1-lol",
+    "game-1v1-lol": "game-pixel-warfare",
+    "game-pixel-warfare": "game-shell-shockers",
+    "game-geometry-dash": "game-color-tunnel",
+    "game-color-tunnel": "game-helix-jump",
+    "game-helix-jump": "game-stacky-bird",
+    "game-stacky-bird": "game-jet-rush",
+    "game-jet-rush": "game-count-masters",
+    "game-count-masters": "game-man-runner-2048",
+    "game-man-runner-2048": "game-geometry-dash",
+    "game-agar-io": "game-snake-io",
+    "game-evowars-io": "game-diep-io",
+    "game-bloxd-io": "game-cubes-2048",
+    "game-cubes-2048": "game-bloxd-io",
+    "game-diep-io": "game-agar-io",
+    "game-zombs-royale": "game-lol-beans",
+    "game-snake-io": "game-agar-io",
+    "game-skribbl-io": "game-fly-or-die",
+    "game-lol-beans": "game-zombs-royale",
+    "game-fly-or-die": "game-evowars-io",
+    "game-basketbros": "game-basketball-stars",
+    "game-basketball-stars": "game-basket-random",
+    "game-goal-gang": "game-crazy-flips",
+    "game-basket-random": "game-basketbros",
+    "game-8-ball-pool": "game-mini-golf",
+    "game-mini-golf": "game-8-ball-pool",
+    "game-crazy-flips": "game-goal-gang",
+    "game-uno-online": "game-chess",
+    "game-chess": "game-master-chess",
+    "game-checkers": "game-backgammon",
+    "game-backgammon": "game-mancala",
+    "game-mahjong": "game-checkers",
+    "game-master-chess": "game-chess",
+    "game-mancala": "game-mahjong",
+    "game-clicker-heroes": "game-mr-mine",
+    "game-mr-mine": "game-doge-miner",
+    "game-doge-miner": "game-doge-miner-2",
+    "game-doge-miner-2": "game-planet-clicker",
+    "game-planet-clicker": "game-race-clicker",
+    "game-race-clicker": "game-idle-inventor",
+    "game-idle-inventor": "game-clicker-heroes",
+    "game-crazy-fish": "game-bubble-blast",
+    "game-papas-pizzeria": "game-getting-over-it",
+    "game-getting-over-it": "game-friday-night-funkin",
+    "game-friday-night-funkin": "game-fireboy-watergirl",
+    "game-bubble-blast": "game-crazy-fish",
+    "game-fireboy-watergirl": "game-papas-pizzeria",
+    "game-night-city-racing": "game-mx-offroad",
+    "game-mx-offroad": "game-night-city-racing",
+    "game-rooftop-snipers": "game-getaway-shootout",
+    "game-getaway-shootout": "game-ragdoll-archers",
+    "game-ragdoll-archers": "game-stickman-clash",
+    "game-stickman-clash": "game-tank-stars",
+    "game-tank-stars": "game-castle-craft",
+    "game-castle-craft": "game-iron-legion",
+    "game-iron-legion": "game-hex-empire",
+    "game-hex-empire": "game-rocket-bot-royale",
+    "game-rocket-bot-royale": "game-horde-killer",
+    "game-horde-killer": "game-superhot",
+    "game-superhot": "game-time-shooter-2",
+    "game-time-shooter-2": "game-street-fighter-2",
+    "game-street-fighter-2": "game-rooftop-snipers"
+  }
+}

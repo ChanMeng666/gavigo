@@ -13,7 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TextInput, Chip, EmptyState } from '@/components/ui';
-import { STUDIOS, type StudioGame } from '@/components/explore/StudioCard';
+import { STUDIOS, ALL_GAMES } from '@/data/games';
+import type { StudioGame } from '@/data/games';
 import { sendUserAction } from '@/services/wsEvents';
 import {
   searchVideos as searchSupabaseVideos,
@@ -21,6 +22,9 @@ import {
   fetchVideosByTheme,
 } from '@/services/feed';
 import type { Video } from '@/types/supabase';
+import defaultVideos from '../../../../shared/defaultVideos.json';
+
+const bundledVideos = defaultVideos as Video[];
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
@@ -53,7 +57,7 @@ const THEMES = [
 const VIDEOS_PER_ROW = 2;
 
 // Flatten all games from all studios into a single list
-const ALL_GAMES: StudioGame[] = STUDIOS.flatMap((s) => s.games);
+// ALL_GAMES is imported from @/data/games
 
 const GAME_CARD_WIDTH = 110;
 
@@ -152,17 +156,44 @@ export default function ExploreScreen() {
 
   const loadVideos = useCallback(async () => {
     try {
-      let data: Video[];
+      let supabaseData: Video[];
       if (search.trim()) {
-        data = await searchSupabaseVideos(search.trim(), 1, 30);
+        supabaseData = await searchSupabaseVideos(search.trim(), 1, 30);
       } else if (activeFilter !== 'all') {
-        data = await fetchVideosByTheme(activeFilter, 1, 30);
+        supabaseData = await fetchVideosByTheme(activeFilter, 1, 30);
       } else {
-        data = await fetchFeed(1, 30);
+        supabaseData = await fetchFeed(1, 60);
       }
-      setVideos(data);
+
+      // Merge: Supabase results + bundled defaults (deduplicated)
+      let local: Video[];
+      if (search.trim()) {
+        const q = search.trim().toLowerCase();
+        local = bundledVideos.filter(
+          (v) =>
+            v.title.toLowerCase().includes(q) ||
+            v.theme.toLowerCase().includes(q) ||
+            v.photographer.toLowerCase().includes(q)
+        );
+      } else if (activeFilter !== 'all') {
+        local = bundledVideos.filter((v) => v.theme === activeFilter);
+      } else {
+        local = bundledVideos;
+      }
+
+      // Deduplicate: Supabase wins for same pexels_id, then append bundled-only videos
+      const seenPexelsIds = new Set(supabaseData.map((v) => v.pexels_id));
+      const extra = local.filter((v) => !seenPexelsIds.has(v.pexels_id));
+      const merged = [...supabaseData, ...extra];
+
+      setVideos(merged);
     } catch {
-      // Keep existing
+      // On network error, use bundled defaults
+      if (activeFilter !== 'all') {
+        setVideos(bundledVideos.filter((v) => v.theme === activeFilter));
+      } else {
+        setVideos(bundledVideos);
+      }
     } finally {
       setLoading(false);
     }

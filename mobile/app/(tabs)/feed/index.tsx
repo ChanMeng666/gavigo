@@ -22,6 +22,8 @@ import { ContentCard, type FeedItem } from '@/components/feed/ContentCard';
 import { SkeletonLoader, EmptyState } from '@/components/ui';
 import { fetchFeed } from '@/services/feed';
 import { syncVideosFromPexels } from '@/services/videoSync';
+import defaultVideos from '../../../../shared/defaultVideos.json';
+import type { Video } from '@/types/supabase';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -115,11 +117,23 @@ export default function FeedScreen() {
     setVideosHasMore,
   } = useFeedStore();
 
-  // Load videos from Supabase on mount
+  // Stale-while-revalidate: show cached/bundled content instantly,
+  // then refresh from Supabase in the background
   useEffect(() => {
     let cancelled = false;
 
-    async function loadInitialFeed() {
+    // Tier 1 & 2: If store already has videos (from MMKV/localStorage persist),
+    // render immediately — no skeleton needed
+    if (videos.length > 0) {
+      setInitialLoading(false);
+    } else if ((defaultVideos as Video[]).length > 0) {
+      // Tier 1 fallback: load bundled defaults (0ms, no network)
+      setVideos(defaultVideos as Video[]);
+      setInitialLoading(false);
+    }
+
+    // Tier 3: Background refresh from Supabase (non-blocking)
+    async function backgroundRefresh() {
       try {
         let vids = await fetchFeed(1);
 
@@ -129,19 +143,20 @@ export default function FeedScreen() {
           vids = await fetchFeed(1);
         }
 
-        if (!cancelled) {
+        if (!cancelled && vids.length > 0) {
           setVideos(vids);
           setVideosPage(1);
           setVideosHasMore(vids.length >= 15);
         }
       } catch (err) {
-        console.warn('Failed to load feed:', err);
+        console.warn('Background feed refresh failed:', err);
       } finally {
+        // If we still haven't loaded anything, clear the loading state
         if (!cancelled) setInitialLoading(false);
       }
     }
 
-    loadInitialFeed();
+    backgroundRefresh();
     return () => { cancelled = true; };
   }, [setVideos, setVideosPage, setVideosHasMore]);
 
