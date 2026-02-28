@@ -3,30 +3,30 @@ import { supabase } from '@/services/supabase';
 import { useSocialStore } from '@/stores/socialStore';
 import { getComments } from '@/services/social';
 
-export function useSocialSubscriptions(videoId: string | null) {
+export function useSocialSubscriptions(contentId: string | null) {
   const setLikeCount = useSocialStore((s) => s.setLikeCount);
   const setComments = useSocialStore((s) => s.setComments);
 
   useEffect(() => {
-    if (!videoId) return;
+    if (!contentId) return;
 
     const channel = supabase
-      .channel(`social-${videoId}`)
+      .channel(`social-${contentId}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'likes',
-          filter: `video_id=eq.${videoId}`,
+          filter: `content_id=eq.${contentId}`,
         },
         async () => {
           // Re-fetch like count
           const { count } = await supabase
             .from('likes')
             .select('*', { count: 'exact', head: true })
-            .eq('video_id', videoId);
-          setLikeCount(videoId, count ?? 0);
+            .eq('content_id', contentId);
+          setLikeCount(contentId, count ?? 0);
         }
       )
       .on(
@@ -35,18 +35,18 @@ export function useSocialSubscriptions(videoId: string | null) {
           event: 'INSERT',
           schema: 'public',
           table: 'comments',
-          filter: `video_id=eq.${videoId}`,
+          filter: `content_id=eq.${contentId}`,
         },
         async () => {
           // Re-fetch comments with profile info
           try {
-            const comments = await getComments(videoId);
+            const comments = await getComments(contentId);
             setComments(
-              videoId,
+              contentId,
               comments.map((c) => ({
                 id: c.id,
                 user_id: c.user_id,
-                content_id: c.video_id,
+                content_id: c.content_id,
                 text: c.text,
                 username: c.username,
                 avatar_url: c.avatar_url,
@@ -63,5 +63,5 @@ export function useSocialSubscriptions(videoId: string | null) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [videoId, setLikeCount, setComments]);
+  }, [contentId, setLikeCount, setComments]);
 }

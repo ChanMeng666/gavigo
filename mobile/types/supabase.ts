@@ -34,7 +34,9 @@ export interface Database {
       videos: {
         Row: {
           id: string;
-          pexels_id: number;
+          pexels_id: number | null;
+          content_type: string;
+          slug: string | null;
           title: string;
           description: string;
           theme: string;
@@ -52,7 +54,9 @@ export interface Database {
           created_at: string;
         };
         Insert: {
-          pexels_id: number;
+          pexels_id?: number | null;
+          content_type?: string;
+          slug?: string | null;
           title: string;
           description?: string;
           theme: string;
@@ -77,12 +81,12 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          video_id: string;
+          content_id: string;
           created_at: string;
         };
         Insert: {
           user_id: string;
-          video_id: string;
+          content_id: string;
         };
         Update: never;
       };
@@ -90,13 +94,13 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          video_id: string;
+          content_id: string;
           text: string;
           created_at: string;
         };
         Insert: {
           user_id: string;
-          video_id: string;
+          content_id: string;
           text: string;
         };
         Update: never;
@@ -135,13 +139,13 @@ export interface Database {
         Row: {
           id: string;
           user_id: string;
-          video_id: string;
+          content_id: string;
           watch_duration_ms: number;
           created_at: string;
         };
         Insert: {
           user_id: string;
-          video_id: string;
+          content_id: string;
           watch_duration_ms?: number;
         };
         Update: {

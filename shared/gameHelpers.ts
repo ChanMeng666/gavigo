@@ -9,6 +9,7 @@ export interface GameEntry {
   url: string;
   theme: string;
   description: string;
+  supabase_id?: string;
 }
 
 export interface StudioEntry {
@@ -76,4 +77,17 @@ export function buildAllGames(data: GamesData): StudioGame[] {
       thumbnail: g.thumbnail,
     }))
   );
+}
+
+/** Build a game slug → Supabase UUID map for social features */
+export function buildGameSupabaseIdMap(data: GamesData): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const studio of data.studios) {
+    for (const game of studio.games) {
+      if (game.supabase_id) {
+        map[game.id] = game.supabase_id;
+      }
+    }
+  }
+  return map;
 }

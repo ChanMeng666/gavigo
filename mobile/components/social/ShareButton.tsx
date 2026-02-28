@@ -10,9 +10,10 @@ import { IconButton } from '@/components/ui';
 interface ShareButtonProps {
   contentId: string;
   title: string;
+  contentType?: 'video' | 'game';
 }
 
-export function ShareButton({ contentId, title }: ShareButtonProps) {
+export function ShareButton({ contentId, title, contentType = 'video' }: ShareButtonProps) {
   const scale = useSharedValue(1);
   const [copied, setCopied] = useState(false);
 
@@ -30,7 +31,8 @@ export function ShareButton({ contentId, title }: ShareButtonProps) {
       // Build a proper HTTPS URL for web sharing
       const origin =
         typeof window !== 'undefined' ? window.location.origin : '';
-      const shareUrl = `${origin}/mobile/video/${contentId}`;
+      const pathSegment = contentType === 'game' ? 'game' : 'video';
+      const shareUrl = `${origin}/mobile/${pathSegment}/${contentId}`;
       const shareText = `Check out "${title}" on GAVIGO IRE! ${shareUrl}`;
 
       // Try Web Share API first

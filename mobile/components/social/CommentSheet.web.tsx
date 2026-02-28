@@ -58,7 +58,7 @@ export function CommentSheet({ contentId, bottomSheetRef }: CommentSheetProps) {
           data.map((c) => ({
             id: c.id,
             user_id: c.user_id,
-            content_id: c.video_id,
+            content_id: c.content_id,
             text: c.text,
             username: c.username,
             avatar_url: c.avatar_url,

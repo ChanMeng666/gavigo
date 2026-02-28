@@ -6,7 +6,7 @@ function getUserId(): string {
 }
 
 export async function toggleLike(
-  videoId: string
+  contentId: string
 ): Promise<{ liked: boolean; count: number }> {
   const userId = getUserId();
 
@@ -15,7 +15,7 @@ export async function toggleLike(
     .from('likes')
     .select('id')
     .eq('user_id', userId)
-    .eq('video_id', videoId)
+    .eq('content_id', contentId)
     .maybeSingle();
 
   if (existing) {
@@ -23,36 +23,36 @@ export async function toggleLike(
     await supabase.from('likes').delete().eq('id', existing.id);
   } else {
     // Like
-    await supabase.from('likes').insert({ user_id: userId, video_id: videoId });
+    await supabase.from('likes').insert({ user_id: userId, content_id: contentId });
   }
 
   // Get updated count
   const { count } = await supabase
     .from('likes')
     .select('*', { count: 'exact', head: true })
-    .eq('video_id', videoId);
+    .eq('content_id', contentId);
 
   return { liked: !existing, count: count ?? 0 };
 }
 
-export async function isLiked(videoId: string): Promise<boolean> {
+export async function isLiked(contentId: string): Promise<boolean> {
   const userId = getUserId();
   const { data } = await supabase
     .from('likes')
     .select('id')
     .eq('user_id', userId)
-    .eq('video_id', videoId)
+    .eq('content_id', contentId)
     .maybeSingle();
   return !!data;
 }
 
 export async function getComments(
-  videoId: string
+  contentId: string
 ): Promise<
   {
     id: string;
     user_id: string;
-    video_id: string;
+    content_id: string;
     text: string;
     username: string;
     avatar_url: string | null;
@@ -61,8 +61,8 @@ export async function getComments(
 > {
   const { data, error } = await supabase
     .from('comments')
-    .select('id, user_id, video_id, text, created_at, profiles!inner(username, avatar_url)')
-    .eq('video_id', videoId)
+    .select('id, user_id, content_id, text, created_at, profiles!inner(username, avatar_url)')
+    .eq('content_id', contentId)
     .order('created_at', { ascending: true });
 
   if (error) throw error;
@@ -70,7 +70,7 @@ export async function getComments(
   return (data ?? []).map((c: any) => ({
     id: c.id,
     user_id: c.user_id,
-    video_id: c.video_id,
+    content_id: c.content_id,
     text: c.text,
     username: c.profiles?.username ?? 'user',
     avatar_url: c.profiles?.avatar_url ?? null,
@@ -79,13 +79,13 @@ export async function getComments(
 }
 
 export async function postComment(
-  videoId: string,
+  contentId: string,
   text: string
 ): Promise<{ id: string }> {
   const userId = getUserId();
   const { data, error } = await supabase
     .from('comments')
-    .insert({ user_id: userId, video_id: videoId, text })
+    .insert({ user_id: userId, content_id: contentId, text })
     .select('id')
     .single();
 
