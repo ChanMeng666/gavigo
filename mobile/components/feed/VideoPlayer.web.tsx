@@ -20,6 +20,7 @@ export function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isMuted, setIsMuted] = useState(true); // start muted for autoplay
   const [isBuffering, setIsBuffering] = useState(false);
   const [hasStarted, setHasStarted] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -96,6 +97,12 @@ export function VideoPlayer({
   }, []);
 
   const handleClick = useCallback(() => {
+    // Unmute on first user interaction (browser autoplay policy)
+    if (isMuted) {
+      setIsMuted(false);
+      if (videoRef.current) videoRef.current.muted = false;
+    }
+
     const now = Date.now();
     const timeSinceLastTap = now - lastTapRef.current;
     lastTapRef.current = now;
@@ -111,7 +118,7 @@ export function VideoPlayer({
         }
       }, 300);
     }
-  }, [togglePlay, triggerHeart]);
+  }, [togglePlay, triggerHeart, isMuted]);
 
   // No video URL — placeholder
   if (!videoUrl) {
@@ -169,7 +176,7 @@ export function VideoPlayer({
         src={videoUrl}
         loop
         playsInline
-        muted={false}
+        muted={isMuted}
         preload="auto"
         style={{
           position: 'absolute',
