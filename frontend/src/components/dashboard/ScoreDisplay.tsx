@@ -24,15 +24,15 @@ export function ScoreDisplay({
   )
 
   return (
-    <Card>
+    <Card className="h-full flex flex-col">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2 text-base">
           <ChartIcon className="h-4 w-4 text-muted-foreground" />
           Real-time Scores
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[280px] pr-3">
+      <CardContent className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full pr-3">
           {scoreEntries.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">

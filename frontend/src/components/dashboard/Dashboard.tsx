@@ -138,7 +138,7 @@ export function Dashboard({
             </div>
 
             {/* Row 3 Right — Scores + Resources */}
-            <div className="space-y-4 min-w-0">
+            <div className="flex flex-col gap-4 min-w-0">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
             </div>
