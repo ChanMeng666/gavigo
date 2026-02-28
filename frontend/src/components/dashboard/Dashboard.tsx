@@ -133,7 +133,7 @@ export function Dashboard({
             </div>
 
             {/* Row 3 Left — AI Decision Log */}
-            <div className="min-w-0 min-h-[400px]">
+            <div className="min-w-0 h-[420px]">
               <AIDecisionLog decisions={decisions} maxItems={30} />
             </div>
 
