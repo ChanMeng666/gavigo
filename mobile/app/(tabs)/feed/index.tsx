@@ -20,7 +20,7 @@ import { useFeedStore } from '@/stores/feedStore';
 import { setGlobalSend } from '@/services/wsEvents';
 import { ContentCard, type FeedItem } from '@/components/feed/ContentCard';
 import { SkeletonLoader, EmptyState } from '@/components/ui';
-import { fetchFeed } from '@/services/feed';
+import { fetchFeed, fetchAllVideos } from '@/services/feed';
 import { syncVideosFromPexels } from '@/services/videoSync';
 import { ALL_GAME_ENTRIES } from '@/data/games';
 import defaultVideos from '../../../../shared/defaultVideos.json';
@@ -134,21 +134,22 @@ export default function FeedScreen() {
       setInitialLoading(false);
     }
 
-    // Tier 3: Background refresh from Supabase (non-blocking)
+    // Tier 3: Background refresh from Supabase — fetch ALL videos at once
+    // (metadata only, ~199 rows is small; avoids pagination issues with
+    // 80 interleaved games blocking onEndReached from firing)
     async function backgroundRefresh() {
       try {
-        let vids = await fetchFeed(1);
+        let vids = await fetchAllVideos();
 
         // If no videos in Supabase yet, trigger initial Pexels sync
         if (vids.length === 0) {
           await syncVideosFromPexels();
-          vids = await fetchFeed(1);
+          vids = await fetchAllVideos();
         }
 
         if (!cancelled && vids.length > 0) {
           setVideos(vids);
-          setVideosPage(1);
-          setVideosHasMore(vids.length >= 15);
+          setVideosHasMore(false); // All loaded, no pagination needed
         }
       } catch (err) {
         console.warn('Background feed refresh failed:', err);
@@ -321,16 +322,17 @@ export default function FeedScreen() {
     setRefreshing(true);
     try {
       await syncVideosFromPexels();
-      const vids = await fetchFeed(1);
-      setVideos(vids);
-      setVideosPage(1);
-      setVideosHasMore(vids.length >= 15);
+      const vids = await fetchAllVideos();
+      if (vids.length > 0) {
+        setVideos(vids);
+        setVideosHasMore(false);
+      }
     } catch {
       // Keep existing
     } finally {
       setRefreshing(false);
     }
-  }, [setVideos, setVideosPage, setVideosHasMore]);
+  }, [setVideos, setVideosHasMore]);
 
   const handleEndReached = useCallback(async () => {
     if (videosLoading || !videosHasMore) return;

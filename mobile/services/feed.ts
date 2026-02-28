@@ -22,6 +22,20 @@ export async function fetchFeed(
   return data ?? [];
 }
 
+/** Fetch all videos in one query (metadata only, suitable for <500 rows) */
+export async function fetchAllVideos(): Promise<Video[]> {
+  const { data, error } = await supabase
+    .from('videos')
+    .select('*')
+    .eq('is_active', true)
+    .eq('content_type', 'video')
+    .order('created_at', { ascending: false })
+    .limit(1000);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function fetchTrendingFeed(
   page = 1,
   pageSize = PAGE_SIZE
