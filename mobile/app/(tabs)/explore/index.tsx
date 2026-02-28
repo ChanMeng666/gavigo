@@ -35,6 +35,18 @@ const THEMES = [
   { key: 'ocean', label: 'Ocean', icon: 'water-outline' as const },
   { key: 'space', label: 'Space', icon: 'planet-outline' as const },
   { key: 'dance', label: 'Dance', icon: 'musical-notes-outline' as const },
+  { key: 'animals', label: 'Animals', icon: 'paw-outline' as const },
+  { key: 'music', label: 'Music', icon: 'musical-note-outline' as const },
+  { key: 'travel', label: 'Travel', icon: 'airplane-outline' as const },
+  { key: 'fitness', label: 'Fitness', icon: 'barbell-outline' as const },
+  { key: 'fashion', label: 'Fashion', icon: 'shirt-outline' as const },
+  { key: 'winter', label: 'Winter', icon: 'snow-outline' as const },
+  { key: 'sunset', label: 'Sunset', icon: 'sunny-outline' as const },
+  { key: 'underwater', label: 'Underwater', icon: 'fish-outline' as const },
+  { key: 'architecture', label: 'Architecture', icon: 'home-outline' as const },
+  { key: 'adventure', label: 'Adventure', icon: 'compass-outline' as const },
+  { key: 'festival', label: 'Festival', icon: 'sparkles-outline' as const },
+  { key: 'abstract', label: 'Abstract', icon: 'color-palette-outline' as const },
 ];
 
 // Videos per row in the grid

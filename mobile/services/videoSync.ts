@@ -10,10 +10,22 @@ const THEMES = [
   'ocean',
   'space',
   'dance',
+  'animals',
+  'music',
+  'travel',
+  'fitness',
+  'fashion',
+  'winter',
+  'sunset',
+  'underwater',
+  'architecture',
+  'adventure',
+  'festival',
+  'abstract',
 ];
 
-const VIDEOS_PER_THEME = 8;
-const MIN_VIDEOS_THRESHOLD = 50;
+const VIDEOS_PER_THEME = 10;
+const MIN_VIDEOS_THRESHOLD = 150;
 
 export async function syncVideosFromPexels(
   options: { force?: boolean } = {}
