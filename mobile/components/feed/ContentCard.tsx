@@ -101,7 +101,16 @@ export function ContentCard({
           videoUrl={video.video_url}
           thumbnailUrl={video.thumbnail_url}
         />
-        <VideoOverlay video={video} />
+        <View
+          style={{
+            position: 'absolute',
+            top: 0, left: 0, right: 0, bottom: 0,
+            zIndex: 10,
+          }}
+          pointerEvents="box-none"
+        >
+          <VideoOverlay video={video} />
+        </View>
       </View>
     );
   }
