@@ -3,8 +3,8 @@
  *
  * Usage: PEXELS_API_KEY=<key> npx tsx shared/scripts/syncDefaultVideos.ts
  *
- * This generates a bundled set of ~50 videos that ship with the app,
- * ensuring the feed renders instantly on first launch with no network.
+ * Incrementally adds videos: keeps existing entries, only fetches missing ones.
+ * Target: 8 videos per theme × 20 themes = 160 total.
  */
 
 import * as fs from 'fs';
@@ -23,7 +23,7 @@ const THEMES = [
   'underwater', 'architecture', 'adventure', 'festival', 'abstract',
 ];
 
-const VIDEOS_PER_THEME = 3;
+const VIDEOS_PER_THEME = 8;
 
 interface PexelsVideoFile {
   id: number;
@@ -65,15 +65,14 @@ interface DefaultVideo {
 }
 
 function pickBestVideoFile(files: PexelsVideoFile[]): PexelsVideoFile | null {
-  // Prefer HD mp4, vertical or square aspect ratio
   const mp4s = files.filter((f) => f.file_type === 'video/mp4');
   const hd = mp4s.filter((f) => f.quality === 'hd' && f.height >= 720);
   const sd = mp4s.filter((f) => f.quality === 'sd');
   return hd[0] ?? sd[0] ?? mp4s[0] ?? null;
 }
 
-async function fetchPexelsVideos(query: string, perPage: number): Promise<PexelsVideo[]> {
-  const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=${perPage}&orientation=portrait`;
+async function fetchPexelsVideos(query: string, perPage: number, page = 1): Promise<PexelsVideo[]> {
+  const url = `https://api.pexels.com/videos/search?query=${encodeURIComponent(query)}&per_page=${perPage}&page=${page}&orientation=portrait`;
   const res = await fetch(url, {
     headers: { Authorization: PEXELS_API_KEY! },
   });
@@ -84,50 +83,101 @@ async function fetchPexelsVideos(query: string, perPage: number): Promise<Pexels
   return data.videos ?? [];
 }
 
+function toDefaultVideo(v: PexelsVideo, theme: string, file: PexelsVideoFile, now: string): DefaultVideo {
+  return {
+    id: `pexels-${theme}-${v.id}`,
+    pexels_id: v.id,
+    title: `${theme.charAt(0).toUpperCase() + theme.slice(1)} - ${v.user.name}`,
+    description: `${theme} video by ${v.user.name}`,
+    theme,
+    video_url: file.link,
+    thumbnail_url: v.image,
+    duration: v.duration,
+    photographer: v.user.name,
+    photographer_url: v.user.url,
+    width: file.width,
+    height: file.height,
+    like_count: 0,
+    comment_count: 0,
+    view_count: 0,
+    is_active: true,
+    created_at: now,
+  };
+}
+
 async function main() {
-  const allVideos: DefaultVideo[] = [];
-  const now = new Date().toISOString();
+  const outPath = path.resolve(__dirname, '../defaultVideos.json');
 
-  for (const theme of THEMES) {
-    console.log(`Fetching ${VIDEOS_PER_THEME} videos for theme: ${theme}`);
-    try {
-      const videos = await fetchPexelsVideos(theme, VIDEOS_PER_THEME);
-
-      for (const v of videos) {
-        const file = pickBestVideoFile(v.video_files);
-        if (!file) continue;
-
-        allVideos.push({
-          id: `pexels-${theme}-${v.id}`,
-          pexels_id: v.id,
-          title: `${theme.charAt(0).toUpperCase() + theme.slice(1)} - ${v.user.name}`,
-          description: `${theme} video by ${v.user.name}`,
-          theme,
-          video_url: file.link,
-          thumbnail_url: v.image,
-          duration: v.duration,
-          photographer: v.user.name,
-          photographer_url: v.user.url,
-          width: file.width,
-          height: file.height,
-          like_count: 0,
-          comment_count: 0,
-          view_count: 0,
-          is_active: true,
-          created_at: now,
-        });
-      }
-
-      // Rate limit: 200 requests/hour = ~1 request per 18s, but be safe
-      await new Promise((r) => setTimeout(r, 500));
-    } catch (err) {
-      console.warn(`Failed to fetch theme "${theme}":`, err);
-    }
+  // Load existing videos
+  let existing: DefaultVideo[] = [];
+  try {
+    existing = JSON.parse(fs.readFileSync(outPath, 'utf-8'));
+    console.log(`Loaded ${existing.length} existing videos`);
+  } catch {
+    console.log('No existing defaultVideos.json, starting fresh');
   }
 
-  const outPath = path.resolve(__dirname, '../defaultVideos.json');
-  fs.writeFileSync(outPath, JSON.stringify(allVideos, null, 2));
-  console.log(`\nWrote ${allVideos.length} videos to ${outPath}`);
+  // Index existing by pexels_id for deduplication
+  const seenPexelsIds = new Set(existing.map((v) => v.pexels_id));
+
+  // Count existing per theme
+  const themeCount: Record<string, number> = {};
+  for (const theme of THEMES) themeCount[theme] = 0;
+  for (const v of existing) {
+    if (themeCount[v.theme] !== undefined) themeCount[v.theme]++;
+  }
+
+  const now = new Date().toISOString();
+  let added = 0;
+
+  for (const theme of THEMES) {
+    const have = themeCount[theme];
+    const need = VIDEOS_PER_THEME - have;
+    if (need <= 0) {
+      console.log(`  ${theme}: already has ${have}/${VIDEOS_PER_THEME}, skip`);
+      continue;
+    }
+
+    console.log(`  ${theme}: has ${have}, need ${need} more`);
+
+    // Fetch extra to account for duplicates/failures; try up to 2 pages
+    let collected = 0;
+    for (let page = 1; page <= 3 && collected < need; page++) {
+      try {
+        const videos = await fetchPexelsVideos(theme, 15, page);
+        for (const v of videos) {
+          if (collected >= need) break;
+          if (seenPexelsIds.has(v.id)) continue;
+
+          const file = pickBestVideoFile(v.video_files);
+          if (!file) continue;
+
+          existing.push(toDefaultVideo(v, theme, file, now));
+          seenPexelsIds.add(v.id);
+          collected++;
+          added++;
+        }
+      } catch (err) {
+        console.warn(`    Failed page ${page} for "${theme}":`, err);
+      }
+
+      // Rate limit: ~200ms between requests
+      await new Promise((r) => setTimeout(r, 300));
+    }
+
+    console.log(`    +${collected} videos (total: ${themeCount[theme] + collected}/${VIDEOS_PER_THEME})`);
+  }
+
+  // Sort by theme for clean output
+  existing.sort((a, b) => {
+    const ti = THEMES.indexOf(a.theme);
+    const tj = THEMES.indexOf(b.theme);
+    if (ti !== tj) return ti - tj;
+    return a.pexels_id - b.pexels_id;
+  });
+
+  fs.writeFileSync(outPath, JSON.stringify(existing, null, 2));
+  console.log(`\nDone! Added ${added} new videos. Total: ${existing.length}`);
 }
 
 main().catch(console.error);

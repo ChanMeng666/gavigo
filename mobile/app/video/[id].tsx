@@ -16,6 +16,9 @@ import { VideoOverlay } from '@/components/feed/VideoOverlay';
 import { fetchVideoById, fetchVideosByTheme, fetchFeed } from '@/services/feed';
 import type { Video } from '@/types/supabase';
 import { useRef } from 'react';
+import defaultVideos from '../../../shared/defaultVideos.json';
+
+const bundledVideos = defaultVideos as Video[];
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -37,37 +40,45 @@ export default function VideoDetailScreen() {
 
     async function load() {
       try {
-        // Fetch the target video first
-        const target = await fetchVideoById(id);
+        // Try Supabase first, then fall back to bundled videos
+        let target = await fetchVideoById(id).catch(() => null);
+        if (!target) {
+          target = bundledVideos.find((v) => v.id === id) ?? null;
+        }
         if (!target || cancelled) {
           setLoading(false);
           return;
         }
 
-        // Fetch more videos from the same theme for continuous scrolling
-        const themeVideos = await fetchVideosByTheme(target.theme, 1, 20);
+        // Build playlist from both Supabase and bundled videos
+        let themeVideos: Video[] = [];
+        let generalVideos: Video[] = [];
+        try {
+          themeVideos = await fetchVideosByTheme(target.theme, 1, 20);
+          generalVideos = await fetchFeed(1, 20);
+        } catch {
+          // Network failed — use bundled only
+        }
 
-        // Also fetch some general videos as fallback
-        const generalVideos = await fetchFeed(1, 20);
+        // Supplement with bundled videos
+        const bundledTheme = bundledVideos.filter((v) => v.theme === target!.theme);
+        const bundledGeneral = bundledVideos;
 
-        // Build playlist: target video first, then same-theme, then general (deduplicated)
+        // Deduplicated playlist: target first, then same-theme, then general
         const seen = new Set<string>();
         const playlist: Video[] = [];
 
-        // Target video always first
         playlist.push(target);
         seen.add(target.id);
 
-        // Same-theme videos next
-        for (const v of themeVideos) {
+        for (const v of [...themeVideos, ...bundledTheme]) {
           if (!seen.has(v.id)) {
             playlist.push(v);
             seen.add(v.id);
           }
         }
 
-        // Fill with general videos
-        for (const v of generalVideos) {
+        for (const v of [...generalVideos, ...bundledGeneral]) {
           if (!seen.has(v.id)) {
             playlist.push(v);
             seen.add(v.id);
