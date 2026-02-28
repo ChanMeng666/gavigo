@@ -22,8 +22,10 @@ import { ContentCard, type FeedItem } from '@/components/feed/ContentCard';
 import { SkeletonLoader, EmptyState } from '@/components/ui';
 import { fetchFeed } from '@/services/feed';
 import { syncVideosFromPexels } from '@/services/videoSync';
+import { ALL_GAME_ENTRIES } from '@/data/games';
 import defaultVideos from '../../../../shared/defaultVideos.json';
 import type { Video } from '@/types/supabase';
+import type { ContentItem } from '@/types';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -206,29 +208,55 @@ export default function FeedScreen() {
     reportIntervalMs: 1000,
   });
 
+  // Stable session seed for shuffling games (set once on mount)
+  const sessionSeed = useRef(Math.random());
+
   // Merge Supabase videos + orchestrator items into unified feed
-  // Pattern: 2 videos → 1 game/AI → 2 videos → 1 game/AI → ...
+  // Pattern: 2 videos → 1 game → 2 videos → 1 game → ...
+  // After videos run out, remaining games continue consecutively
   const feedItems: FeedItem[] = useMemo(() => {
     const items: FeedItem[] = [];
-    const orchItems = content.filter((c) => c.type === 'GAME');
+
+    // Use orchestrator games when available (real container states + WS events),
+    // otherwise build fallback from local game data for instant feed
+    let gameItems: ContentItem[] = content.filter((c) => c.type === 'GAME');
+    if (gameItems.length === 0) {
+      gameItems = ALL_GAME_ENTRIES.map((g) => ({
+        id: g.id,
+        type: 'GAME' as const,
+        theme: g.theme,
+        title: g.title,
+        description: g.description,
+        thumbnail_url: g.thumbnail,
+        container_status: 'HOT' as const,
+        deployment_name: g.id,
+        personal_score: 0,
+        global_score: 0,
+        combined_score: 0,
+      }));
+    }
+
+    // Shuffle games per-session for variety (seeded for stability across re-renders)
+    const shuffled = [...gameItems];
+    const seed = sessionSeed.current;
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      // Simple seeded pseudo-random using sin
+      const j = Math.floor(Math.abs(Math.sin(seed * (i + 1) * 9301) * 49297) % (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
 
     let vidIdx = 0;
-    let orchIdx = 0;
+    let gameIdx = 0;
 
-    while (vidIdx < videos.length || orchIdx < orchItems.length) {
+    while (vidIdx < videos.length || gameIdx < shuffled.length) {
       // Add up to 2 videos
       for (let i = 0; i < 2 && vidIdx < videos.length; i++, vidIdx++) {
         items.push({ kind: 'video', data: videos[vidIdx] });
       }
-      // Add 1 orchestrator item (game / AI service), cycling if needed
-      if (orchItems.length > 0) {
-        items.push({
-          kind: 'orchestrator',
-          data: orchItems[orchIdx % orchItems.length],
-        });
-        orchIdx++;
-        // Stop cycling once we've run out of videos
-        if (vidIdx >= videos.length) break;
+      // Add 1 game (each game appears exactly once)
+      if (gameIdx < shuffled.length) {
+        items.push({ kind: 'orchestrator', data: shuffled[gameIdx] });
+        gameIdx++;
       }
     }
 

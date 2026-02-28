@@ -14,6 +14,7 @@ export async function fetchFeed(
     .from('videos')
     .select('*')
     .eq('is_active', true)
+    .eq('content_type', 'video')
     .order('created_at', { ascending: false })
     .range(from, to);
 
@@ -32,6 +33,7 @@ export async function fetchTrendingFeed(
     .from('videos')
     .select('*')
     .eq('is_active', true)
+    .eq('content_type', 'video')
     .order('like_count', { ascending: false })
     .range(from, to);
 
@@ -51,6 +53,7 @@ export async function fetchVideosByTheme(
     .from('videos')
     .select('*')
     .eq('is_active', true)
+    .eq('content_type', 'video')
     .eq('theme', theme)
     .order('created_at', { ascending: false })
     .range(from, to);
@@ -82,6 +85,7 @@ export async function searchVideos(
     .from('videos')
     .select('*')
     .eq('is_active', true)
+    .eq('content_type', 'video')
     .or(`title.ilike.%${query}%,description.ilike.%${query}%,photographer.ilike.%${query}%`)
     .order('like_count', { ascending: false })
     .range(from, to);

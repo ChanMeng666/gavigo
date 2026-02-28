@@ -79,6 +79,11 @@ export function buildAllGames(data: GamesData): StudioGame[] {
   );
 }
 
+/** Flatten all games with full entry data (theme, description, etc.) */
+export function buildAllGameEntries(data: GamesData): GameEntry[] {
+  return data.studios.flatMap((s) => s.games);
+}
+
 /** Build a game slug → Supabase UUID map for social features */
 export function buildGameSupabaseIdMap(data: GamesData): Record<string, string> {
   const map: Record<string, string> = {};
