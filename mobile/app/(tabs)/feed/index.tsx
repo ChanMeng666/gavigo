@@ -6,6 +6,7 @@ import {
   RefreshControl,
   ActivityIndicator,
   type ViewToken,
+  type LayoutChangeEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -77,7 +78,15 @@ export default function FeedScreen() {
   const lastScrollTime = useRef(Date.now());
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const itemHeight = SCREEN_HEIGHT - insets.bottom - 60;
+  const [containerHeight, setContainerHeight] = useState(SCREEN_HEIGHT - 60);
+  const itemHeight = containerHeight;
+
+  const handleContainerLayout = useCallback((e: LayoutChangeEvent) => {
+    const h = e.nativeEvent.layout.height;
+    if (h > 0 && Math.abs(h - containerHeight) > 1) {
+      setContainerHeight(h);
+    }
+  }, [containerHeight]);
 
   const {
     content,
@@ -350,7 +359,7 @@ export default function FeedScreen() {
     : 0;
 
   return (
-    <View className="flex-1 bg-bg-base">
+    <View className="flex-1 bg-bg-base" onLayout={handleContainerLayout}>
       <FlatList
         ref={flatListRef}
         data={feedItems}
