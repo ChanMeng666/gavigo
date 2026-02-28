@@ -104,7 +104,7 @@ export function Dashboard({
           {/* 3-column detail grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-6">
             {/* Left Column - Mode, Service Status, Engagement, Workload */}
-            <div className="md:col-span-1 xl:col-span-3 space-y-4">
+            <div className="md:col-span-1 xl:col-span-3 space-y-4 min-w-0">
               <ModeIndicator
                 currentMode={currentMode}
                 activeContentId={activeContentId}
@@ -115,7 +115,7 @@ export function Dashboard({
             </div>
 
             {/* Center Column - AI Decisions + Social Feed */}
-            <div className="md:col-span-1 xl:col-span-5 space-y-4">
+            <div className="md:col-span-1 xl:col-span-5 space-y-4 min-w-0">
               <div className="h-[calc(50vh-100px)] min-h-[250px]">
                 <AIDecisionLog decisions={decisions} maxItems={30} />
               </div>
@@ -128,7 +128,7 @@ export function Dashboard({
             </div>
 
             {/* Right Column - Scores, Resources, Screen Distribution, Demo Controls */}
-            <div className="md:col-span-2 xl:col-span-4 space-y-4">
+            <div className="md:col-span-2 xl:col-span-4 space-y-4 min-w-0">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
               <ScreenDistribution userActivities={userActivities} />

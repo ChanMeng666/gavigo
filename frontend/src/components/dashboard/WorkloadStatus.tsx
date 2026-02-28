@@ -57,30 +57,28 @@ export function WorkloadStatus({ content, containerStates, telemetrySnapshots }:
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-elevated hover:bg-overlay transition-colors"
+                  className="flex flex-wrap items-center gap-2 p-3 rounded-lg bg-elevated hover:bg-overlay transition-colors"
                   role="listitem"
                   aria-label={`${item.title}: ${statusConfig[status].label}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <StatusIndicator status={status} size="md" />
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {item.title}
+                  <StatusIndicator status={status} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground truncate">
+                      {item.title}
+                    </p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-xs text-muted-foreground font-mono truncate">
+                        {item.deployment_name}
                       </p>
-                      <div className="flex items-center gap-1.5">
-                        <p className="text-xs text-muted-foreground font-mono truncate">
-                          {item.deployment_name}
-                        </p>
-                        {warmingLabel && (
-                          <span className={`text-[10px] font-medium ${
-                            warmingLabel === "Warming..."
-                              ? "text-warm animate-pulse"
-                              : "text-warm"
-                          }`}>
-                            {warmingLabel}
-                          </span>
-                        )}
-                      </div>
+                      {warmingLabel && (
+                        <span className={`text-[10px] font-medium ${
+                          warmingLabel === "Warming..."
+                            ? "text-warm animate-pulse"
+                            : "text-warm"
+                        }`}>
+                          {warmingLabel}
+                        </span>
+                      )}
                     </div>
                   </div>
                   <StatusBadge status={status} glow={status !== "COLD"} />

@@ -98,14 +98,14 @@ export function AIDecisionLog({ decisions, maxItems = 20 }: AIDecisionLogProps) 
                       </div>
 
                       {/* Reasoning */}
-                      <p className="text-sm text-foreground/80 mb-2 line-clamp-2">
+                      <p className="text-sm text-foreground/80 mb-2">
                         {decision.reasoning_text}
                       </p>
 
                       {/* Footer */}
-                      <div className="flex items-center justify-between text-[10px]">
-                        <span className="text-muted-foreground font-mono">
-                          {decision.affected_content_id.slice(0, 12)}...
+                      <div className="flex items-center justify-between gap-2 text-[10px]">
+                        <span className="text-muted-foreground font-mono break-all">
+                          {decision.affected_content_id}
                         </span>
                         <div className="flex items-center gap-3">
                           <span className="text-accent-primary">
