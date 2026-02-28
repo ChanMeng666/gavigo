@@ -101,37 +101,50 @@ export function Dashboard({
             socialEvents={socialEvents}
           />
 
-          {/* 3-column detail grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-4 lg:gap-6">
-            {/* Left Column - Mode, Service Status, Engagement, Workload */}
-            <div className="md:col-span-1 xl:col-span-3 space-y-4 min-w-0">
+          {/* 2-column detail grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+
+            {/* Row 1 Left — Mode + Services */}
+            <div className="space-y-4 min-w-0">
               <ModeIndicator
                 currentMode={currentMode}
                 activeContentId={activeContentId}
               />
               <ServiceStatus />
-              <UserEngagement engagement={engagement} />
+            </div>
+
+            {/* Row 1 Right — Game Workloads */}
+            <div className="min-w-0">
               <WorkloadStatus content={content} containerStates={containerStates} telemetrySnapshots={telemetrySnapshots} />
             </div>
 
-            {/* Center Column - AI Decisions + Social Feed */}
-            <div className="md:col-span-1 xl:col-span-5 space-y-4 min-w-0">
-              <div className="h-[calc(50vh-100px)] min-h-[250px]">
-                <AIDecisionLog decisions={decisions} maxItems={30} />
-              </div>
-              <div className="h-[calc(50vh-100px)] min-h-[250px]">
-                <SocialActivityFeed
-                  events={socialEvents}
-                  contentTitles={contentTitles}
-                />
-              </div>
+            {/* Row 2 Left — User Engagement + Screen Distribution */}
+            <div className="space-y-4 min-w-0">
+              <UserEngagement engagement={engagement} />
+              <ScreenDistribution userActivities={userActivities} />
             </div>
 
-            {/* Right Column - Scores, Resources, Screen Distribution, Demo Controls */}
-            <div className="md:col-span-2 xl:col-span-4 space-y-4 min-w-0">
+            {/* Row 2 Right — Social Activity Feed */}
+            <div className="min-w-0 min-h-[300px]">
+              <SocialActivityFeed
+                events={socialEvents}
+                contentTitles={contentTitles}
+              />
+            </div>
+
+            {/* Row 3 Left — AI Decision Log */}
+            <div className="min-w-0 min-h-[400px]">
+              <AIDecisionLog decisions={decisions} maxItems={30} />
+            </div>
+
+            {/* Row 3 Right — Scores + Resources */}
+            <div className="space-y-4 min-w-0">
               <ScoreDisplay scores={scores} contentTitles={contentTitles} />
               <ResourceChart history={resourceHistory} />
-              <ScreenDistribution userActivities={userActivities} />
+            </div>
+
+            {/* Row 4 — Demo Controls (full width) */}
+            <div className="md:col-span-2">
               <DemoControls
                 content={content}
                 onDemoControl={onDemoControl}
