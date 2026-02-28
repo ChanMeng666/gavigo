@@ -24,7 +24,7 @@ interface TelemetryPanelProps {
 const pathColors: Record<ActivationPathType, { bg: string; text: string; label: string }> = {
   COLD_PATH: { bg: "bg-cold/20", text: "text-cold", label: "Cold Path" },
   PREWARM_PATH: { bg: "bg-warm/20", text: "text-warm", label: "Prewarm Path" },
-  RESTORE_PATH: { bg: "bg-cyan-500/20", text: "text-cyan-400", label: "Restore Path" },
+  RESTORE_PATH: { bg: "bg-cyan-500/20", text: "text-cyan-600 dark:text-cyan-400", label: "Restore Path" },
 }
 
 function formatMs(ms: number): string {

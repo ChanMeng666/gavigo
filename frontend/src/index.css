@@ -4,13 +4,7 @@
 
 @layer base {
   :root {
-    /* === BACKGROUND LAYERS === */
-    --bg-base: 222 47% 3%;
-    --bg-surface: 222 35% 5%;
-    --bg-elevated: 217 33% 9%;
-    --bg-overlay: 217 19% 18%;
-
-    /* === STATUS COLORS === */
+    /* === STATUS COLORS (shared) === */
     --status-hot: 0 84% 60%;
     --status-hot-glow: 0 84% 60% / 0.4;
     --status-warm: 38 92% 50%;
@@ -18,20 +12,68 @@
     --status-cold: 217 91% 60%;
     --status-cold-glow: 217 91% 60% / 0.3;
 
-    /* === ACCENT COLORS === */
+    /* === ACCENT COLORS (shared) === */
     --accent-primary: 199 89% 48%;
     --accent-secondary: 187 94% 43%;
     --accent-success: 160 84% 39%;
     --accent-warning: 38 92% 50%;
     --accent-error: 0 84% 60%;
 
-    /* === TEXT COLORS === */
+    /* === TYPOGRAPHY (shared) === */
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* === ANIMATIONS (shared) === */
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
+
+    --radius: 0.5rem;
+
+    /* === LIGHT MODE DEFAULTS === */
+    --bg-base: 0 0% 97%;
+    --bg-surface: 0 0% 100%;
+    --bg-elevated: 220 14% 96%;
+    --bg-overlay: 220 13% 91%;
+
+    --foreground: 222 47% 11%;
+    --foreground-secondary: 215 16% 35%;
+    --foreground-muted: 215 16% 47%;
+    --foreground-disabled: 215 16% 70%;
+
+    --background: 0 0% 97%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 199 89% 48%;
+  }
+
+  .dark {
+    /* === DARK MODE === */
+    --bg-base: 222 47% 3%;
+    --bg-surface: 222 35% 5%;
+    --bg-elevated: 217 33% 9%;
+    --bg-overlay: 217 19% 18%;
+
     --foreground: 0 0% 98%;
     --foreground-secondary: 0 0% 70%;
     --foreground-muted: 0 0% 50%;
     --foreground-disabled: 0 0% 30%;
 
-    /* === SHADCN VARIABLES === */
     --background: 222 47% 3%;
     --card: 222 35% 5%;
     --card-foreground: 0 0% 98%;
@@ -50,17 +92,6 @@
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 199 89% 48%;
-    --radius: 0.5rem;
-
-    /* === TYPOGRAPHY === */
-    --font-display: 'Space Grotesk', system-ui, sans-serif;
-    --font-body: 'Inter', system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
-
-    /* === ANIMATIONS === */
-    --duration-fast: 150ms;
-    --duration-normal: 250ms;
-    --duration-slow: 400ms;
   }
 }
 

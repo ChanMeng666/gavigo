@@ -32,7 +32,7 @@ export function UserEngagement({ engagement }: UserEngagementProps) {
               <span className="text-xs text-muted-foreground">
                 Currently viewing
               </span>
-              <span className="inline-flex items-center rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-medium text-cyan-400">
+              <span className="inline-flex items-center rounded-full bg-cyan-500/20 px-2 py-0.5 text-[10px] font-medium text-cyan-600 dark:text-cyan-400">
                 {engagement.theme}
               </span>
             </div>

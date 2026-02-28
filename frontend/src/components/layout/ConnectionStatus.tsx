@@ -37,7 +37,7 @@ export function ConnectionStatus({ connected, sessionId, className }: Connection
       {sessionId && connected && (
         <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
           <span className="text-foreground/30">|</span>
-          <span className="font-mono">{sessionId.slice(0, 8)}...</span>
+          <span className="font-mono whitespace-nowrap">{sessionId}</span>
         </div>
       )}
     </div>

@@ -13,15 +13,15 @@ interface ProofSignalLogProps {
 }
 
 const eventConfig: Record<ProofEventType, { label: string; color: string; bgColor: string }> = {
-  intent_detected: { label: "Intent", color: "text-gray-400", bgColor: "bg-gray-500/20" },
-  orchestration_decision_made: { label: "Decision", color: "text-blue-400", bgColor: "bg-blue-500/20" },
-  prewarm_start: { label: "Prewarm", color: "text-amber-400", bgColor: "bg-amber-500/20" },
-  warm_ready: { label: "Warm Ready", color: "text-green-400", bgColor: "bg-green-500/20" },
-  activation_request_received: { label: "Activate", color: "text-orange-400", bgColor: "bg-orange-500/20" },
-  hot_state_entered: { label: "Hot", color: "text-red-400", bgColor: "bg-red-500/20" },
-  execution_ready: { label: "Exec Ready", color: "text-emerald-400", bgColor: "bg-emerald-500/20" },
-  restore_start: { label: "Restore", color: "text-cyan-400", bgColor: "bg-cyan-500/20" },
-  restore_complete: { label: "Restored", color: "text-cyan-300", bgColor: "bg-cyan-500/20" },
+  intent_detected: { label: "Intent", color: "text-gray-600 dark:text-gray-400", bgColor: "bg-gray-500/20" },
+  orchestration_decision_made: { label: "Decision", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500/20" },
+  prewarm_start: { label: "Prewarm", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500/20" },
+  warm_ready: { label: "Warm Ready", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-500/20" },
+  activation_request_received: { label: "Activate", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-500/20" },
+  hot_state_entered: { label: "Hot", color: "text-red-600 dark:text-red-400", bgColor: "bg-red-500/20" },
+  execution_ready: { label: "Exec Ready", color: "text-emerald-600 dark:text-emerald-400", bgColor: "bg-emerald-500/20" },
+  restore_start: { label: "Restore", color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-500/20" },
+  restore_complete: { label: "Restored", color: "text-cyan-500 dark:text-cyan-300", bgColor: "bg-cyan-500/20" },
 }
 
 function formatTimestamp(tsMs: number): string {
@@ -89,7 +89,7 @@ export function ProofSignalLog({ proofSignals, contentTitles }: ProofSignalLogPr
             No proof signals yet. Interact with content to generate events.
           </p>
         ) : (
-          <ScrollArea className="max-h-[300px]">
+          <ScrollArea className="h-[300px]">
             <AnimatePresence mode="popLayout">
               <div className="space-y-3">
                 {grouped.map((group) => (

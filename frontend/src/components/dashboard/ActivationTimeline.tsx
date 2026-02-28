@@ -14,21 +14,21 @@ interface ActivationTimelineProps {
 }
 
 const phaseConfig: Record<ActivationPhase, { label: string; color: string; bgColor: string; dotColor: string }> = {
-  INTENT: { label: "Intent", color: "text-gray-400", bgColor: "bg-gray-500/20", dotColor: "bg-gray-400" },
-  PRE_WARM: { label: "Pre-Warm", color: "text-amber-400", bgColor: "bg-amber-500/20", dotColor: "bg-amber-400" },
-  PREVIEW_READY: { label: "Ready", color: "text-green-400", bgColor: "bg-green-500/20", dotColor: "bg-green-400" },
-  ACTIVATING: { label: "Activating", color: "text-orange-400", bgColor: "bg-orange-500/20", dotColor: "bg-orange-400" },
-  HOT: { label: "Hot", color: "text-red-400", bgColor: "bg-red-500/20", dotColor: "bg-red-400" },
-  DEACTIVATING: { label: "Leaving", color: "text-blue-300", bgColor: "bg-blue-500/20", dotColor: "bg-blue-300" },
-  COOLING: { label: "Cooling", color: "text-blue-400", bgColor: "bg-blue-500/20", dotColor: "bg-blue-400" },
-  RESTORE_START: { label: "Restoring", color: "text-cyan-400", bgColor: "bg-cyan-500/20", dotColor: "bg-cyan-400" },
-  RESTORE_COMPLETE: { label: "Restored", color: "text-cyan-300", bgColor: "bg-cyan-500/20", dotColor: "bg-cyan-300" },
+  INTENT: { label: "Intent", color: "text-gray-600 dark:text-gray-400", bgColor: "bg-gray-500/20", dotColor: "bg-gray-400" },
+  PRE_WARM: { label: "Pre-Warm", color: "text-amber-600 dark:text-amber-400", bgColor: "bg-amber-500/20", dotColor: "bg-amber-400" },
+  PREVIEW_READY: { label: "Ready", color: "text-green-600 dark:text-green-400", bgColor: "bg-green-500/20", dotColor: "bg-green-400" },
+  ACTIVATING: { label: "Activating", color: "text-orange-600 dark:text-orange-400", bgColor: "bg-orange-500/20", dotColor: "bg-orange-400" },
+  HOT: { label: "Hot", color: "text-red-600 dark:text-red-400", bgColor: "bg-red-500/20", dotColor: "bg-red-400" },
+  DEACTIVATING: { label: "Leaving", color: "text-blue-500 dark:text-blue-300", bgColor: "bg-blue-500/20", dotColor: "bg-blue-300" },
+  COOLING: { label: "Cooling", color: "text-blue-600 dark:text-blue-400", bgColor: "bg-blue-500/20", dotColor: "bg-blue-400" },
+  RESTORE_START: { label: "Restoring", color: "text-cyan-600 dark:text-cyan-400", bgColor: "bg-cyan-500/20", dotColor: "bg-cyan-400" },
+  RESTORE_COMPLETE: { label: "Restored", color: "text-cyan-500 dark:text-cyan-300", bgColor: "bg-cyan-500/20", dotColor: "bg-cyan-300" },
 }
 
 const weightLabels: Record<ResourceWeight, { label: string; className: string }> = {
   IDLE_MINIMAL: { label: "idle", className: "text-gray-500" },
-  PREVIEW_LOW: { label: "preview", className: "text-amber-500" },
-  FULL_HIGH: { label: "full", className: "text-red-400" },
+  PREVIEW_LOW: { label: "preview", className: "text-amber-600 dark:text-amber-500" },
+  FULL_HIGH: { label: "full", className: "text-red-600 dark:text-red-400" },
 }
 
 function formatDuration(ms: number): string {
@@ -119,7 +119,7 @@ export function ActivationTimeline({ events, contentTitles, telemetrySnapshots }
             </p>
           </div>
         ) : (
-          <ScrollArea className="max-h-[300px]">
+          <ScrollArea className="h-[300px]">
             <AnimatePresence mode="popLayout">
               <div className="space-y-4">
                 {timelines.map((tl) => (
@@ -141,7 +141,7 @@ export function ActivationTimeline({ events, contentTitles, telemetrySnapshots }
                           {contentTitles[tl.contentId] || tl.contentId}
                         </span>
                         {tl.isRestore && (
-                          <Badge variant="outline" className="text-cyan-400 border-cyan-500/30 text-[10px] gap-1">
+                          <Badge variant="outline" className="text-cyan-600 dark:text-cyan-400 border-cyan-500/30 text-[10px] gap-1">
                             <Zap className="h-3 w-3" />
                             RESTORED{tl.restoreDurationMs != null && ` in ${formatDuration(tl.restoreDurationMs)}`}
                           </Badge>

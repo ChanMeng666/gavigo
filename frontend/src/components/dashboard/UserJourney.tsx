@@ -134,10 +134,10 @@ function mergeAndSort(
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  screen: "bg-violet-500/20 text-violet-300 border-violet-500/30",
-  social: "bg-pink-500/20 text-pink-300 border-pink-500/30",
-  focus: "bg-cyan-500/20 text-cyan-300 border-cyan-500/30",
-  action: "bg-amber-500/20 text-amber-300 border-amber-500/30",
+  screen: "bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/30",
+  social: "bg-pink-500/20 text-pink-700 dark:text-pink-300 border-pink-500/30",
+  focus: "bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border-cyan-500/30",
+  action: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/30",
 }
 
 export function UserJourney({
@@ -172,7 +172,7 @@ export function UserJourney({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card">
+    <div className="rounded-lg border border-border bg-card overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <h3 className="text-sm font-medium text-foreground">
           User Journey

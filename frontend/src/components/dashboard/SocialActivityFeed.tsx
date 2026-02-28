@@ -74,7 +74,7 @@ export function SocialActivityFeed({
           Social Activity
         </h3>
         {events.length > 0 && (
-          <span className="inline-flex items-center rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400">
+          <span className="inline-flex items-center rounded-full bg-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-400">
             {events.length} events
           </span>
         )}

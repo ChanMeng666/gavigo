@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils"
 import { ViewToggle, type ViewMode } from "./ViewToggle"
 import { ConnectionStatus } from "./ConnectionStatus"
-import { Smartphone } from "lucide-react"
+import { Smartphone, Sun, Moon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { useTheme } from "@/components/ThemeProvider"
 
 interface HeaderProps {
   viewMode: ViewMode
@@ -11,6 +12,21 @@ interface HeaderProps {
   connected: boolean
   sessionId?: string
   className?: string
+}
+
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8"
+      onClick={toggleTheme}
+      aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+    </Button>
+  )
 }
 
 export function Header({
@@ -51,8 +67,9 @@ export function Header({
         className="hidden md:flex"
       />
 
-      {/* View Toggle + Mobile Link - Right */}
+      {/* Theme Toggle + View Toggle + Mobile Link - Right */}
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         <ViewToggle mode={viewMode} onChange={onViewModeChange} />
         <div className="w-px h-6 bg-border" />
         <TooltipProvider delayDuration={300}>
