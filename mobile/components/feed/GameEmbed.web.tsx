@@ -3,12 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
-import { SkeletonLoader, EmptyState, Chip } from '@/components/ui';
+import { SkeletonLoader, EmptyState } from '@/components/ui';
 import { gameUrlMap } from '@/data/games';
 
 interface GameEmbedProps {
@@ -20,7 +15,6 @@ export function GameEmbed({ deploymentName, isVisible }: GameEmbedProps) {
   const gameUrl = gameUrlMap[deploymentName];
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const hintOpacity = useSharedValue(1);
 
   // Loading timeout
   useEffect(() => {
@@ -30,19 +24,6 @@ export function GameEmbed({ deploymentName, isVisible }: GameEmbedProps) {
     }, 15000);
     return () => clearTimeout(timer);
   }, [isVisible, isLoaded, gameUrl]);
-
-  useEffect(() => {
-    if (isLoaded) {
-      const timer = setTimeout(() => {
-        hintOpacity.value = withTiming(0, { duration: 300 });
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [isLoaded, hintOpacity]);
-
-  const hintStyle = useAnimatedStyle(() => ({
-    opacity: hintOpacity.value,
-  }));
 
   if (!gameUrl || hasError) {
     return (
@@ -83,23 +64,6 @@ export function GameEmbed({ deploymentName, isVisible }: GameEmbedProps) {
           sandbox: 'allow-scripts allow-same-origin allow-popups',
         })}
 
-      {isLoaded && (
-        <Animated.View
-          style={[
-            hintStyle,
-            {
-              position: 'absolute',
-              bottom: 8,
-              left: 0,
-              right: 0,
-              alignItems: 'center',
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Chip label="Tap to play" leftIcon="game-controller" compact />
-        </Animated.View>
-      )}
     </View>
   );
 }
