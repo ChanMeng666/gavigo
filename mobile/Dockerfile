@@ -16,6 +16,9 @@ COPY mobile/ .
 # Build for web
 RUN npx expo export --platform web
 
+# Fix: Zustand persist emits import.meta.env which requires ES module script tag
+RUN sed -i 's/<script src="\(.*\)" defer>/<script type="module" src="\1">/' dist/index.html
+
 # Stage 2: Serve with nginx
 FROM nginx:alpine
 COPY mobile/nginx.conf /etc/nginx/conf.d/default.conf
