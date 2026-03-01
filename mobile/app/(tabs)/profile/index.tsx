@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, ScrollView, Alert, Platform, TouchableOpacity, Text, Linking } from 'react-native';
+import { View, ScrollView, Alert, Platform, TouchableOpacity, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
 import { signOut } from '@/services/firebase';
-import { sendUserAction } from '@/services/wsEvents';
+
 import { supabase } from '@/services/supabase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { SettingsSection } from '@/components/profile/SettingsSection';
@@ -149,24 +149,12 @@ export default function ProfileScreen() {
             <SettingsItem
               icon="notifications-outline"
               label="Notifications"
-              onPress={() =>
-                sendUserAction({
-                  action: 'settings_view',
-                  screen: 'profile',
-                  value: 'notifications',
-                })
-              }
+              onPress={() => router.push('/(tabs)/profile/notifications' as any)}
             />
             <SettingsItem
               icon="shield-outline"
               label="Privacy & Security"
-              onPress={() =>
-                sendUserAction({
-                  action: 'settings_view',
-                  screen: 'profile',
-                  value: 'privacy',
-                })
-              }
+              onPress={() => router.push('/(tabs)/profile/privacy' as any)}
             />
           </SettingsSection>
 
@@ -194,7 +182,7 @@ export default function ProfileScreen() {
             <SettingsItem
               icon="help-circle-outline"
               label="Help & Support"
-              onPress={() => Linking.openURL('mailto:support@gavigo.com')}
+              onPress={() => router.push('/(tabs)/profile/help' as any)}
             />
             <SettingsItem
               icon="document-text-outline"

@@ -51,9 +51,9 @@ export function ProfileHeader({
         <TouchableOpacity
           onPress={onFollowersPress}
           activeOpacity={0.7}
-          className="flex-1 items-center"
+          className="flex-1 items-center px-2"
         >
-          <Text className="text-h3 font-bold text-text-primary">
+          <Text className="text-h3 font-bold text-text-primary" numberOfLines={1}>
             {user?.followers_count ?? 0}
           </Text>
           <Text className="text-micro text-text-secondary">Followers</Text>
@@ -62,16 +62,16 @@ export function ProfileHeader({
         <TouchableOpacity
           onPress={onFollowingPress}
           activeOpacity={0.7}
-          className="flex-1 items-center"
+          className="flex-1 items-center px-2"
         >
-          <Text className="text-h3 font-bold text-text-primary">
+          <Text className="text-h3 font-bold text-text-primary" numberOfLines={1}>
             {user?.following_count ?? 0}
           </Text>
           <Text className="text-micro text-text-secondary">Following</Text>
         </TouchableOpacity>
         <View className="w-px h-8 bg-border" />
-        <View className="flex-1 items-center">
-          <Text className="text-h3 font-bold text-text-primary">
+        <View className="flex-1 items-center px-2">
+          <Text className="text-h3 font-bold text-text-primary" numberOfLines={1}>
             {user?.likes_count ?? 0}
           </Text>
           <Text className="text-micro text-text-secondary">Likes</Text>

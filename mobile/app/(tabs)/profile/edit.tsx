@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,6 +17,8 @@ import { sendUserAction } from '@/services/wsEvents';
 import { Avatar, Button } from '@/components/ui';
 import { TextInput as RNTextInput } from 'react-native';
 
+type SaveStatus = 'idle' | 'success' | 'no-changes' | 'error';
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -30,6 +32,25 @@ export default function EditProfileScreen() {
     user?.avatar_url || null
   );
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
+  const statusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Original values for change detection
+  const originalUsername = useRef(user?.username || '');
+  const originalBio = useRef(user?.bio || '');
+  const originalAvatar = useRef(user?.avatar_url || null);
+
+  const hasChanges =
+    username.trim() !== originalUsername.current ||
+    bio.trim() !== originalBio.current ||
+    avatarUri !== originalAvatar.current;
+
+  // Clear status timer on unmount
+  useEffect(() => {
+    return () => {
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+    };
+  }, []);
 
   const handlePickAvatar = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -79,7 +100,15 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     if (!firebaseUid || !username.trim()) return;
 
+    if (!hasChanges) {
+      setSaveStatus('no-changes');
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+      statusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000);
+      return;
+    }
+
     setSaving(true);
+    setSaveStatus('idle');
     try {
       const updates: Record<string, string> = {
         username: username.trim(),
@@ -113,12 +142,27 @@ export default function EditProfileScreen() {
         });
       }
 
-      router.back();
+      // Update original values to reflect saved state
+      originalUsername.current = username.trim();
+      originalBio.current = bio.trim();
+      originalAvatar.current = avatarUri;
+
+      setSaveStatus('success');
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+      statusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to save profile');
+      setSaveStatus('error');
+      if (statusTimer.current) clearTimeout(statusTimer.current);
+      statusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000);
     } finally {
       setSaving(false);
     }
+  };
+
+  const getButtonLabel = () => {
+    if (saving) return 'Saving...';
+    if (!hasChanges) return 'No Changes';
+    return 'Save Changes';
   };
 
   return (
@@ -164,7 +208,10 @@ export default function EditProfileScreen() {
           </Text>
           <RNTextInput
             value={username}
-            onChangeText={setUsername}
+            onChangeText={(text) => {
+              setUsername(text);
+              if (saveStatus !== 'idle') setSaveStatus('idle');
+            }}
             placeholder="Enter username"
             placeholderTextColor="#555568"
             maxLength={30}
@@ -177,7 +224,10 @@ export default function EditProfileScreen() {
           <Text className="text-caption text-text-secondary mb-1.5">Bio</Text>
           <RNTextInput
             value={bio}
-            onChangeText={setBio}
+            onChangeText={(text) => {
+              setBio(text);
+              if (saveStatus !== 'idle') setSaveStatus('idle');
+            }}
             placeholder="Tell us about yourself"
             placeholderTextColor="#555568"
             maxLength={150}
@@ -191,9 +241,59 @@ export default function EditProfileScreen() {
           </Text>
         </View>
 
+        {/* Status Banner */}
+        {saveStatus === 'success' && (
+          <View
+            style={{
+              backgroundColor: 'rgba(34,197,94,0.15)',
+              borderRadius: 8,
+              padding: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name="checkmark-circle" size={18} color="#22c55e" />
+            <Text style={{ color: '#22c55e', fontSize: 14, marginLeft: 8 }}>
+              Profile updated successfully
+            </Text>
+          </View>
+        )}
+        {saveStatus === 'no-changes' && (
+          <View
+            style={{
+              backgroundColor: 'rgba(85,85,104,0.15)',
+              borderRadius: 8,
+              padding: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name="information-circle" size={18} color="#555568" />
+            <Text style={{ color: '#555568', fontSize: 14, marginLeft: 8 }}>
+              No changes to save
+            </Text>
+          </View>
+        )}
+        {saveStatus === 'error' && (
+          <View
+            style={{
+              backgroundColor: 'rgba(239,68,68,0.15)',
+              borderRadius: 8,
+              padding: 12,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+          >
+            <Ionicons name="alert-circle" size={18} color="#ef4444" />
+            <Text style={{ color: '#ef4444', fontSize: 14, marginLeft: 8 }}>
+              Failed to save profile
+            </Text>
+          </View>
+        )}
+
         <View className="mt-4">
           <Button
-            label={saving ? 'Saving...' : 'Save Changes'}
+            label={getButtonLabel()}
             onPress={handleSave}
             variant="primary"
             size="md"

@@ -1,29 +1,8 @@
 import { useEffect } from 'react';
-import { View, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { Tabs, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { sendScreenView } from '@/services/wsEvents';
-
-function TabIcon({
-  name,
-  focused,
-  color,
-  size,
-}: {
-  name: keyof typeof Ionicons.glyphMap;
-  focused: boolean;
-  color: string;
-  size: number;
-}) {
-  return (
-    <View className="items-center">
-      <Ionicons name={name} size={size} color={color} />
-      {focused && (
-        <View className="w-1 h-1 rounded-full bg-accent mt-0.5" />
-      )}
-    </View>
-  );
-}
 
 export default function TabsLayout() {
   const tabBarHeight = Platform.OS === 'ios' ? 64 : 56;
@@ -58,11 +37,10 @@ export default function TabsLayout() {
         options={{
           title: 'Feed',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
+            <Ionicons
               name={focused ? 'home' : 'home-outline'}
-              focused={focused}
-              color={color}
               size={size}
+              color={color}
             />
           ),
         }}
@@ -72,11 +50,10 @@ export default function TabsLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
+            <Ionicons
               name={focused ? 'compass' : 'compass-outline'}
-              focused={focused}
-              color={color}
               size={size}
+              color={color}
             />
           ),
         }}
@@ -86,11 +63,10 @@ export default function TabsLayout() {
         options={{
           title: 'AI Chat',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
+            <Ionicons
               name={focused ? 'sparkles' : 'sparkles-outline'}
-              focused={focused}
-              color={color}
               size={size}
+              color={color}
             />
           ),
         }}
@@ -100,38 +76,41 @@ export default function TabsLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
-            <TabIcon
+            <Ionicons
               name={focused ? 'person-circle' : 'person-circle-outline'}
-              focused={focused}
-              color={color}
               size={size}
+              color={color}
             />
           ),
         }}
       />
       <Tabs.Screen
         name="profile/edit"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="profile/followers"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="profile/about"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="profile/terms"
-        options={{
-          href: null,
-        }}
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/help"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/notifications"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/privacy"
+        options={{ href: null }}
       />
     </Tabs>
   );
