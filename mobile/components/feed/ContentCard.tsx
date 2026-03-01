@@ -167,7 +167,7 @@ export function ContentCard({
       {/* Browse mode: overlay + "Tap to play" prompt for active games */}
       {!(isActiveGame && isImmersive) && (
         <>
-          <ContentOverlay item={orchItem} containerStatus={status} />
+          <ContentOverlay item={orchItem} />
 
           {/* "Tap to play" prompt — centered over the game */}
           {isActiveGame && (

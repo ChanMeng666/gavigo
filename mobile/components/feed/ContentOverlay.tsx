@@ -4,17 +4,16 @@ import { LikeButton } from '@/components/social/LikeButton';
 import { CommentButton } from '@/components/social/CommentButton';
 import { ShareButton } from '@/components/social/ShareButton';
 import { FollowButton } from '@/components/social/FollowButton';
-import { Avatar, Badge, Chip } from '@/components/ui';
+import { Avatar, Chip } from '@/components/ui';
 import { getEngagementCounts } from '@/services/social';
 import { useSocialStore } from '@/stores/socialStore';
-import type { ContentItem, ContainerStatus } from '@/types';
+import type { ContentItem } from '@/types';
 
 interface ContentOverlayProps {
   item: ContentItem;
-  containerStatus: ContainerStatus;
 }
 
-export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
+export function ContentOverlay({ item }: ContentOverlayProps) {
   const initLikeCount = useSocialStore((s) => s.initLikeCount);
   const initCommentCount = useSocialStore((s) => s.initCommentCount);
   const likeCount = useSocialStore((s) => s.likeCounts[item.id] ?? 0);
@@ -78,10 +77,6 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
         <ShareButton contentId={item.id} title={item.title} />
       </View>
 
-      {/* Container status badge */}
-      <View className="absolute top-4 right-3" pointerEvents="none">
-        <Badge status={containerStatus} />
-      </View>
     </>
   );
 }

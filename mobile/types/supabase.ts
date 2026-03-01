@@ -118,6 +118,27 @@ export interface Database {
         };
         Update: never;
       };
+      conversations: {
+        Row: {
+          id: string;
+          user_id: string;
+          title: string | null;
+          model: string;
+          message_count: number;
+          total_tokens: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          title?: string | null;
+          model?: string;
+        };
+        Update: {
+          title?: string;
+          model?: string;
+        };
+      };
       chat_messages: {
         Row: {
           id: string;
@@ -125,6 +146,10 @@ export interface Database {
           conversation_id: string;
           role: 'user' | 'assistant';
           content: string;
+          model: string | null;
+          token_count: number | null;
+          word_count: number | null;
+          status: 'sending' | 'sent' | 'failed';
           created_at: string;
         };
         Insert: {
@@ -132,8 +157,14 @@ export interface Database {
           conversation_id: string;
           role: 'user' | 'assistant';
           content: string;
+          model?: string | null;
+          token_count?: number | null;
+          word_count?: number | null;
+          status?: string;
         };
-        Update: never;
+        Update: {
+          status?: string;
+        };
       };
       view_history: {
         Row: {
@@ -162,5 +193,6 @@ export type Video = Database['public']['Tables']['videos']['Row'];
 export type Like = Database['public']['Tables']['likes']['Row'];
 export type CommentRow = Database['public']['Tables']['comments']['Row'];
 export type Follow = Database['public']['Tables']['follows']['Row'];
+export type Conversation = Database['public']['Tables']['conversations']['Row'];
 export type ChatMessage = Database['public']['Tables']['chat_messages']['Row'];
 export type ViewHistory = Database['public']['Tables']['view_history']['Row'];

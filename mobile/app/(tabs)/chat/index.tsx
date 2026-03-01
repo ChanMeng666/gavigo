@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
   useSharedValue,
@@ -19,10 +20,15 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { getApiBase } from '@/services/api';
-import { supabase } from '@/services/supabase';
 import { useAuthStore } from '@/stores/authStore';
 import { sendUserAction } from '@/services/wsEvents';
 import { IconButton, EmptyState, Chip } from '@/components/ui';
+import {
+  createConversation,
+  getConversationMessages,
+  persistMessage as persistChatMessage,
+  countWords,
+} from '@/services/chat';
 import { TextInput as RNTextInput } from 'react-native';
 
 interface ChatMessage {
@@ -30,10 +36,13 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   created_at: number;
+  model?: string;
+  word_count?: number;
+  status: 'sending' | 'sent' | 'failed';
   failed?: boolean;
 }
 
-function formatTimeAgo(timestamp: number): string {
+export function formatTimeAgo(timestamp: number): string {
   const diff = Date.now() - timestamp;
   if (diff < 60_000) return 'just now';
   const minutes = Math.floor(diff / 60_000);
@@ -96,46 +105,63 @@ const SUGGESTIONS = [
 
 export default function ChatScreen() {
   const insets = useSafeAreaInsets();
+  const { conversationId: routeConversationId } = useLocalSearchParams<{
+    conversationId?: string;
+  }>();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const conversationIdRef = useRef(generateUUID());
+  const conversationIdRef = useRef<string | null>(null);
+  const conversationCreatedRef = useRef(false);
   const userId = useAuthStore((s) => s.firebaseUid);
 
-  // Load most recent conversation on mount
+  // Load conversation on mount (route param or most recent)
   useEffect(() => {
     if (!userId) return;
 
     (async () => {
       try {
-        // Get the most recent conversation_id for this user
-        const { data: recent } = await supabase
-          .from('chat_messages')
-          .select('conversation_id')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        const targetConvId = routeConversationId;
 
-        if (recent) {
-          conversationIdRef.current = recent.conversation_id;
-
-          // Load all messages for that conversation
-          const { data: msgs } = await supabase
-            .from('chat_messages')
-            .select('*')
-            .eq('user_id', userId)
-            .eq('conversation_id', recent.conversation_id)
-            .order('created_at', { ascending: true });
-
-          if (msgs && msgs.length > 0) {
+        if (targetConvId) {
+          // Load specific conversation from route param
+          conversationIdRef.current = targetConvId;
+          conversationCreatedRef.current = true;
+          const msgs = await getConversationMessages(targetConvId);
+          if (msgs.length > 0) {
             setMessages(
               msgs.map((m) => ({
                 id: m.id,
                 role: m.role,
                 content: m.content,
                 created_at: new Date(m.created_at).getTime(),
+                model: m.model ?? undefined,
+                word_count: m.word_count ?? undefined,
+                status: (m.status as ChatMessage['status']) || 'sent',
+              }))
+            );
+          }
+          return;
+        }
+
+        // Load most recent conversation
+        const { getUserConversations } = await import('@/services/chat');
+        const convos = await getUserConversations(userId);
+        if (convos.length > 0) {
+          conversationIdRef.current = convos[0].id;
+          conversationCreatedRef.current = true;
+          const msgs = await getConversationMessages(convos[0].id);
+          if (msgs.length > 0) {
+            setMessages(
+              msgs.map((m) => ({
+                id: m.id,
+                role: m.role,
+                content: m.content,
+                created_at: new Date(m.created_at).getTime(),
+                model: m.model ?? undefined,
+                word_count: m.word_count ?? undefined,
+                status: (m.status as ChatMessage['status']) || 'sent',
               }))
             );
           }
@@ -144,7 +170,7 @@ export default function ChatScreen() {
         // Start fresh
       }
     })();
-  }, [userId]);
+  }, [userId, routeConversationId]);
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -152,44 +178,69 @@ export default function ChatScreen() {
     }
   }, [messages]);
 
-  const persistMessage = useCallback(
-    async (role: 'user' | 'assistant', content: string) => {
-      if (!userId) return;
-      try {
-        await supabase.from('chat_messages').insert({
-          user_id: userId,
-          conversation_id: conversationIdRef.current,
-          role,
-          content,
-        });
-      } catch {
-        // Non-critical
+  const ensureConversation = useCallback(async (): Promise<string> => {
+    if (conversationIdRef.current && conversationCreatedRef.current) {
+      return conversationIdRef.current;
+    }
+
+    if (userId) {
+      const conv = await createConversation(userId);
+      if (conv) {
+        conversationIdRef.current = conv.id;
+        conversationCreatedRef.current = true;
+        return conv.id;
       }
-    },
-    [userId]
-  );
+    }
+
+    // Fallback to local UUID if DB fails
+    const fallbackId = generateUUID();
+    conversationIdRef.current = fallbackId;
+    return fallbackId;
+  }, [userId]);
 
   const sendMessage = useCallback(
     async (text: string) => {
       if (!text.trim() || isLoading) return;
 
       const userMessage = text.trim();
+      const userMsgId = Date.now().toString();
       const userMsg: ChatMessage = {
-        id: Date.now().toString(),
+        id: userMsgId,
         role: 'user',
         content: userMessage,
         created_at: Date.now(),
+        model: 'gpt-4o-mini',
+        word_count: countWords(userMessage),
+        status: 'sending',
       };
 
       setInput('');
       setMessages((prev) => [...prev, userMsg]);
       setIsLoading(true);
 
-      // Track chat message (length only, not content — privacy)
       sendUserAction({ action: 'chat_message', screen: 'chat', value: String(userMessage.length) });
 
-      // Persist user message
-      persistMessage('user', userMessage);
+      // Ensure conversation exists, then persist
+      const convId = await ensureConversation();
+
+      if (userId) {
+        const dbId = await persistChatMessage({
+          userId,
+          conversationId: convId,
+          role: 'user',
+          content: userMessage,
+          model: 'gpt-4o-mini',
+          wordCount: countWords(userMessage),
+        });
+        // Mark as sent
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === userMsgId
+              ? { ...m, id: dbId || userMsgId, status: 'sent' as const }
+              : m
+          )
+        );
+      }
 
       try {
         const response = await fetch(
@@ -208,20 +259,31 @@ export default function ChatScreen() {
           role: 'assistant',
           content: assistantContent,
           created_at: Date.now(),
+          model: 'gpt-4o-mini',
+          word_count: countWords(assistantContent),
+          status: 'sent',
         };
         setMessages((prev) => [...prev, assistantMsg]);
 
-        // Persist assistant message
-        persistMessage('assistant', assistantContent);
+        if (userId) {
+          persistChatMessage({
+            userId,
+            conversationId: convId,
+            role: 'assistant',
+            content: assistantContent,
+            model: 'gpt-4o-mini',
+            wordCount: countWords(assistantContent),
+          });
+        }
       } catch {
-        const failContent = 'Sorry, I could not connect to the AI service.';
         setMessages((prev) => [
           ...prev,
           {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
-            content: failContent,
+            content: 'Sorry, I could not connect to the AI service.',
             created_at: Date.now(),
+            status: 'failed',
             failed: true,
           },
         ]);
@@ -229,26 +291,26 @@ export default function ChatScreen() {
         setIsLoading(false);
       }
     },
-    [isLoading, persistMessage]
+    [isLoading, userId, ensureConversation]
   );
 
   const handleSend = () => sendMessage(input);
 
-  const handleClear = () => {
-    const doClear = () => {
+  const handleNewChat = () => {
+    const doNewChat = () => {
       setMessages([]);
-      // New conversation ID (old messages preserved in DB)
-      conversationIdRef.current = generateUUID();
+      conversationIdRef.current = null;
+      conversationCreatedRef.current = false;
     };
 
     if (Platform.OS === 'web') {
-      if (window.confirm('Start a new conversation?')) {
-        doClear();
+      if (window.confirm('Start a new conversation? Current chat is saved.')) {
+        doNewChat();
       }
     } else {
-      Alert.alert('Clear Chat', 'Start a new conversation?', [
+      Alert.alert('New Chat', 'Start a new conversation? Current chat is saved.', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Clear', style: 'destructive', onPress: doClear },
+        { text: 'New Chat', onPress: doNewChat },
       ]);
     }
   };
@@ -290,9 +352,17 @@ export default function ChatScreen() {
             {item.content}
           </Text>
         </View>
-        <Text className="text-micro text-text-tertiary mt-0.5 ml-1">
-          {formatTimeAgo(item.created_at)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2, marginLeft: 4, gap: 4 }}>
+          <Text className="text-micro text-text-tertiary">
+            {formatTimeAgo(item.created_at)}
+          </Text>
+          {item.role === 'user' && item.status === 'sent' && (
+            <Ionicons name="checkmark" size={10} color="#555568" />
+          )}
+          {item.role === 'user' && item.status === 'sending' && (
+            <Ionicons name="time-outline" size={10} color="#555568" />
+          )}
+        </View>
         {item.failed && (
           <TouchableOpacity
             onPress={() => handleRetry(item)}
@@ -342,11 +412,19 @@ export default function ChatScreen() {
           </View>
           {messages.length > 0 && (
             <TouchableOpacity
-              onPress={handleClear}
+              onPress={handleNewChat}
               accessibilityRole="button"
-              accessibilityLabel="Clear chat"
+              accessibilityLabel="New chat"
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: 'rgba(124,58,237,0.1)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <Text className="text-caption text-text-secondary">Clear</Text>
+              <Ionicons name="create-outline" size={18} color="#7c3aed" />
             </TouchableOpacity>
           )}
         </View>

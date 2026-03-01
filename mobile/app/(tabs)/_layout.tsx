@@ -115,6 +115,24 @@ export default function TabsLayout() {
           href: null,
         }}
       />
+      <Tabs.Screen
+        name="profile/followers"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile/about"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="profile/terms"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

@@ -8,12 +8,6 @@ import {
   type ViewToken,
   type LayoutChangeEvent,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useEngagement } from '@/hooks/useEngagement';
 import { useFeedStore } from '@/stores/feedStore';
@@ -49,35 +43,7 @@ function FeedSkeleton() {
   );
 }
 
-function ConnectionDot({ connected }: { connected: boolean }) {
-  const opacity = useSharedValue(1);
-
-  useEffect(() => {
-    opacity.value = withTiming(1, { duration: 300 });
-  }, [connected, opacity]);
-
-  const style = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        style,
-        {
-          width: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: connected ? '#34d399' : '#f87171',
-        },
-      ]}
-      pointerEvents="none"
-    />
-  );
-}
-
 export default function FeedScreen() {
-  const insets = useSafeAreaInsets();
   const flatListRef = useRef<FlatList>(null);
   const lastScrollTime = useRef(Date.now());
   const [refreshing, setRefreshing] = useState(false);
@@ -96,7 +62,6 @@ export default function FeedScreen() {
     content,
     containerStates,
     currentIndex,
-    connected,
     videos,
     videosPage,
     videosLoading,
@@ -443,15 +408,6 @@ export default function FeedScreen() {
           />
         }
       />
-
-      {/* Connection indicator */}
-      <View
-        className="absolute"
-        style={{ top: insets.top + 8, left: 16 }}
-        pointerEvents="none"
-      >
-        <ConnectionDot connected={connected} />
-      </View>
 
       {/* Vertical scroll progress bar */}
       <View

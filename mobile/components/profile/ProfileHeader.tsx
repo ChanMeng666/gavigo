@@ -1,13 +1,20 @@
-import { View, Text } from 'react-native';
-import { Avatar, Button, Divider } from '@/components/ui';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Avatar, Button } from '@/components/ui';
 import type { UserProfile } from '@/types';
 
 interface ProfileHeaderProps {
   user: UserProfile | null;
   onEditProfile?: () => void;
+  onFollowersPress?: () => void;
+  onFollowingPress?: () => void;
 }
 
-export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
+export function ProfileHeader({
+  user,
+  onEditProfile,
+  onFollowersPress,
+  onFollowingPress,
+}: ProfileHeaderProps) {
   return (
     <View className="items-center px-4 pt-4 pb-6">
       {/* Subtle gradient bg behind avatar */}
@@ -41,19 +48,27 @@ export function ProfileHeader({ user, onEditProfile }: ProfileHeaderProps) {
 
       {/* Stats row */}
       <View className="flex-row items-center mt-6 gap-0">
-        <View className="flex-1 items-center">
+        <TouchableOpacity
+          onPress={onFollowersPress}
+          activeOpacity={0.7}
+          className="flex-1 items-center"
+        >
           <Text className="text-h3 font-bold text-text-primary">
             {user?.followers_count ?? 0}
           </Text>
           <Text className="text-micro text-text-secondary">Followers</Text>
-        </View>
+        </TouchableOpacity>
         <View className="w-px h-8 bg-border" />
-        <View className="flex-1 items-center">
+        <TouchableOpacity
+          onPress={onFollowingPress}
+          activeOpacity={0.7}
+          className="flex-1 items-center"
+        >
           <Text className="text-h3 font-bold text-text-primary">
             {user?.following_count ?? 0}
           </Text>
           <Text className="text-micro text-text-secondary">Following</Text>
-        </View>
+        </TouchableOpacity>
         <View className="w-px h-8 bg-border" />
         <View className="flex-1 items-center">
           <Text className="text-h3 font-bold text-text-primary">

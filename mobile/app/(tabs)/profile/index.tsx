@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { View, ScrollView, Alert, Platform } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, ScrollView, Alert, Platform, TouchableOpacity, Text, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '@/stores/authStore';
@@ -9,7 +9,12 @@ import { supabase } from '@/services/supabase';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { SettingsItem } from '@/components/profile/SettingsItem';
+import { LikedGrid } from '@/components/profile/LikedGrid';
+import { ChatHistory } from '@/components/profile/ChatHistory';
 import { Button } from '@/components/ui';
+
+const TABS = ['Liked', 'Chats', 'Settings'] as const;
+type Tab = (typeof TABS)[number];
 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
@@ -17,6 +22,7 @@ export default function ProfileScreen() {
   const user = useAuthStore((s) => s.user);
   const firebaseUid = useAuthStore((s) => s.firebaseUid);
   const setUser = useAuthStore((s) => s.setUser);
+  const [activeTab, setActiveTab] = useState<Tab>('Liked');
 
   // Refresh profile from Supabase on mount
   useEffect(() => {
@@ -70,50 +76,145 @@ export default function ProfileScreen() {
     router.push('/(tabs)/profile/edit');
   };
 
+  const handleFollowersPress = () => {
+    router.push('/(tabs)/profile/followers?type=followers' as any);
+  };
+
+  const handleFollowingPress = () => {
+    router.push('/(tabs)/profile/followers?type=following' as any);
+  };
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(message);
+    } else {
+      Alert.alert(title, message);
+    }
+  };
+
   return (
     <ScrollView
       className="flex-1 bg-bg-base"
       contentContainerStyle={{ paddingTop: insets.top }}
     >
-      <ProfileHeader user={user} onEditProfile={handleEditProfile} />
+      <ProfileHeader
+        user={user}
+        onEditProfile={handleEditProfile}
+        onFollowersPress={handleFollowersPress}
+        onFollowingPress={handleFollowingPress}
+      />
 
-      <View className="px-4">
-        <SettingsSection title="Account">
-          <SettingsItem icon="notifications-outline" label="Notifications" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'notifications' })} />
-          <SettingsItem icon="shield-outline" label="Privacy & Security" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'privacy' })} />
-        </SettingsSection>
-
-        <SettingsSection title="Preferences">
-          <SettingsItem
-            icon="moon-outline"
-            label="Appearance"
-            value="On"
-            onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'appearance' })}
-          />
-          <SettingsItem icon="language-outline" label="Language" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'language' })} />
-        </SettingsSection>
-
-        <SettingsSection title="About">
-          <SettingsItem
-            icon="information-circle-outline"
-            label="About GAVIGO"
-            onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'about' })}
-          />
-          <SettingsItem icon="help-circle-outline" label="Help & Support" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'help' })} />
-          <SettingsItem icon="document-text-outline" label="Terms of Service" onPress={() => sendUserAction({ action: 'settings_view', screen: 'profile', value: 'terms' })} />
-        </SettingsSection>
-
-        <View className="mt-8 mb-8">
-          <Button
-            label="Sign Out"
-            onPress={handleSignOut}
-            variant="danger"
-            size="md"
-            fullWidth
-            leftIcon="log-out-outline"
-          />
-        </View>
+      {/* Tab Bar */}
+      <View
+        style={{
+          flexDirection: 'row',
+          borderBottomWidth: 1,
+          borderBottomColor: '#1e1e30',
+        }}
+      >
+        {TABS.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.7}
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              paddingVertical: 12,
+              borderBottomWidth: 2,
+              borderBottomColor: activeTab === tab ? '#7c3aed' : 'transparent',
+            }}
+          >
+            <Text
+              style={{
+                color: activeTab === tab ? '#7c3aed' : '#555568',
+                fontSize: 14,
+                fontWeight: activeTab === tab ? '600' : '400',
+              }}
+            >
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
+
+      {/* Tab Content */}
+      {activeTab === 'Liked' && <LikedGrid userId={firebaseUid} />}
+
+      {activeTab === 'Chats' && <ChatHistory userId={firebaseUid} />}
+
+      {activeTab === 'Settings' && (
+        <View className="px-4">
+          <SettingsSection title="Account">
+            <SettingsItem
+              icon="notifications-outline"
+              label="Notifications"
+              onPress={() =>
+                sendUserAction({
+                  action: 'settings_view',
+                  screen: 'profile',
+                  value: 'notifications',
+                })
+              }
+            />
+            <SettingsItem
+              icon="shield-outline"
+              label="Privacy & Security"
+              onPress={() =>
+                sendUserAction({
+                  action: 'settings_view',
+                  screen: 'profile',
+                  value: 'privacy',
+                })
+              }
+            />
+          </SettingsSection>
+
+          <SettingsSection title="Preferences">
+            <SettingsItem
+              icon="moon-outline"
+              label="Appearance"
+              value="Dark"
+              onPress={() => showAlert('Appearance', 'Dark mode is the only theme')}
+            />
+            <SettingsItem
+              icon="language-outline"
+              label="Language"
+              value="English"
+              onPress={() => showAlert('Language', 'English is the only language')}
+            />
+          </SettingsSection>
+
+          <SettingsSection title="About">
+            <SettingsItem
+              icon="information-circle-outline"
+              label="About GAVIGO"
+              onPress={() => router.push('/(tabs)/profile/about' as any)}
+            />
+            <SettingsItem
+              icon="help-circle-outline"
+              label="Help & Support"
+              onPress={() => Linking.openURL('mailto:support@gavigo.com')}
+            />
+            <SettingsItem
+              icon="document-text-outline"
+              label="Terms of Service"
+              onPress={() => router.push('/(tabs)/profile/terms' as any)}
+            />
+          </SettingsSection>
+
+          <View className="mt-8 mb-8">
+            <Button
+              label="Sign Out"
+              onPress={handleSignOut}
+              variant="danger"
+              size="md"
+              fullWidth
+              leftIcon="log-out-outline"
+            />
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 }
