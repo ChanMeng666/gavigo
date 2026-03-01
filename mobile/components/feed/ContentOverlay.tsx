@@ -1,10 +1,12 @@
 import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { useEffect } from 'react';
 import { LikeButton } from '@/components/social/LikeButton';
 import { CommentButton } from '@/components/social/CommentButton';
 import { ShareButton } from '@/components/social/ShareButton';
 import { FollowButton } from '@/components/social/FollowButton';
 import { Avatar, Badge, Chip } from '@/components/ui';
+import { getEngagementCounts } from '@/services/social';
+import { useSocialStore } from '@/stores/socialStore';
 import type { ContentItem, ContainerStatus } from '@/types';
 
 interface ContentOverlayProps {
@@ -12,20 +14,18 @@ interface ContentOverlayProps {
   containerStatus: ContainerStatus;
 }
 
-const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-  VIDEO: 'play-circle',
-  GAME: 'game-controller',
-  AI_SERVICE: 'sparkles',
-};
-
 export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
-  // Generate pseudo-random engagement numbers from content ID
-  const hashCode = item.id.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
-    return a & a;
-  }, 0);
-  const baseLikes = Math.abs(hashCode % 10000) + 100;
-  const baseComments = Math.abs((hashCode >> 8) % 500) + 10;
+  const initLikeCount = useSocialStore((s) => s.initLikeCount);
+  const initCommentCount = useSocialStore((s) => s.initCommentCount);
+  const likeCount = useSocialStore((s) => s.likeCounts[item.id] ?? 0);
+  const commentCount = useSocialStore((s) => s.commentCounts[item.id] ?? 0);
+
+  useEffect(() => {
+    getEngagementCounts(item.id).then(({ likes, comments }) => {
+      initLikeCount(item.id, likes);
+      initCommentCount(item.id, comments);
+    }).catch(() => {});
+  }, [item.id, initLikeCount, initCommentCount]);
 
   return (
     <>
@@ -73,18 +73,9 @@ export function ContentOverlay({ item, containerStatus }: ContentOverlayProps) {
 
       {/* Right-side action buttons */}
       <View className="absolute right-2 bottom-32 items-center gap-5">
-        <LikeButton contentId={item.id} initialCount={baseLikes} />
-        <CommentButton contentId={item.id} initialCount={baseComments} />
+        <LikeButton contentId={item.id} initialCount={likeCount} />
+        <CommentButton contentId={item.id} initialCount={commentCount} />
         <ShareButton contentId={item.id} title={item.title} />
-
-        {/* Content type indicator */}
-        <View className="w-11 h-11 rounded-full bg-accent/60 items-center justify-center">
-          <Ionicons
-            name={typeIcons[item.type] || 'cube'}
-            size={22}
-            color="white"
-          />
-        </View>
       </View>
 
       {/* Container status badge */}

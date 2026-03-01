@@ -1,5 +1,4 @@
 import { View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { LikeButton } from '@/components/social/LikeButton';
 import { CommentButton } from '@/components/social/CommentButton';
 import { ShareButton } from '@/components/social/ShareButton';
@@ -69,20 +68,6 @@ export function VideoOverlay({ video }: VideoOverlayProps) {
         <LikeButton contentId={video.id} initialCount={video.like_count} />
         <CommentButton contentId={video.id} initialCount={video.comment_count} />
         <ShareButton contentId={video.id} title={video.title} />
-
-        {/* Video type indicator */}
-        <View
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: 20,
-            backgroundColor: 'rgba(124,58,237,0.6)',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Ionicons name="play-circle" size={20} color="white" />
-        </View>
       </View>
     </>
   );

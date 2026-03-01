@@ -29,7 +29,20 @@ interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  created_at: number;
   failed?: boolean;
+}
+
+function formatTimeAgo(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  if (diff < 60_000) return 'just now';
+  const minutes = Math.floor(diff / 60_000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(diff / 3_600_000);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(diff / 86_400_000);
+  if (days < 7) return `${days}d ago`;
+  return new Date(timestamp).toLocaleDateString();
 }
 
 function generateUUID(): string {
@@ -122,6 +135,7 @@ export default function ChatScreen() {
                 id: m.id,
                 role: m.role,
                 content: m.content,
+                created_at: new Date(m.created_at).getTime(),
               }))
             );
           }
@@ -164,6 +178,7 @@ export default function ChatScreen() {
         id: Date.now().toString(),
         role: 'user',
         content: userMessage,
+        created_at: Date.now(),
       };
 
       setInput('');
@@ -192,6 +207,7 @@ export default function ChatScreen() {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
           content: assistantContent,
+          created_at: Date.now(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
 
@@ -205,6 +221,7 @@ export default function ChatScreen() {
             id: (Date.now() + 1).toString(),
             role: 'assistant',
             content: failContent,
+            created_at: Date.now(),
             failed: true,
           },
         ]);
@@ -218,18 +235,22 @@ export default function ChatScreen() {
   const handleSend = () => sendMessage(input);
 
   const handleClear = () => {
-    Alert.alert('Clear Chat', 'Start a new conversation?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Clear',
-        style: 'destructive',
-        onPress: () => {
-          setMessages([]);
-          // New conversation ID (old messages preserved in DB)
-          conversationIdRef.current = generateUUID();
-        },
-      },
-    ]);
+    const doClear = () => {
+      setMessages([]);
+      // New conversation ID (old messages preserved in DB)
+      conversationIdRef.current = generateUUID();
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm('Start a new conversation?')) {
+        doClear();
+      }
+    } else {
+      Alert.alert('Clear Chat', 'Start a new conversation?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Clear', style: 'destructive', onPress: doClear },
+      ]);
+    }
   };
 
   const handleRetry = (msg: ChatMessage) => {
@@ -265,20 +286,12 @@ export default function ChatScreen() {
               : 'bg-bg-surface border border-border rounded-2xl rounded-bl-sm'
           }`}
         >
-          {item.role === 'assistant' && (
-            <Ionicons
-              name="sparkles"
-              size={12}
-              color="#a78bfa"
-              style={{ position: 'absolute', top: 8, right: 10 }}
-            />
-          )}
           <Text className="text-body text-text-primary leading-5">
             {item.content}
           </Text>
         </View>
         <Text className="text-micro text-text-tertiary mt-0.5 ml-1">
-          just now
+          {formatTimeAgo(item.created_at)}
         </Text>
         {item.failed && (
           <TouchableOpacity
@@ -323,7 +336,7 @@ export default function ChatScreen() {
                 <View className="w-1.5 h-1.5 rounded-full bg-success" />
               </View>
               <Text className="text-micro text-accent-light">
-                Powered by GPT-4o-mini
+                Online
               </Text>
             </View>
           </View>

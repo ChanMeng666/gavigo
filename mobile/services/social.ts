@@ -126,3 +126,22 @@ export async function isFollowing(targetUserId: string): Promise<boolean> {
     .maybeSingle();
   return !!data;
 }
+
+export async function getEngagementCounts(
+  contentId: string
+): Promise<{ likes: number; comments: number }> {
+  const [likesRes, commentsRes] = await Promise.all([
+    supabase
+      .from('likes')
+      .select('*', { count: 'exact', head: true })
+      .eq('content_id', contentId),
+    supabase
+      .from('comments')
+      .select('*', { count: 'exact', head: true })
+      .eq('content_id', contentId),
+  ]);
+  return {
+    likes: likesRes.count ?? 0,
+    comments: commentsRes.count ?? 0,
+  };
+}

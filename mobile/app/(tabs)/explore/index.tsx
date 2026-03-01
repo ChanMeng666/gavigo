@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   ScrollView,
-  Dimensions,
   RefreshControl,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -25,9 +25,6 @@ import type { Video } from '@/types/supabase';
 import defaultVideos from '../../../../shared/defaultVideos.json';
 
 const bundledVideos = defaultVideos as Video[];
-
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const CARD_WIDTH = (SCREEN_WIDTH - 48) / 2;
 
 const THEMES = [
   { key: 'all', label: 'All', icon: 'grid-outline' as const },
@@ -53,30 +50,22 @@ const THEMES = [
   { key: 'abstract', label: 'Abstract', icon: 'color-palette-outline' as const },
 ];
 
-// Videos per row in the grid
-const VIDEOS_PER_ROW = 2;
-
-// Flatten all games from all studios into a single list
-// ALL_GAMES is imported from @/data/games
-
-const GAME_CARD_WIDTH = 110;
-
 type ExploreItem = { type: 'video-row'; videos: Video[] };
 
-function buildExploreData(videos: Video[]): ExploreItem[] {
+function buildExploreData(videos: Video[], numColumns: number): ExploreItem[] {
   const items: ExploreItem[] = [];
   let videoIdx = 0;
 
   while (videoIdx < videos.length) {
-    const row = videos.slice(videoIdx, videoIdx + VIDEOS_PER_ROW);
+    const row = videos.slice(videoIdx, videoIdx + numColumns);
     items.push({ type: 'video-row', videos: row });
-    videoIdx += VIDEOS_PER_ROW;
+    videoIdx += numColumns;
   }
 
   return items;
 }
 
-function GameThumbnailCard({ game, onPress }: { game: StudioGame; onPress: () => void }) {
+function GameThumbnailCard({ game, onPress, cardWidth }: { game: StudioGame; onPress: () => void; cardWidth: number }) {
   const [imgFailed, setImgFailed] = useState(false);
 
   return (
@@ -84,7 +73,7 @@ function GameThumbnailCard({ game, onPress }: { game: StudioGame; onPress: () =>
       onPress={onPress}
       activeOpacity={0.8}
       style={{
-        width: GAME_CARD_WIDTH,
+        width: cardWidth,
         borderRadius: 12,
         overflow: 'hidden',
         backgroundColor: '#1a1a2e',
@@ -93,7 +82,7 @@ function GameThumbnailCard({ game, onPress }: { game: StudioGame; onPress: () =>
       }}
     >
       {/* Cover image */}
-      <View style={{ height: GAME_CARD_WIDTH, backgroundColor: '#0e0e18' }}>
+      <View style={{ height: cardWidth, backgroundColor: '#0e0e18' }}>
         {game.thumbnail && !imgFailed ? (
           <Image
             source={{ uri: game.thumbnail }}
@@ -148,11 +137,17 @@ function GameThumbnailCard({ game, onPress }: { game: StudioGame; onPress: () =>
 export default function ExploreScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [videos, setVideos] = useState<Video[]>([]);
   const [search, setSearch] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Responsive columns: 2 on phone, 3 on tablet, 4 on desktop
+  const numColumns = width >= 1024 ? 4 : width >= 768 ? 3 : 2;
+  const cardWidth = (width - 32 - (numColumns - 1) * 12) / numColumns;
+  const gameCardWidth = width >= 768 ? 140 : 110;
 
   const loadVideos = useCallback(async () => {
     try {
@@ -229,12 +224,12 @@ export default function ExploreScreen() {
     return n.toString();
   };
 
-  const exploreData = buildExploreData(videos);
+  const exploreData = useMemo(() => buildExploreData(videos, numColumns), [videos, numColumns]);
 
   const renderVideoCard = (item: Video) => (
     <TouchableOpacity
       key={item.id}
-      style={{ width: CARD_WIDTH, marginBottom: 12 }}
+      style={{ width: cardWidth, marginBottom: 12 }}
       activeOpacity={0.8}
       accessibilityRole="button"
       accessibilityLabel={`Play ${item.title}`}
@@ -298,7 +293,8 @@ export default function ExploreScreen() {
     </TouchableOpacity>
   );
 
-  const renderItem = useRef(({ item }: { item: ExploreItem }) => {
+  const renderItem = useCallback(({ item }: { item: ExploreItem }) => {
+    const spacers = numColumns - item.videos.length;
     return (
       <View
         style={{
@@ -308,17 +304,17 @@ export default function ExploreScreen() {
         }}
       >
         {item.videos.map((v) => renderVideoCard(v))}
-        {/* Spacer if odd number */}
-        {item.videos.length < VIDEOS_PER_ROW && (
-          <View style={{ width: CARD_WIDTH }} />
-        )}
+        {spacers > 0 &&
+          Array.from({ length: spacers }, (_, i) => (
+            <View key={`spacer-${i}`} style={{ width: cardWidth }} />
+          ))}
       </View>
     );
-  }).current;
+  }, [cardWidth, numColumns]);
 
-  const keyExtractor = useRef((item: ExploreItem, index: number) => {
+  const keyExtractor = useCallback((item: ExploreItem) => {
     return `row-${item.videos.map((v) => v.id).join('-')}`;
-  }).current;
+  }, []);
 
   const gamesSection = (
     <View style={{ marginBottom: 16 }}>
@@ -352,6 +348,7 @@ export default function ExploreScreen() {
           <GameThumbnailCard
             key={game.id}
             game={game}
+            cardWidth={gameCardWidth}
             onPress={() => handleGamePress(game.id)}
           />
         ))}

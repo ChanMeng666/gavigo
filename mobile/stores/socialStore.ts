@@ -10,6 +10,8 @@ interface SocialState {
 
   toggleLike: (contentId: string) => void;
   setLikeCount: (contentId: string, count: number) => void;
+  initLikeCount: (contentId: string, count: number) => void;
+  initCommentCount: (contentId: string, count: number) => void;
   setComments: (contentId: string, comments: Comment[]) => void;
   addComment: (contentId: string, comment: Comment) => void;
   setCommentCount: (contentId: string, count: number) => void;
@@ -41,6 +43,18 @@ export const useSocialStore = create<SocialState>((set) => ({
     set((state) => ({
       likeCounts: { ...state.likeCounts, [contentId]: count },
     })),
+
+  initLikeCount: (contentId, count) =>
+    set((state) => {
+      if (contentId in state.likeCounts) return state;
+      return { likeCounts: { ...state.likeCounts, [contentId]: count } };
+    }),
+
+  initCommentCount: (contentId, count) =>
+    set((state) => {
+      if (contentId in state.commentCounts) return state;
+      return { commentCounts: { ...state.commentCounts, [contentId]: count } };
+    }),
 
   setComments: (contentId, comments) =>
     set((state) => ({
