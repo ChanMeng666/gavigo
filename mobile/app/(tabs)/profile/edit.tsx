@@ -184,7 +184,7 @@ export default function EditProfileScreen() {
       {/* Header */}
       <View className="flex-row items-center justify-between px-4 py-3">
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/profile')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

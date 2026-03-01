@@ -71,7 +71,7 @@ export default function NotificationsScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/profile')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

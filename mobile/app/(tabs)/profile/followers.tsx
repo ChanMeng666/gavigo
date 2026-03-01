@@ -125,7 +125,7 @@ export default function FollowersScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/profile')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

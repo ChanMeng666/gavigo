@@ -111,7 +111,7 @@ export default function PrivacyScreen() {
         }}
       >
         <TouchableOpacity
-          onPress={() => router.back()}
+          onPress={() => router.replace('/(tabs)/profile')}
           accessibilityRole="button"
           accessibilityLabel="Go back"
         >

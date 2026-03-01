@@ -72,7 +72,7 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="profile/index"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, size, focused }) => (
@@ -83,6 +83,34 @@ export default function TabsLayout() {
             />
           ),
         }}
+      />
+      <Tabs.Screen
+        name="profile/edit"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/followers"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/about"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/terms"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/help"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/notifications"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="profile/privacy"
+        options={{ href: null }}
       />
     </Tabs>
   );
