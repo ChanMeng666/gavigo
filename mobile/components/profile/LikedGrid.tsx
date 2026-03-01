@@ -67,7 +67,7 @@ export function LikedGrid({ userId }: { userId: string | null }) {
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => {
-          // Navigate to feed — could deep-link to specific video in future
+          router.push(`/video/${item.videos.id}`);
         }}
         style={{ width: cellSize, height: cellSize }}
       >

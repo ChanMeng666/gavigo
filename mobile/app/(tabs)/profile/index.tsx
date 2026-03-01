@@ -73,15 +73,15 @@ export default function ProfileScreen() {
   };
 
   const handleEditProfile = () => {
-    router.push('/(tabs)/profile/edit');
+    router.push('./edit');
   };
 
   const handleFollowersPress = () => {
-    router.push('/(tabs)/profile/followers?type=followers' as any);
+    router.push('./followers?type=followers' as any);
   };
 
   const handleFollowingPress = () => {
-    router.push('/(tabs)/profile/followers?type=following' as any);
+    router.push('./followers?type=following' as any);
   };
 
   const showAlert = (title: string, message: string) => {
@@ -149,12 +149,12 @@ export default function ProfileScreen() {
             <SettingsItem
               icon="notifications-outline"
               label="Notifications"
-              onPress={() => router.push('/(tabs)/profile/notifications' as any)}
+              onPress={() => router.push('./notifications' as any)}
             />
             <SettingsItem
               icon="shield-outline"
               label="Privacy & Security"
-              onPress={() => router.push('/(tabs)/profile/privacy' as any)}
+              onPress={() => router.push('./privacy' as any)}
             />
           </SettingsSection>
 
@@ -177,17 +177,17 @@ export default function ProfileScreen() {
             <SettingsItem
               icon="information-circle-outline"
               label="About GAVIGO"
-              onPress={() => router.push('/(tabs)/profile/about' as any)}
+              onPress={() => router.push('./about' as any)}
             />
             <SettingsItem
               icon="help-circle-outline"
               label="Help & Support"
-              onPress={() => router.push('/(tabs)/profile/help' as any)}
+              onPress={() => router.push('./help' as any)}
             />
             <SettingsItem
               icon="document-text-outline"
               label="Terms of Service"
-              onPress={() => router.push('/(tabs)/profile/terms' as any)}
+              onPress={() => router.push('./terms' as any)}
             />
           </SettingsSection>
 

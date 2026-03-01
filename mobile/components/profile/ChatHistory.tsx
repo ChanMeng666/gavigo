@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { getUserConversations } from '@/services/chat';
+import { useSocialStore } from '@/stores/socialStore';
 import { EmptyState } from '@/components/ui';
 import type { Database } from '@/types/supabase';
 
@@ -30,6 +33,8 @@ export function ChatHistory({ userId }: { userId: string | null }) {
   const router = useRouter();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const hiddenIds = useSocialStore((s) => s.hiddenConversationIds);
+  const hideConversation = useSocialStore((s) => s.hideConversation);
 
   useEffect(() => {
     if (!userId) return;
@@ -46,6 +51,34 @@ export function ChatHistory({ userId }: { userId: string | null }) {
     })();
   }, [userId]);
 
+  const visibleConversations = useMemo(
+    () => conversations.filter((c) => !hiddenIds.includes(c.id)),
+    [conversations, hiddenIds]
+  );
+
+  const handleLongPress = useCallback(
+    (item: Conversation) => {
+      const title = item.title || 'this conversation';
+      const doHide = () => hideConversation(item.id);
+
+      if (Platform.OS === 'web') {
+        if (window.confirm(`Delete "${title}"?`)) {
+          doHide();
+        }
+      } else {
+        Alert.alert(
+          'Delete Conversation',
+          `Delete "${title}"? It will be hidden from your list.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Delete', style: 'destructive', onPress: doHide },
+          ]
+        );
+      }
+    },
+    [hideConversation]
+  );
+
   const renderItem = useCallback(
     ({ item }: { item: Conversation }) => (
       <TouchableOpacity
@@ -53,6 +86,8 @@ export function ChatHistory({ userId }: { userId: string | null }) {
         onPress={() =>
           router.push(`/(tabs)/chat?conversationId=${item.id}` as any)
         }
+        onLongPress={() => handleLongPress(item)}
+        delayLongPress={500}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -92,7 +127,7 @@ export function ChatHistory({ userId }: { userId: string | null }) {
         <Ionicons name="chevron-forward" size={16} color="#555568" />
       </TouchableOpacity>
     ),
-    [router]
+    [router, handleLongPress]
   );
 
   if (loading) {
@@ -103,7 +138,7 @@ export function ChatHistory({ userId }: { userId: string | null }) {
     );
   }
 
-  if (conversations.length === 0) {
+  if (visibleConversations.length === 0) {
     return (
       <View style={{ paddingTop: 40 }}>
         <EmptyState
@@ -118,7 +153,7 @@ export function ChatHistory({ userId }: { userId: string | null }) {
 
   return (
     <FlatList
-      data={conversations}
+      data={visibleConversations}
       renderItem={renderItem}
       keyExtractor={(item) => item.id}
       scrollEnabled={false}

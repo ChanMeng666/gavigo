@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { appStorage } from '@/services/storage';
 import type { Comment } from '@/types';
 
 interface SocialState {
@@ -7,6 +9,7 @@ interface SocialState {
   commentCounts: Record<string, number>; // contentId -> count
   comments: Record<string, Comment[]>; // contentId -> comments
   following: Record<string, boolean>; // userId -> following
+  hiddenConversationIds: string[]; // soft-deleted conversation IDs
 
   toggleLike: (contentId: string) => void;
   setLikeCount: (contentId: string, count: number) => void;
@@ -17,14 +20,24 @@ interface SocialState {
   setCommentCount: (contentId: string, count: number) => void;
   toggleFollow: (userId: string) => void;
   setFollowing: (userId: string, isFollowing: boolean) => void;
+  hideConversation: (conversationId: string) => void;
 }
 
-export const useSocialStore = create<SocialState>((set) => ({
+const zustandStorage = createJSONStorage(() => ({
+  getItem: (key: string) => appStorage.getItem(key),
+  setItem: (key: string, value: string) => appStorage.setItem(key, value),
+  removeItem: (key: string) => appStorage.removeItem(key),
+}));
+
+export const useSocialStore = create<SocialState>()(
+  persist(
+    (set) => ({
   likes: {},
   likeCounts: {},
   commentCounts: {},
   comments: {},
   following: {},
+  hiddenConversationIds: [],
 
   toggleLike: (contentId) =>
     set((state) => {
@@ -88,4 +101,20 @@ export const useSocialStore = create<SocialState>((set) => ({
     set((state) => ({
       following: { ...state.following, [userId]: isFollowing },
     })),
-}));
+
+  hideConversation: (conversationId) =>
+    set((state) => ({
+      hiddenConversationIds: state.hiddenConversationIds.includes(conversationId)
+        ? state.hiddenConversationIds
+        : [...state.hiddenConversationIds, conversationId],
+    })),
+    }),
+    {
+      name: 'social-store',
+      storage: zustandStorage,
+      partialize: (state) => ({
+        hiddenConversationIds: state.hiddenConversationIds,
+      }),
+    }
+  )
+);

@@ -64,23 +64,29 @@ export default function EditProfileScreen() {
       const asset = result.assets[0];
 
       try {
-        // Upload to Supabase Storage
-        const ext = asset.uri.split('.').pop() || 'jpg';
-        const fileName = `${firebaseUid}/avatar.${ext}`;
+        // Sanitize extension (uri may have query params)
+        const rawExt = asset.uri.split('.').pop() || 'jpg';
+        const ext = rawExt.split(/[?#]/)[0].toLowerCase();
+        const validExt = ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+        const fileName = `${firebaseUid}/avatar.${validExt}`;
 
+        // Read as ArrayBuffer for wider compatibility (web + native)
         const response = await fetch(asset.uri);
-        const blob = await response.blob();
+        const arrayBuffer = await response.arrayBuffer();
 
         const { error: uploadError } = await supabase.storage
           .from('avatars')
-          .upload(fileName, blob, {
+          .upload(fileName, arrayBuffer, {
             upsert: true,
-            contentType: `image/${ext}`,
+            contentType: `image/${validExt === 'jpg' ? 'jpeg' : validExt}`,
           });
 
         if (uploadError) {
-          // If storage bucket doesn't exist, just use local URI
           console.warn('Avatar upload failed:', uploadError.message);
+          setSaveStatus('error');
+          if (statusTimer.current) clearTimeout(statusTimer.current);
+          statusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000);
+          // Still use local URI so user sees their pick
           setAvatarUri(asset.uri);
           return;
         }
@@ -89,8 +95,13 @@ export default function EditProfileScreen() {
           data: { publicUrl },
         } = supabase.storage.from('avatars').getPublicUrl(fileName);
 
-        setAvatarUri(publicUrl);
-      } catch {
+        // Cache-bust to force image refresh
+        setAvatarUri(`${publicUrl}?t=${Date.now()}`);
+      } catch (err) {
+        console.warn('Avatar pick error:', err);
+        setSaveStatus('error');
+        if (statusTimer.current) clearTimeout(statusTimer.current);
+        statusTimer.current = setTimeout(() => setSaveStatus('idle'), 3000);
         // Use local URI as fallback
         setAvatarUri(asset.uri);
       }
